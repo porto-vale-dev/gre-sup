@@ -17,7 +17,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export function ArchivedTicketsClient() {
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
-  const { tickets } = useTickets();
+  const { tickets, isLoadingTickets, fetchTickets } = useTickets(); // Added isLoadingTickets
   const router = useRouter();
 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -31,6 +31,9 @@ export function ArchivedTicketsClient() {
     if (!authIsLoading && !isAuthenticated) {
       router.push('/login');
     }
+    // if (isAuthenticated) {
+    //   fetchTickets(); // Fetch tickets when authenticated
+    // }
   }, [isAuthenticated, authIsLoading, router]);
 
   const archivedTickets = useMemo(() => {
@@ -67,15 +70,18 @@ export function ArchivedTicketsClient() {
     return ["Todos", ...new Set(archivedTickets.map(t => t.responsible).filter(Boolean) as string[])];
   }, [archivedTickets]);
 
-  if (authIsLoading || !isAuthenticated) {
-    return (
+  if (authIsLoading || isLoadingTickets || (!isAuthenticated && !authIsLoading) ) { // Added isLoadingTickets
+     return (
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <Skeleton className="h-10 w-full sm:w-64" />
-          <Skeleton className="h-10 w-full sm:w-48" />
-          <Skeleton className="h-10 w-full sm:w-32" />
+         <div className="flex flex-col lg:flex-row gap-2 items-center w-full p-4 bg-card border rounded-lg shadow">
+          <Skeleton className="h-10 w-full lg:flex-grow" />
+          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto items-center shrink-0">
+            <Skeleton className="h-10 w-full sm:w-[180px]" />
+            <Skeleton className="h-10 w-full sm:w-[180px]" />
+            <Skeleton className="h-10 w-20 hidden sm:block" />
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={`gap-6 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'space-y-4'}`}>
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-72 rounded-lg" />)}
         </div>
       </div>

@@ -19,23 +19,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ticketSchema, type TicketFormData } from '@/lib/schemas';
 import { TICKET_REASONS, ALLOWED_FILE_TYPES, MAX_FILE_SIZE, MAX_OBSERVATIONS_LENGTH } from '@/lib/constants';
-import type { TicketFile } from '@/types';
+// TicketFile type is now mainly for display, raw File object is used for submission
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Info, Send, Paperclip, UploadCloud } from 'lucide-react';
 
-async function readFileAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(file);
-  });
-}
+// readFileAsDataURL is no longer needed as we directly upload the File object
 
 export function TicketForm() {
   const [selectedReason, setSelectedReason] = useState<(typeof TICKET_REASONS)[0] | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // Store the selected File object
   const { addTicket } = useTickets();
   const { toast } = useToast();
 
@@ -46,7 +40,7 @@ export function TicketForm() {
       phone: "",
       reason: "",
       observations: "",
-      file: undefined,
+      // file: undefined, // Zod schema handles this. We'll use selectedFile state.
     },
   });
 
@@ -62,66 +56,50 @@ export function TicketForm() {
       if (file.size > MAX_FILE_SIZE) {
         form.setError("file", { type: "manual", message: `Tamanho máximo do arquivo é ${MAX_FILE_SIZE / 1024 / 1024}MB.` });
         setFileName(null);
+        setSelectedFile(null);
         event.target.value = ""; 
         return;
       }
-      if (!ALLOWED_FILE_TYPES.includes(file.type) && !ALLOWED_FILE_TYPES.some(ext => file.name.toLowerCase().endsWith(ext.toLowerCase()))) {
+      const isAllowedType = ALLOWED_FILE_TYPES.includes(file.type) || ALLOWED_FILE_TYPES.some(ext => file.name.toLowerCase().endsWith(ext.toLowerCase()));
+      if (!isAllowedType && !file.name.match(/\.(pdf|doc|docx|txt|xls|xlsx|csv|jpg|jpeg|png|gif)$/i) ) {
          form.setError("file", { type: "manual", message: "Tipo de arquivo inválido." });
          setFileName(null);
+         setSelectedFile(null);
          event.target.value = ""; 
         return;
       }
       form.clearErrors("file");
       setFileName(file.name);
+      setSelectedFile(file); // Store the File object
     } else {
       setFileName(null);
+      setSelectedFile(null);
     }
   };
 
   async function onSubmit(data: TicketFormData) {
-    let fileDetails: TicketFile | undefined = undefined;
-
-    if (data.file && data.file.length > 0) {
-      const file = data.file[0];
-      try {
-        const fileContent = await readFileAsDataURL(file);
-        fileDetails = {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          content: fileContent,
-        };
-      } catch (error) {
-        console.error("Error reading file:", error);
-        toast({
-          title: "Erro ao Ler Arquivo",
-          description: "Não foi possível processar o arquivo anexado. Tente novamente.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
     const ticketPayload = {
       name: data.name,
       phone: data.phone,
       reason: data.reason,
       estimatedResponseTime: selectedReason?.responseTime || "N/A",
       observations: data.observations,
-      file: fileDetails,
+      file: selectedFile || undefined, // Pass the File object to addTicket
     };
 
-    addTicket(ticketPayload);
-    toast({
-      title: "Ticket Enviado com Sucesso!",
-      description: "Seu ticket foi registrado e será processado em breve.",
-      variant: "default",
-    });
-    form.reset();
-    setSelectedReason(null);
-    setFileName(null);
-    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
-    if (fileInput) fileInput.value = "";
+    try {
+        await addTicket(ticketPayload);
+        // Toast for success is handled within addTicket now
+        form.reset();
+        setSelectedReason(null);
+        setFileName(null);
+        setSelectedFile(null);
+        const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+        if (fileInput) fileInput.value = "";
+    } catch (error) {
+        // Error toast is handled within addTicket
+        console.error("Submission error in TicketForm:", error);
+    }
   }
 
   return (
@@ -214,8 +192,8 @@ export function TicketForm() {
             />
             <FormField
               control={form.control}
-              name="file"
-              render={({ field: { onChange, onBlur, name, ref }}) => (
+              name="file" // Still needed for Zod validation linking
+              render={({ fieldState }) => ( // Only need fieldState for error display
                 <FormItem>
                   <FormLabel>Anexar Arquivo (Opcional)</FormLabel>
                   <FormControl>
@@ -224,13 +202,8 @@ export function TicketForm() {
                           id="file-upload" 
                           type="file" 
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          onChange={(e) => {
-                            onChange(e.target.files); 
-                            handleFileChange(e);
-                          }}
-                          onBlur={onBlur} 
-                          name={name} 
-                          ref={ref}
+                          onChange={handleFileChange} // Uses custom handler
+                          // onBlur, name, ref are not directly used from RHF for file input
                           accept={ALLOWED_FILE_TYPES.join(',')}
                         />
                         <Label 
@@ -249,10 +222,10 @@ export function TicketForm() {
                         <Paperclip className="h-4 w-4" /> Arquivo selecionado: {fileName}
                     </FormDescription>
                   )}
-                  <FormDescription>
-                    Tipos permitidos: PDF, DOC(X), TXT, XLS(X), CSV, Imagens. Tamanho máx: 5MB.
+                   <FormDescription>
+                    Tipos permitidos: PDF, DOC(X), TXT, XLS(X), CSV, Imagens (JPG, PNG, GIF). Tamanho máx: 5MB.
                   </FormDescription>
-                  <FormMessage />
+                  {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
                 </FormItem>
               )}
             />

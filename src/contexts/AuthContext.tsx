@@ -3,62 +3,73 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-// import { useLocalStorage } from '@/hooks/useLocalStorage'; // Removed useLocalStorage
 import type { LoginFormData } from '@/lib/schemas';
+import { supabase } from '@/lib/supabaseClient';
+import type { Session, User } from '@supabase/supabase-js';
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  user: User | null;
   isLoading: boolean;
-  login: (data: LoginFormData) => Promise<boolean>;
-  logout: () => void;
+  login: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false); // Use useState
-  const [isLoading, setIsLoading] = useState(true); // Keep isLoading for initial setup
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulating the end of initial loading.
-    // In a real app with a backend, you might check for an existing session token here.
-    // For now, we assume the user is not authenticated initially.
-    setIsLoading(false);
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    };
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      }
+    );
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
   }, []);
 
-  const login = async (data: LoginFormData): Promise<boolean> => {
+  const login = async (data: LoginFormData): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
-    // TODO: Replace with a real API call to your authentication backend
-    // const response = await fetch('/api/auth/login', { method: 'POST', body: JSON.stringify(data) });
-    // if (response.ok) {
-    //   setIsAuthenticated(true);
-    //   setIsLoading(false);
-    //   return true;
-    // }
-
-    // Simulate API call (current mock logic)
-    await new Promise(resolve => setTimeout(resolve, 500));
-    if (
-      (data.username === 'adm' && data.password === 'PortoVale102030@@') ||
-      (data.username === 'GRE' && data.password === 'PortoVale102030@@')
-    ) {
-      setIsAuthenticated(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.username, // Assuming username is email for Supabase
+        password: data.password,
+      });
       setIsLoading(false);
-      return true;
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      // Auth state change will be handled by the listener
+      return { success: true };
+    } catch (e: any) {
+      setIsLoading(false);
+      return { success: false, error: e.message || "An unexpected error occurred." };
     }
-    setIsAuthenticated(false);
-    setIsLoading(false);
-    return false;
   };
 
-  const logout = async () => { // Made async to simulate API call
-    // TODO: Implement API call to invalidate session on the backend
-    // await fetch('/api/auth/logout', { method: 'POST' });
-    setIsAuthenticated(false);
+  const logout = async () => {
+    setIsLoading(true);
+    await supabase.auth.signOut();
+    // Auth state change will be handled by the listener
+    // setUser(null) will be set by the listener
+    setIsLoading(false);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated: !!user, user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

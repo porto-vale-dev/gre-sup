@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -22,14 +23,14 @@ export function LoginForm() {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      username: "", // Supabase expects email here
       password: "",
     },
   });
 
   async function onSubmit(data: LoginFormData) {
     setIsLoading(true);
-    const success = await login(data);
+    const { success, error } = await login(data);
     setIsLoading(false);
 
     if (success) {
@@ -41,10 +42,11 @@ export function LoginForm() {
     } else {
       toast({
         title: "Erro no Login",
-        description: "Usuário ou senha inválidos. Tente novamente.",
+        description: error || "Usuário ou senha inválidos. Tente novamente.",
         variant: "destructive",
       });
-      form.setError("password", { message: "Credenciais inválidas" });
+      // Do not set form error for "password" specifically unless the error confirms it's a password issue
+      // form.setError("password", { message: "Credenciais inválidas" });
     }
   }
 
@@ -55,7 +57,7 @@ export function LoginForm() {
           <CardTitle className="font-headline text-3xl text-primary flex items-center justify-center gap-2">
             <LogIn className="h-8 w-8" /> Acesso Restrito
           </CardTitle>
-          <CardDescription>Faça login para acessar o painel do gestor.</CardDescription>
+          <CardDescription>Faça login para acessar o painel do gestor. Use seu e-mail como usuário.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -65,9 +67,9 @@ export function LoginForm() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-1.5"><User className="h-4 w-4 text-muted-foreground" /> Usuário</FormLabel>
+                    <FormLabel className="flex items-center gap-1.5"><User className="h-4 w-4 text-muted-foreground" /> Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="adm" {...field} />
+                      <Input type="email" placeholder="seu@email.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
