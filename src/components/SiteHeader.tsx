@@ -44,10 +44,10 @@ export function SiteHeader() {
       <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
         <Link
           href={!isLoading && isAuthenticated && isDashboardArea ? "/dashboard" : "/"}
-          className="flex items-center gap-2 text-primary transition-colors hover:text-primary/80"
+          className="flex items-center gap-3 text-primary transition-colors hover:text-primary/80"
           aria-label="Tickets - Porto Vale Consórcio Home"
         >
-          <TicketIcon className="h-7 w-7 sm:h-8 sm:w-8" />
+          <TicketIcon className="h-8 w-8 sm:h-9 sm:w-9" />
           <div className="flex flex-col leading-tight">
             <span className="text-xl sm:text-2xl font-headline font-bold">Tickets</span>
             <span className="text-xs font-normal opacity-90">Porto Vale Consórcio</span>
