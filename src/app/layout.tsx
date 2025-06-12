@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Atendimento GRE - Porto Vale',
+  title: 'Tickets - Porto Vale Consórcio',
   description: 'Sistema de abertura de tickets',
   icons: {
     icon: '/favicon.ico', // Assuming you might add a favicon later

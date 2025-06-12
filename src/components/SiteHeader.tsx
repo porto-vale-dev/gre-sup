@@ -28,7 +28,7 @@ export function SiteHeader() {
         <div className="container mx-auto h-20 flex items-center justify-center px-4">
            <Link href="/" className="flex items-center gap-3 text-3xl font-headline font-bold text-primary">
             <TicketIcon className="h-8 w-8" />
-            <span>Atendimento GRE - Porto Vale</span>
+            <span>Tickets - Porto Vale Consórcio</span>
           </Link>
         </div>
       </header>
@@ -42,10 +42,10 @@ export function SiteHeader() {
         <Link 
           href={!isLoading && isAuthenticated && isDashboardArea ? "/dashboard" : "/"} 
           className="flex items-center gap-2 text-xl sm:text-2xl font-headline font-bold text-primary transition-colors hover:text-primary/80"
-          aria-label="Atendimento GRE - Porto Vale Home"
+          aria-label="Tickets - Porto Vale Consórcio Home"
         >
           <TicketIcon className="h-7 w-7 sm:h-8 sm:w-8" />
-          <span>Atendimento GRE - Porto Vale</span>
+          <span>Tickets - Porto Vale Consórcio</span>
            {!isLoading && isAuthenticated && isDashboardArea && (
             <span className="text-sm sm:text-base font-normal text-muted-foreground hidden md:inline">
               {isArchivedPage ? "- Arquivados" : "- Painel do Gestor"}
