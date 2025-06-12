@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -28,7 +29,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500));
-    if (data.username === 'adm' && data.password === 'PortoVale102030@@') {
+    if (
+      (data.username === 'adm' && data.password === 'PortoVale102030@@') ||
+      (data.username === 'GRE' && data.password === 'PortoVale102030@@')
+    ) {
       setIsAuthenticated(true);
       setIsLoading(false);
       return true;
@@ -56,3 +60,4 @@ export function useAuth() {
   }
   return context;
 }
+
