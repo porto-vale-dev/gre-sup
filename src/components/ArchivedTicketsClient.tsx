@@ -85,20 +85,20 @@ export function ArchivedTicketsClient() {
   return (
     <div className="space-y-6">
       <div className="p-4 bg-card border rounded-lg shadow">
-        <div className="flex flex-col xl:flex-row gap-4 justify-between items-center">
-          <div className="relative w-full xl:max-w-sm">
+        <div className="flex flex-col lg:flex-row gap-2 items-center w-full">
+          <div className="relative w-full lg:flex-grow">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Buscar por nome, motivo, responsável..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 w-full"
               aria-label="Buscar tickets arquivados"
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto items-center">
+          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto items-center shrink-0">
             <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
               <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por responsável">
                 <User className="h-4 w-4 mr-2 text-muted-foreground" />
