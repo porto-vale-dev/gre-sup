@@ -26,9 +26,12 @@ export function SiteHeader() {
     return (
        <header className="bg-card border-b shadow-sm">
         <div className="container mx-auto h-20 flex items-center justify-center px-4">
-           <Link href="/" className="flex items-center gap-3 text-3xl font-headline font-bold text-primary">
+           <Link href="/" className="flex items-center gap-3 text-primary">
             <TicketIcon className="h-8 w-8" />
-            <span>Tickets - Porto Vale Consórcio</span>
+            <div className="flex flex-col leading-tight">
+              <span className="text-2xl sm:text-3xl font-headline font-bold">Tickets</span>
+              <span className="text-sm font-normal opacity-90">Porto Vale Consórcio</span>
+            </div>
           </Link>
         </div>
       </header>
@@ -39,20 +42,23 @@ export function SiteHeader() {
   return (
     <header className="bg-card border-b sticky top-0 z-40 shadow-sm">
       <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
-        <Link 
-          href={!isLoading && isAuthenticated && isDashboardArea ? "/dashboard" : "/"} 
-          className="flex items-center gap-2 text-xl sm:text-2xl font-headline font-bold text-primary transition-colors hover:text-primary/80"
+        <Link
+          href={!isLoading && isAuthenticated && isDashboardArea ? "/dashboard" : "/"}
+          className="flex items-center gap-2 text-primary transition-colors hover:text-primary/80"
           aria-label="Tickets - Porto Vale Consórcio Home"
         >
           <TicketIcon className="h-7 w-7 sm:h-8 sm:w-8" />
-          <span>Tickets - Porto Vale Consórcio</span>
+          <div className="flex flex-col leading-tight">
+            <span className="text-xl sm:text-2xl font-headline font-bold">Tickets</span>
+            <span className="text-xs font-normal opacity-90">Porto Vale Consórcio</span>
+          </div>
            {!isLoading && isAuthenticated && isDashboardArea && (
-            <span className="text-sm sm:text-base font-normal text-muted-foreground hidden md:inline">
+            <span className="text-sm sm:text-base font-normal text-muted-foreground hidden md:inline ml-1">
               {isArchivedPage ? "- Arquivados" : "- Painel do Gestor"}
             </span>
           )}
         </Link>
-        
+
         {!isLoading && (
           <nav className="flex items-center gap-1 sm:gap-2">
             {isAuthenticated && isDashboardArea && (
