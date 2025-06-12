@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -11,10 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, ListFilter, Info, LayoutGrid, List } from 'lucide-react';
+import { Search, ListFilter, Info, LayoutGrid, List, User } from 'lucide-react';
 import { Button } from './ui/button';
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export function DashboardClient() {
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
@@ -25,9 +25,9 @@ export function DashboardClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("Todos");
+  const [responsibleFilter, setResponsibleFilter] = useState<string>("Todos");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc"); // desc for newest first
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
 
   useEffect(() => {
     if (!authIsLoading && !isAuthenticated) {
@@ -35,21 +35,26 @@ export function DashboardClient() {
     }
   }, [isAuthenticated, authIsLoading, router]);
 
+  const activeTickets = useMemo(() => {
+    return tickets.filter(ticket => ticket.status !== "Concluído");
+  }, [tickets]);
+
   const filteredAndSortedTickets = useMemo(() => {
-    return tickets
+    return activeTickets
       .filter(ticket => {
         const searchMatch = ticket.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             ticket.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (ticket.responsible && ticket.responsible.toLowerCase().includes(searchTerm.toLowerCase()));
         const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
-        return searchMatch && statusMatch;
+        const responsibleMatch = responsibleFilter === "Todos" || ticket.responsible === responsibleFilter;
+        return searchMatch && statusMatch && responsibleMatch;
       })
       .sort((a, b) => {
         const dateA = new Date(a.submissionDate).getTime();
         const dateB = new Date(b.submissionDate).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
-  }, [tickets, searchTerm, statusFilter, sortOrder]);
+  }, [activeTickets, searchTerm, statusFilter, responsibleFilter, sortOrder]);
 
   const handleOpenDetails = (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -61,11 +66,21 @@ export function DashboardClient() {
     setSelectedTicket(null);
   };
 
+  const ticketStatusesForFilter = useMemo(() => {
+    return ["Todos", ...new Set(activeTickets.map(t => t.status))];
+  }, [activeTickets]);
+
+  const responsibleNamesForFilter = useMemo(() => {
+    return ["Todos", ...new Set(activeTickets.map(t => t.responsible).filter(Boolean) as string[])];
+  }, [activeTickets]);
+
+
   if (authIsLoading || !isAuthenticated) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <Skeleton className="h-10 w-full sm:w-64" />
+          <Skeleton className="h-10 w-full sm:w-48" />
           <Skeleton className="h-10 w-full sm:w-48" />
           <Skeleton className="h-10 w-full sm:w-32" />
         </div>
@@ -76,14 +91,11 @@ export function DashboardClient() {
     );
   }
   
-  const ticketStatusesForFilter = ["Todos", ...new Set(tickets.map(t => t.status))];
-
-
   return (
     <div className="space-y-6">
       <div className="p-4 bg-card border rounded-lg shadow">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div className="relative w-full md:max-w-sm">
+        <div className="flex flex-col xl:flex-row gap-4 justify-between items-center">
+            <div className="relative w-full xl:max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                     type="search"
@@ -91,11 +103,11 @@ export function DashboardClient() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
-                    aria-label="Buscar tickets"
+                    aria-label="Buscar tickets ativos"
                 />
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto items-center">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por status">
                         <ListFilter className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -104,6 +116,18 @@ export function DashboardClient() {
                     <SelectContent>
                         {ticketStatusesForFilter.map(status => (
                             <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por responsável">
+                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Filtrar por responsável" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {responsibleNamesForFilter.map(name => (
+                            <SelectItem key={name} value={name}>{name}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -133,9 +157,9 @@ export function DashboardClient() {
       {filteredAndSortedTickets.length === 0 ? (
         <Alert variant="default" className="mt-6 border-primary/50 bg-primary/5">
           <Info className="h-5 w-5 text-primary" />
-          <AlertTitle className="text-primary">Nenhum Ticket Encontrado</AlertTitle>
+          <AlertTitle className="text-primary">Nenhum Ticket Ativo Encontrado</AlertTitle>
           <AlertDescription>
-            Não há tickets que correspondam aos seus filtros atuais ou nenhum ticket foi aberto ainda.
+            Não há tickets ativos que correspondam aos seus filtros atuais ou nenhum ticket foi aberto ainda (que não esteja concluído).
           </AlertDescription>
         </Alert>
       ) : (

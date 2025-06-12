@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Ticket as TicketIcon, UserCircle } from 'lucide-react';
+import { LogOut, Ticket as TicketIcon, UserCircle, Archive, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -16,6 +16,10 @@ export function SiteHeader() {
     logout();
     router.push('/login');
   };
+
+  const isDashboardArea = pathname.startsWith('/dashboard');
+  const isArchivedPage = pathname === '/dashboard/archived';
+  const isMainDashboardPage = pathname === '/dashboard';
 
   // On login page, show a simplified header
   if (pathname === '/login') {
@@ -36,25 +40,52 @@ export function SiteHeader() {
     <header className="bg-card border-b sticky top-0 z-40 shadow-sm">
       <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
         <Link 
-          href={!isLoading && isAuthenticated && pathname.startsWith('/dashboard') ? "/dashboard" : "/"} 
+          href={!isLoading && isAuthenticated && isDashboardArea ? "/dashboard" : "/"} 
           className="flex items-center gap-2 text-xl sm:text-2xl font-headline font-bold text-primary transition-colors hover:text-primary/80"
           aria-label="TicketFlow Home"
         >
           <TicketIcon className="h-7 w-7 sm:h-8 sm:w-8" />
           <span>TicketFlow</span>
-          {!isLoading && isAuthenticated && pathname.startsWith('/dashboard') && (
-            <span className="text-sm sm:text-base font-normal text-muted-foreground hidden md:inline">- Painel do Gestor</span>
+           {!isLoading && isAuthenticated && isDashboardArea && (
+            <span className="text-sm sm:text-base font-normal text-muted-foreground hidden md:inline">
+              {isArchivedPage ? "- Arquivados" : "- Painel do Gestor"}
+            </span>
           )}
         </Link>
         
         {!isLoading && (
-          <nav className="flex items-center gap-2 sm:gap-4">
-            {isAuthenticated && pathname.startsWith('/dashboard') ? (
-              <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Sair da conta">
-                <LogOut className="mr-1.5 h-4 w-4" />
-                Sair
-              </Button>
-            ) : pathname === '/' && (
+          <nav className="flex items-center gap-1 sm:gap-2">
+            {isAuthenticated && isDashboardArea && (
+              <>
+                {isArchivedPage ? (
+                  <Link href="/dashboard" passHref>
+                    <Button variant={isMainDashboardPage ? "secondary" : "ghost"} size="sm" aria-label="Painel Principal">
+                      <Home className="mr-1.5 h-4 w-4" />
+                      Painel Principal
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/dashboard/archived" passHref>
+                    <Button variant={isArchivedPage ? "secondary" : "ghost"} size="sm" aria-label="Tickets Arquivados">
+                      <Archive className="mr-1.5 h-4 w-4" />
+                      Arquivados
+                    </Button>
+                  </Link>
+                )}
+                <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Sair da conta">
+                  <LogOut className="mr-1.5 h-4 w-4" />
+                  Sair
+                </Button>
+              </>
+            )}
+            {isAuthenticated && !isDashboardArea && ( // User is authenticated but on home page
+                 <Link href="/dashboard" passHref>
+                    <Button variant="outline" size="sm">
+                        Painel do Gestor
+                    </Button>
+                </Link>
+            )}
+            {!isAuthenticated && pathname === '/' && (
               <Link href="/login" passHref>
                 <Button variant="outline" size="sm" className="rounded-full">
                   <UserCircle className="mr-1.5 h-4 w-4" />
