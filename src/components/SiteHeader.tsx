@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -35,13 +36,13 @@ export function SiteHeader() {
     <header className="bg-card border-b sticky top-0 z-40 shadow-sm">
       <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
         <Link 
-          href={isAuthenticated && pathname.startsWith('/dashboard') ? "/dashboard" : "/"} 
+          href={!isLoading && isAuthenticated && pathname.startsWith('/dashboard') ? "/dashboard" : "/"} 
           className="flex items-center gap-2 text-xl sm:text-2xl font-headline font-bold text-primary transition-colors hover:text-primary/80"
           aria-label="TicketFlow Home"
         >
           <TicketIcon className="h-7 w-7 sm:h-8 sm:w-8" />
           <span>TicketFlow</span>
-          {isAuthenticated && pathname.startsWith('/dashboard') && (
+          {!isLoading && isAuthenticated && pathname.startsWith('/dashboard') && (
             <span className="text-sm sm:text-base font-normal text-muted-foreground hidden md:inline">- Painel do Gestor</span>
           )}
         </Link>
