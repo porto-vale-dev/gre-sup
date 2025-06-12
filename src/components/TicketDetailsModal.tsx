@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Ticket } from '@/types';
@@ -63,7 +64,7 @@ export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsMod
               </div>
                <div>
                 <strong className="font-medium text-muted-foreground">Status:</strong>
-                <p><Badge variant={ticket.status === 'Concluído' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'}>{ticket.status}</Badge></p>
+                <Badge variant={ticket.status === 'Concluído' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'}>{ticket.status}</Badge>
               </div>
             </div>
 
