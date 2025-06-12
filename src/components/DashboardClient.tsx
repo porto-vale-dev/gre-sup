@@ -141,16 +141,15 @@ export function DashboardClient() {
                         <SelectItem value="asc">Mais Antigos</SelectItem>
                     </SelectContent>
                 </Select>
+                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {if(value) setViewMode(value as "grid" | "list")}} className="hidden sm:flex">
+                    <ToggleGroupItem value="grid" aria-label="Visualização em grade">
+                        <LayoutGrid className="h-4 w-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="list" aria-label="Visualização em lista">
+                        <List className="h-4 w-4" />
+                    </ToggleGroupItem>
+                </ToggleGroup>
             </div>
-             <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {if(value) setViewMode(value as "grid" | "list")}} className="hidden sm:flex">
-                <ToggleGroupItem value="grid" aria-label="Visualização em grade">
-                    <LayoutGrid className="h-4 w-4" />
-                </ToggleGroupItem>
-                <ToggleGroupItem value="list" aria-label="Visualização em lista">
-                    <List className="h-4 w-4" />
-                </ToggleGroupItem>
-            </ToggleGroup>
-
         </div>
       </div>
 

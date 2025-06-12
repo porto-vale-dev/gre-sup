@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google'; // Using next/font for Inter
 import './globals.css';
@@ -11,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'TicketFlow',
+  title: 'Atendimento GRE - Porto Vale',
   description: 'Sistema de abertura de tickets',
   icons: {
     icon: '/favicon.ico', // Assuming you might add a favicon later
@@ -35,8 +36,8 @@ export default function RootLayout({
             {children}
           </main>
           <footer className="text-center p-6 text-sm text-muted-foreground border-t mt-auto">
-            <p>© {new Date().getFullYear()} TicketFlow. Todos os direitos reservados.</p>
-            <p className="mt-1">Desenvolvido com Next.js e ShadCN/UI</p>
+            <p>© Porto Vale Consórcio. Todos os direitos reservados.</p>
+            <p className="mt-1">Sistema de atendimento GRE - Suporte comercial</p>
           </footer>
         </AppProviders>
       </body>
