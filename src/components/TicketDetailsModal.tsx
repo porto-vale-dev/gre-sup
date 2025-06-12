@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download } from 'lucide-react';
 
 interface TicketDetailsModalProps {
   ticket: Ticket | null;
@@ -26,6 +26,17 @@ interface TicketDetailsModalProps {
 
 export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsModalProps) {
   if (!ticket) return null;
+
+  const handleDownload = () => {
+    if (ticket.file && ticket.file.content) {
+      const link = document.createElement('a');
+      link.href = ticket.file.content;
+      link.download = ticket.file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -39,7 +50,7 @@ export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsMod
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="flex-grow pr-6 -mr-6"> {/* Added pr for scrollbar space and negative margin to compensate DialogContent padding */}
+        <ScrollArea className="flex-grow pr-6 -mr-6">
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
@@ -90,14 +101,18 @@ export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsMod
                 <Separator />
                 <div>
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Paperclip className="h-4 w-4" />Arquivo Anexado:</strong>
-                  <p>
-                    {ticket.file.name} ({ (ticket.file.size / 1024).toFixed(2) } KB)
-                  </p>
-                  {/* In a real app, provide a download link */}
-                   <Button variant="link" size="sm" className="p-0 h-auto mt-1" asChild>
-                     {/* Replace with actual download logic if files were stored */}
-                     <a href="#" onClick={(e) => e.preventDefault()} aria-label={`Baixar ${ticket.file?.name}`}>Baixar arquivo (simulação)</a>
-                   </Button>
+                  <div className="flex items-center justify-between">
+                    <p>
+                      {ticket.file.name} ({ (ticket.file.size / 1024).toFixed(2) } KB)
+                    </p>
+                    {ticket.file.content && (
+                      <Button variant="outline" size="sm" onClick={handleDownload} aria-label={`Baixar ${ticket.file.name}`}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Baixar
+                      </Button>
+                    )}
+                  </div>
+                   {!ticket.file.content && <p className="text-xs text-muted-foreground">Pré-visualização/download não disponível para este arquivo.</p>}
                 </div>
               </>
             )}

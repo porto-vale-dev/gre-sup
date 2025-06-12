@@ -1,10 +1,11 @@
+
 export type TicketStatus = "Novo" | "Em Andamento" | "Atrasado" | "Concluído";
 
 export interface TicketFile {
   name: string;
   type: string;
   size: number;
-  // Base64 content or URL could be added here if needed for previews
+  content?: string; // To store file content as base64 data URI
 }
 
 export interface Ticket {

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type ChangeEvent } from 'react';
@@ -18,9 +19,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ticketSchema, type TicketFormData } from '@/lib/schemas';
 import { TICKET_REASONS, ALLOWED_FILE_TYPES, MAX_FILE_SIZE, MAX_OBSERVATIONS_LENGTH } from '@/lib/constants';
+import type { TicketFile } from '@/types';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Info, Send, Paperclip, UploadCloud } from 'lucide-react';
+
+async function readFileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+}
 
 export function TicketForm() {
   const [selectedReason, setSelectedReason] = useState<(typeof TICKET_REASONS)[0] | null>(null);
@@ -35,6 +46,7 @@ export function TicketForm() {
       phone: "",
       reason: "",
       observations: "",
+      file: undefined,
     },
   });
 
@@ -47,37 +59,59 @@ export function TicketForm() {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Validate file type and size client-side before setting in form
       if (file.size > MAX_FILE_SIZE) {
         form.setError("file", { type: "manual", message: `Tamanho máximo do arquivo é ${MAX_FILE_SIZE / 1024 / 1024}MB.` });
         setFileName(null);
-        event.target.value = ""; // Clear the input
+        event.target.value = ""; 
         return;
       }
-      if (!ALLOWED_FILE_TYPES.includes(file.type) && !ALLOWED_FILE_TYPES.some(ext => file.name.endsWith(ext))) {
+      if (!ALLOWED_FILE_TYPES.includes(file.type) && !ALLOWED_FILE_TYPES.some(ext => file.name.toLowerCase().endsWith(ext.toLowerCase()))) {
          form.setError("file", { type: "manual", message: "Tipo de arquivo inválido." });
          setFileName(null);
-         event.target.value = ""; // Clear the input
+         event.target.value = ""; 
         return;
       }
-      form.clearErrors("file"); // Clear any previous error
+      form.clearErrors("file");
       setFileName(file.name);
     } else {
       setFileName(null);
     }
   };
 
-  function onSubmit(data: TicketFormData) {
-    const file = data.file?.[0];
-    const ticketData = {
+  async function onSubmit(data: TicketFormData) {
+    let fileDetails: TicketFile | undefined = undefined;
+
+    if (data.file && data.file.length > 0) {
+      const file = data.file[0];
+      try {
+        const fileContent = await readFileAsDataURL(file);
+        fileDetails = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          content: fileContent,
+        };
+      } catch (error) {
+        console.error("Error reading file:", error);
+        toast({
+          title: "Erro ao Ler Arquivo",
+          description: "Não foi possível processar o arquivo anexado. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    const ticketPayload = {
       name: data.name,
       phone: data.phone,
       reason: data.reason,
       estimatedResponseTime: selectedReason?.responseTime || "N/A",
       observations: data.observations,
-      file: file ? { name: file.name, type: file.type, size: file.size } : undefined,
+      file: fileDetails,
     };
-    addTicket(ticketData);
+
+    addTicket(ticketPayload);
     toast({
       title: "Ticket Enviado com Sucesso!",
       description: "Seu ticket foi registrado e será processado em breve.",
@@ -86,7 +120,6 @@ export function TicketForm() {
     form.reset();
     setSelectedReason(null);
     setFileName(null);
-    // Clear file input visually if possible (target.value = "" in change handler helps)
     const fileInput = document.getElementById('file-upload') as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   }
@@ -192,7 +225,7 @@ export function TicketForm() {
                           type="file" 
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                           onChange={(e) => {
-                            onChange(e.target.files); // RHF expects FileList
+                            onChange(e.target.files); 
                             handleFileChange(e);
                           }}
                           onBlur={onBlur} 
