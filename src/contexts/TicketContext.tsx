@@ -40,17 +40,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const fetchTickets = useCallback(async () => {
     if (authIsLoading) {
-      // console.log("Auth is loading, deferring ticket fetch.");
-      // Set loading false because we are not actually fetching yet.
-      // Or, you could keep isLoadingTickets true until auth is resolved and fetch actually runs.
-      // For now, let's prevent flicker by setting it true only when fetch actually starts.
       return;
     }
-
-    // If RLS policies require authentication to read tickets,
-    // and the user is not authenticated, we might choose not to fetch
-    // or expect the fetch to fail (which should be handled gracefully).
-    // For now, we proceed, and RLS will enforce permissions.
 
     setIsLoadingTickets(true);
     try {
@@ -60,18 +51,16 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         .order('submissionDate', { ascending: false });
 
       if (queryError) {
-        throw queryError; // Throw the Supabase error to be caught by the catch block
+        throw queryError; 
       }
 
       if (!data) {
-        // This case should ideally not happen if queryError is null,
-        // but as a safeguard:
         throw new Error("Dados não recebidos do Supabase, mas nenhum erro explícito foi reportado.");
       }
 
       const formattedTickets = data.map(ticket => ({
         ...ticket,
-        submissionDate: ticket.submissionDate || ticket.created_at,
+        submissionDate: ticket.submissionDate || ticket.created_at, // Supabase uses created_at by default
         file: ticket.file_path ? {
           name: ticket.file_name,
           type: ticket.file_type,
@@ -83,26 +72,29 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
     } catch (errorCaught: any) {
       let errorMessage = "Ocorreu um erro desconhecido ao buscar os tickets.";
-      let errorToLog: any = errorCaught;
+      let errorForConsole: any = errorCaught;
 
       if (errorCaught && typeof errorCaught.message === 'string' && errorCaught.message.trim() !== '') {
         errorMessage = errorCaught.message;
+        // Append details and hint if available, common in Supabase errors
+        if (errorCaught.details) errorMessage += ` Detalhes: ${errorCaught.details}`;
+        if (errorCaught.hint) errorMessage += ` Dica: ${errorCaught.hint}`;
       } else if (typeof errorCaught === 'string' && errorCaught.trim() !== '') {
         errorMessage = errorCaught;
       } else if (errorCaught) {
-        // Attempt to get more details if it's an object without a direct message
+        // Fallback for other types of errors or if message is not directly useful
         try {
           const errorString = JSON.stringify(errorCaught);
-          if (errorString !== '{}') { // Avoid just showing "{}"
+          if (errorString !== '{}') { 
             errorMessage = `Detalhes do erro: ${errorString}`;
-          } else if (typeof errorCaught.toString === 'function') {
+          } else if (errorCaught.toString && typeof errorCaught.toString === 'function') {
             const objStr = errorCaught.toString();
-            if (objStr !== '[object Object]') { // Avoid generic useless string
+            if (objStr !== '[object Object]') { 
                 errorMessage = `Erro: ${objStr}`;
             }
           }
-        } catch (e) {
-          // JSON.stringify or toString failed
+        } catch (e_stringify) {
+          // JSON.stringify or toString failed, stick with the generic unknown error message
         }
       }
       
@@ -111,24 +103,24 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         description: errorMessage, 
         variant: "destructive" 
       });
-      console.error("Original error object during fetchTickets:", errorToLog);
-      if (errorMessage !== "Ocorreu um erro desconhecido ao buscar os tickets." && (!errorToLog || errorToLog.message !== errorMessage)) {
-         console.error("Processed error message for toast:", errorMessage);
-      }
+
+      console.error("Detailed error information during fetchTickets:", {
+        message: errorForConsole?.message,
+        details: errorForConsole?.details,
+        hint: errorForConsole?.hint,
+        code: errorForConsole?.code,
+        fullErrorObject: errorForConsole, 
+      });
     } finally {
       setIsLoadingTickets(false);
     }
-  }, [toast, authIsLoading, isAuthenticated]); // Added authIsLoading and isAuthenticated
+  }, [toast, authIsLoading, isAuthenticated]); 
 
   useEffect(() => {
-    // Fetch tickets only when authentication status is resolved.
-    // If isAuthenticated is false, fetchTickets might still be called
-    // and fail if RLS blocks anonymous reads, which is expected.
-    // The key is that authIsLoading being false means we know the auth state.
     if (!authIsLoading) {
       fetchTickets();
     }
-  }, [fetchTickets, authIsLoading, isAuthenticated]); // Ensure dependencies are correct
+  }, [fetchTickets, authIsLoading, isAuthenticated]);
 
 
   const addTicket = async (ticketData: {
@@ -137,9 +129,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     reason: string;
     estimatedResponseTime: string;
     observations?: string;
-    file?: File; // Raw file object
+    file?: File; 
   }) => {
-    setIsLoadingTickets(true); // Indicate loading for any ticket operation
+    setIsLoadingTickets(true); 
     let fileDetails: TicketFile | undefined = undefined;
     let filePathInStorage: string | undefined = undefined;
 
@@ -185,7 +177,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      await fetchTickets(); // Refetch to update the list
+      await fetchTickets(); 
       toast({ title: "Ticket Criado", description: "Seu ticket foi registrado com sucesso." });
 
     } catch (error: any) {
@@ -197,8 +189,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       if (filePathInStorage) {
         console.warn("Orphaned file may exist in storage due to error:", filePathInStorage);
       }
-    } finally {
-      // setIsLoadingTickets(false); // fetchTickets will handle this
     }
   };
 
@@ -275,3 +265,4 @@ export function useTickets() {
   }
   return context;
 }
+
