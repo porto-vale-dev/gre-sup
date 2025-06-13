@@ -36,21 +36,42 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
   const { toast } = useToast();
-  const { user } = useAuth(); // Get the authenticated user
+  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
+    if (authIsLoading) {
+      // console.log("Auth is loading, deferring ticket fetch.");
+      // Set loading false because we are not actually fetching yet.
+      // Or, you could keep isLoadingTickets true until auth is resolved and fetch actually runs.
+      // For now, let's prevent flicker by setting it true only when fetch actually starts.
+      return;
+    }
+
+    // If RLS policies require authentication to read tickets,
+    // and the user is not authenticated, we might choose not to fetch
+    // or expect the fetch to fail (which should be handled gracefully).
+    // For now, we proceed, and RLS will enforce permissions.
+
     setIsLoadingTickets(true);
     try {
-      const { data, error } = await supabase
+      const { data, error: queryError } = await supabase
         .from('tickets')
         .select('*')
-        .order('submissionDate', { ascending: false }); // Supabase uses 'created_at' by default if you used the DDL
+        .order('submissionDate', { ascending: false });
 
-      if (error) throw error;
+      if (queryError) {
+        throw queryError; // Throw the Supabase error to be caught by the catch block
+      }
+
+      if (!data) {
+        // This case should ideally not happen if queryError is null,
+        // but as a safeguard:
+        throw new Error("Dados não recebidos do Supabase, mas nenhum erro explícito foi reportado.");
+      }
 
       const formattedTickets = data.map(ticket => ({
         ...ticket,
-        submissionDate: ticket.submissionDate || ticket.created_at, // Use submissionDate or created_at
+        submissionDate: ticket.submissionDate || ticket.created_at,
         file: ticket.file_path ? {
           name: ticket.file_name,
           type: ticket.file_type,
@@ -60,17 +81,55 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       })) as Ticket[];
       setTickets(formattedTickets);
 
-    } catch (error: any) {
-      toast({ title: "Erro ao Carregar Tickets", description: error.message, variant: "destructive" });
-      console.error("Error fetching tickets:", error);
+    } catch (errorCaught: any) {
+      let errorMessage = "Ocorreu um erro desconhecido ao buscar os tickets.";
+      let errorToLog: any = errorCaught;
+
+      if (errorCaught && typeof errorCaught.message === 'string' && errorCaught.message.trim() !== '') {
+        errorMessage = errorCaught.message;
+      } else if (typeof errorCaught === 'string' && errorCaught.trim() !== '') {
+        errorMessage = errorCaught;
+      } else if (errorCaught) {
+        // Attempt to get more details if it's an object without a direct message
+        try {
+          const errorString = JSON.stringify(errorCaught);
+          if (errorString !== '{}') { // Avoid just showing "{}"
+            errorMessage = `Detalhes do erro: ${errorString}`;
+          } else if (typeof errorCaught.toString === 'function') {
+            const objStr = errorCaught.toString();
+            if (objStr !== '[object Object]') { // Avoid generic useless string
+                errorMessage = `Erro: ${objStr}`;
+            }
+          }
+        } catch (e) {
+          // JSON.stringify or toString failed
+        }
+      }
+      
+      toast({ 
+        title: "Erro ao Carregar Tickets", 
+        description: errorMessage, 
+        variant: "destructive" 
+      });
+      console.error("Original error object during fetchTickets:", errorToLog);
+      if (errorMessage !== "Ocorreu um erro desconhecido ao buscar os tickets." && (!errorToLog || errorToLog.message !== errorMessage)) {
+         console.error("Processed error message for toast:", errorMessage);
+      }
     } finally {
       setIsLoadingTickets(false);
     }
-  }, [toast]);
+  }, [toast, authIsLoading, isAuthenticated]); // Added authIsLoading and isAuthenticated
 
   useEffect(() => {
-    fetchTickets();
-  }, [fetchTickets]);
+    // Fetch tickets only when authentication status is resolved.
+    // If isAuthenticated is false, fetchTickets might still be called
+    // and fail if RLS blocks anonymous reads, which is expected.
+    // The key is that authIsLoading being false means we know the auth state.
+    if (!authIsLoading) {
+      fetchTickets();
+    }
+  }, [fetchTickets, authIsLoading, isAuthenticated]); // Ensure dependencies are correct
+
 
   const addTicket = async (ticketData: {
     name: string;
@@ -80,15 +139,13 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     observations?: string;
     file?: File; // Raw file object
   }) => {
-    setIsLoadingTickets(true);
+    setIsLoadingTickets(true); // Indicate loading for any ticket operation
     let fileDetails: TicketFile | undefined = undefined;
     let filePathInStorage: string | undefined = undefined;
 
     try {
-      // Handle file upload if present
       if (ticketData.file) {
         const file = ticketData.file;
-        // Create a unique path for the file in Supabase Storage
         filePathInStorage = `public/${crypto.randomUUID()}-${file.name}`;
         
         const { error: uploadError } = await supabase.storage
@@ -103,7 +160,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
           name: file.name,
           type: file.type,
           size: file.size,
-          path: filePathInStorage, // Store the path
+          path: filePathInStorage,
         };
       }
 
@@ -117,9 +174,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         file_type: fileDetails?.type,
         file_size: fileDetails?.size,
         file_path: fileDetails?.path,
-        // status: 'Novo', // Handled by DB default or RLS
-        // submissionDate: new Date().toISOString(), // Handled by DB default
-        user_id: user?.id, // Optional: associate with the logged-in user
+        user_id: user?.id,
       };
 
       const { data, error } = await supabase
@@ -130,21 +185,20 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      // Refetch tickets to update the list including the new one
-      await fetchTickets();
+      await fetchTickets(); // Refetch to update the list
       toast({ title: "Ticket Criado", description: "Seu ticket foi registrado com sucesso." });
 
     } catch (error: any) {
-      toast({ title: "Erro ao Criar Ticket", description: error.message, variant: "destructive" });
+      let detailedMessage = error.message || "Ocorreu um erro desconhecido.";
+      if (error.details) detailedMessage += ` Detalhes: ${error.details}`;
+      if (error.hint) detailedMessage += ` Dica: ${error.hint}`;
+      toast({ title: "Erro ao Criar Ticket", description: detailedMessage, variant: "destructive" });
       console.error("Error adding ticket:", error);
-      // If file upload succeeded but DB insert failed, consider deleting the orphaned file
       if (filePathInStorage) {
-        // supabase.storage.from(TICKET_FILES_BUCKET).remove([filePathInStorage]);
-        // For now, we'll log it. Robust error handling would remove it.
-        console.warn("Orphaned file may exist in storage:", filePathInStorage);
+        console.warn("Orphaned file may exist in storage due to error:", filePathInStorage);
       }
     } finally {
-      setIsLoadingTickets(false);
+      // setIsLoadingTickets(false); // fetchTickets will handle this
     }
   };
 
@@ -156,10 +210,10 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         .eq('id', ticketId);
 
       if (error) throw error;
-      await fetchTickets(); // Refetch to reflect changes
+      await fetchTickets();
       toast({ title: "Status Atualizado", description: `Status do ticket alterado para ${status}.` });
     } catch (error: any) {
-      toast({ title: "Erro ao Atualizar Status", description: error.message, variant: "destructive" });
+      toast({ title: "Erro ao Atualizar Status", description: error.message || "Erro desconhecido.", variant: "destructive" });
     }
   };
 
@@ -171,10 +225,10 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         .eq('id', ticketId);
 
       if (error) throw error;
-      await fetchTickets(); // Refetch to reflect changes
+      await fetchTickets();
       toast({ title: "Responsável Atualizado", description: `Responsável pelo ticket alterado para ${responsible}.` });
     } catch (error: any) {
-      toast({ title: "Erro ao Atualizar Responsável", description: error.message, variant: "destructive" });
+      toast({ title: "Erro ao Atualizar Responsável", description: error.message || "Erro desconhecido.", variant: "destructive" });
     }
   };
   
@@ -201,7 +255,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         toast({ title: "Download Iniciado", description: `Baixando ${fileName}...` });
       }
     } catch (error: any) {
-        toast({ title: "Erro no Download", description: `Não foi possível baixar o arquivo: ${error.message}`, variant: "destructive" });
+        toast({ title: "Erro no Download", description: `Não foi possível baixar o arquivo: ${error.message || "Erro desconhecido."}`, variant: "destructive" });
         console.error("Error downloading file:", error);
     }
   };
