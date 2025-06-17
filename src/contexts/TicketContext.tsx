@@ -39,12 +39,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
-    if (authIsLoading) { // Wait for authentication to be resolved
-      // console.log("Auth is loading, delaying fetchTickets");
+    if (authIsLoading) {
       return;
     }
-    // console.log("Auth resolved, isAuthenticated:", isAuthenticated, "Proceeding with fetchTickets");
-
 
     setIsLoadingTickets(true);
     try {
@@ -75,30 +72,28 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
     } catch (errorCaught: any) {
       let errorMessage = "Ocorreu um erro desconhecido ao buscar os tickets.";
-      // Keep a reference to the original error for detailed logging
-      const originalError = errorCaught;
+      const originalError = errorCaught; // Keep a reference
 
-      if (errorCaught && typeof errorCaught.message === 'string' && errorCaught.message.trim() !== '') {
-        errorMessage = errorCaught.message;
-        if (errorCaught.details) errorMessage += ` Detalhes: ${errorCaught.details}`;
-        if (errorCaught.hint) errorMessage += ` Dica: ${errorCaught.hint}`;
-      } else if (typeof errorCaught === 'string' && errorCaught.trim() !== '') {
-        errorMessage = errorCaught;
-      } else if (errorCaught) {
-        // Try to stringify the error if it's an object but not an error with a message
+      // Attempt to extract a meaningful message
+      if (originalError && typeof originalError.message === 'string' && originalError.message.trim() !== '') {
+        errorMessage = originalError.message;
+        if (originalError.details) errorMessage += ` Detalhes: ${originalError.details}`;
+        if (originalError.hint) errorMessage += ` Dica: ${originalError.hint}`;
+      } else if (typeof originalError === 'string' && originalError.trim() !== '') {
+        errorMessage = originalError;
+      } else if (originalError) {
         try {
-          const errorString = JSON.stringify(errorCaught);
-          if (errorString !== '{}') { // Avoid showing "{}" if stringify results in an empty object
+          const errorString = JSON.stringify(originalError);
+          if (errorString !== '{}') {
             errorMessage = `Detalhes do erro: ${errorString}`;
-          } else if (errorCaught.toString && typeof errorCaught.toString === 'function') {
-            // Fallback to toString if JSON.stringify is not helpful
-            const objStr = errorCaught.toString();
-            if (objStr !== '[object Object]') { // Avoid showing "[object Object]"
+          } else if (originalError.toString && typeof originalError.toString === 'function') {
+            const objStr = originalError.toString();
+            if (objStr !== '[object Object]') {
                 errorMessage = `Erro: ${objStr}`;
             }
           }
         } catch (e_stringify) {
-          // If stringify or toString fails, stick with the generic unknown error message
+          // Stick with the generic message
         }
       }
       
@@ -109,31 +104,31 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       });
 
       // Enhanced console logging
-      console.error("fetchTickets caught an error. Raw error object:", originalError);
+      console.error("Raw error object during fetchTickets:", originalError);
       
-      let stringifiedError;
+      let stringifiedErrorForOverlay;
       try {
-        stringifiedError = JSON.stringify(originalError, Object.getOwnPropertyNames(originalError), 2);
+        stringifiedErrorForOverlay = JSON.stringify(originalError, Object.getOwnPropertyNames(originalError));
       } catch (e) {
-        stringifiedError = "Could not stringify the error object.";
+        stringifiedErrorForOverlay = "Não foi possível stringificar o objeto de erro para o overlay.";
       }
-      
-      console.error("Detailed error information for fetchTickets:", {
-        message: String(originalError?.message || 'N/A (No message property)'),
-        details: String(originalError?.details || 'N/A (No details property)'),
-        hint: String(originalError?.hint || 'N/A (No hint property)'),
-        code: String(originalError?.code || 'N/A (No code property)'),
-        raw_error_stringified: stringifiedError,
-        // You can also log the raw object again if the structured one is not enough for the overlay
-        // fullErrorObject_direct: originalError 
+
+      console.error("Detailed error information during fetchTickets:", {
+        message: String(originalError?.message || 'N/A (Sem propriedade message)'),
+        details: String(originalError?.details || 'N/A (Sem propriedade details)'),
+        hint: String(originalError?.hint || 'N/A (Sem propriedade hint)'),
+        code: String(originalError?.code || 'N/A (Sem propriedade code)'),
+        raw_error_stringified_for_overlay: stringifiedErrorForOverlay,
+        fullErrorObject_direct_log: originalError 
       });
+
     } finally {
       setIsLoadingTickets(false);
     }
-  }, [toast, authIsLoading, isAuthenticated]); // Ensure all dependencies are listed
+  }, [toast, authIsLoading, isAuthenticated]);
 
   useEffect(() => {
-    if (!authIsLoading) { // Only call fetchTickets if auth is not loading
+    if (!authIsLoading) {
       fetchTickets();
     }
   }, [fetchTickets, authIsLoading]);
@@ -182,19 +177,18 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         file_type: fileDetails?.type,
         file_size: fileDetails?.size,
         file_path: fileDetails?.path,
-        user_id: user?.id, // Associate ticket with the logged-in user
+        user_id: user?.id, 
       };
 
       const { data, error } = await supabase
         .from('tickets')
         .insert([newTicketPayload])
         .select()
-        .single(); // Use .single() if you expect one row back, good for insert returning the new row
+        .single(); 
 
       if (error) throw error;
 
-      // Instead of just setting new ticket, refetch all to keep list consistent
-      await fetchTickets(); // This will re-fetch and update the tickets list including the new one
+      await fetchTickets(); 
       toast({ title: "Ticket Criado", description: "Seu ticket foi registrado com sucesso." });
 
     } catch (error: any) {
@@ -203,13 +197,10 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       if (error.hint) detailedMessage += ` Dica: ${error.hint}`;
       toast({ title: "Erro ao Criar Ticket", description: detailedMessage, variant: "destructive" });
       console.error("Error adding ticket:", error);
-      // Potentially handle file cleanup if DB insert fails after file upload
       if (filePathInStorage) {
-        // Consider deleting the orphaned file from storage if the ticket creation failed
         console.warn("Orphaned file may exist in storage due to error:", filePathInStorage);
-        // await supabase.storage.from(TICKET_FILES_BUCKET).remove([filePathInStorage]); // Uncomment if you want to auto-delete
       }
-    } /* finally { // setIsLoadingTickets(false); // isLoading is handled by fetchTickets } */
+    } 
   };
 
   const updateTicketStatus = async (ticketId: string, status: TicketStatus) => {
@@ -220,9 +211,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         .eq('id', ticketId);
 
       if (error) throw error;
-      // Update local state immediately for responsiveness or refetch
-      // setTickets(prevTickets => prevTickets.map(t => t.id === ticketId ? { ...t, status } : t));
-      await fetchTickets(); // Refetch to ensure data consistency
+      await fetchTickets(); 
       toast({ title: "Status Atualizado", description: `Status do ticket alterado para ${status}.` });
     } catch (error: any) {
       toast({ title: "Erro ao Atualizar Status", description: error.message || "Erro desconhecido.", variant: "destructive" });
@@ -237,8 +226,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         .eq('id', ticketId);
 
       if (error) throw error;
-      // setTickets(prevTickets => prevTickets.map(t => t.id === ticketId ? { ...t, responsible } : t));
-      await fetchTickets(); // Refetch for consistency
+      await fetchTickets(); 
       toast({ title: "Responsável Atualizado", description: `Responsável pelo ticket alterado para ${responsible}.` });
     } catch (error: any) {
       toast({ title: "Erro ao Atualizar Responsável", description: error.message || "Erro desconhecido.", variant: "destructive" });
@@ -260,7 +248,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         const url = URL.createObjectURL(data);
         const link = document.createElement('a');
         link.href = url;
-        link.download = fileName; // Use the original file name for download
+        link.download = fileName; 
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
