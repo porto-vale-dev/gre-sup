@@ -28,9 +28,10 @@ interface TicketDetailsModalProps {
 }
 
 export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsModalProps) {
-  const { downloadFile, getPublicUrl } = useTickets();
+  const { downloadFile, createPreviewUrl } = useTickets();
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   if (!ticket) return null;
 
@@ -42,18 +43,15 @@ export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsMod
     }
   };
 
-  const handlePreview = () => {
+  const handlePreview = async () => {
     if (ticket.file_path) {
-      const url = getPublicUrl(ticket.file_path);
+      setIsPreviewing(true);
+      const url = await createPreviewUrl(ticket.file_path);
+      setIsPreviewing(false);
       if (url) {
         window.open(url, '_blank', 'noopener,noreferrer');
-      } else {
-        toast({
-          title: "Erro ao Visualizar",
-          description: "Não foi possível gerar o link de visualização para o arquivo.",
-          variant: "destructive",
-        });
       }
+      // O toast de erro já é tratado dentro de createPreviewUrl
     }
   };
 
@@ -129,9 +127,9 @@ export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsMod
                     <p className="truncate mr-4" title={ticket.file_name}>{ticket.file_name}</p>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {isPreviewable && (
-                        <Button variant="outline" size="sm" onClick={handlePreview} aria-label={`Visualizar ${ticket.file_name}`}>
+                        <Button variant="outline" size="sm" onClick={handlePreview} disabled={isPreviewing} aria-label={`Visualizar ${ticket.file_name}`}>
                            <Eye className="mr-2 h-4 w-4" />
-                           Visualizar
+                           {isPreviewing ? 'Gerando...' : 'Visualizar'}
                         </Button>
                       )}
                       <Button variant="outline" size="sm" onClick={handleDownload} disabled={isDownloading} aria-label={`Baixar ${ticket.file_name}`}>

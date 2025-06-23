@@ -26,7 +26,7 @@ interface TicketContextType {
   getTicketById: (ticketId: string) => Ticket | undefined;
   fetchTickets: () => void;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
-  getPublicUrl: (filePath: string) => string | null;
+  createPreviewUrl: (filePath: string) => Promise<string | null>;
 }
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
@@ -181,12 +181,23 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const getPublicUrl = (filePath: string): string | null => {
+  const createPreviewUrl = async (filePath: string): Promise<string | null> => {
     try {
-      const { data } = supabase.storage.from(TICKET_FILES_BUCKET).getPublicUrl(filePath);
-      return data?.publicUrl || null;
-    } catch (error) {
-      console.error("Error getting public URL:", error);
+      const { data, error } = await supabase.storage
+        .from(TICKET_FILES_BUCKET)
+        .createSignedUrl(filePath, 60); // Link válido por 60 segundos
+
+      if (error) {
+        throw error;
+      }
+      return data.signedUrl;
+    } catch (error: any) {
+      console.error("Error creating signed URL:", error);
+      toast({
+        title: "Erro ao Gerar Link",
+        description: `Não foi possível criar o link de visualização: ${error.message}`,
+        variant: "destructive",
+      });
       return null;
     }
   };
@@ -202,7 +213,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         getTicketById, 
         fetchTickets, 
         downloadFile,
-        getPublicUrl
+        createPreviewUrl
     }}>
       {children}
     </TicketContext.Provider>
