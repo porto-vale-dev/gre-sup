@@ -1,80 +1,49 @@
--- File: supabase/schema.sql
+-- Apaga a tabela existente se ela existir, para garantir um início limpo.
+-- Isso é útil durante o desenvolvimento, mas pode ser perigoso em produção se você tiver dados.
+DROP TABLE IF EXISTS public.tickets CASCADE;
 
--- -----------------------------------------------------------------------------
--- Tickets Table and RLS Policies
--- -----------------------------------------------------------------------------
-
--- Create the tickets table if it doesn't exist
-CREATE TABLE IF NOT EXISTS tickets (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    reason TEXT NOT NULL,
-    estimatedResponseTime TEXT NOT NULL,
-    observations TEXT,
-    submissionDate TIMESTAMPTZ NOT NULL DEFAULT now(),
-    status TEXT NOT NULL DEFAULT 'Novo',
-    responsible TEXT,
-    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-    file_path TEXT,
-    file_name TEXT
+-- Cria a tabela de tickets
+CREATE TABLE public.tickets (
+    id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+    submissionDate timestamp with time zone DEFAULT now() NOT NULL,
+    name text NOT NULL,
+    phone text NOT NULL,
+    reason text NOT NULL,
+    estimatedResponseTime text,
+    observations text,
+    status text DEFAULT 'Novo'::text,
+    responsible text,
+    user_id uuid REFERENCES auth.users(id),
+    file_path text,
+    file_name text
 );
 
--- Enable Row Level Security (RLS) for the tickets table
-ALTER TABLE tickets ENABLE ROW LEVEL SECURITY;
+-- Ativa a Segurança em Nível de Linha (RLS) para a tabela de tickets.
+-- Isso é crucial para a segurança, garantindo que as políticas abaixo sejam aplicadas.
+ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
 
--- Policies for 'tickets' table
-DROP POLICY IF EXISTS "Allow anonymous insert" ON tickets;
-CREATE POLICY "Allow anonymous insert"
-ON tickets
-FOR INSERT
-WITH CHECK (true);
+-- Apaga políticas antigas para garantir que as novas sejam aplicadas corretamente.
+DROP POLICY IF EXISTS "Permitir acesso de leitura para usuários autenticados" ON public.tickets;
+DROP POLICY IF EXISTS "Permitir inserção para todos os usuários (anon e auth)" ON public.tickets;
+DROP POLICY IF EXISTS "Permitir atualização para usuários autenticados" ON public.tickets;
+DROP POLICY IF EXISTS "Permitir exclusão para usuários autenticados" ON public.tickets;
 
-DROP POLICY IF EXISTS "Allow authenticated read" ON tickets;
-CREATE POLICY "Allow authenticated read"
-ON tickets
-FOR SELECT
-USING (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Allow authenticated update" ON tickets;
-CREATE POLICY "Allow authenticated update"
-ON tickets
-FOR UPDATE
-USING (auth.role() = 'authenticated')
-WITH CHECK (auth.role() = 'authenticated');
+-- Define as políticas de acesso para a tabela de tickets
+CREATE POLICY "Permitir acesso de leitura para usuários autenticados" ON public.tickets FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Permitir inserção para todos os usuários (anon e auth)" ON public.tickets FOR INSERT WITH CHECK (true);
+CREATE POLICY "Permitir atualização para usuários autenticados" ON public.tickets FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "Permitir exclusão para usuários autenticados" ON public.tickets FOR DELETE USING (auth.role() = 'authenticated');
 
 
--- -----------------------------------------------------------------------------
--- Storage Bucket and RLS Policies
--- -----------------------------------------------------------------------------
--- These policies are for the 'storage.objects' table, which manages file metadata.
--- You must first create a bucket named 'ticket-files' via the Supabase Dashboard.
+-- Políticas para o Armazenamento (Storage)
+-- Apaga políticas antigas para o bucket 'ticket-files'
+DROP POLICY IF EXISTS "Permitir SELECT público para todos os usuários" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir INSERT para usuários anônimos" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir UPDATE para usuários autenticados" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir DELETE para usuários autenticados" ON storage.objects;
 
--- Policy for public uploads (e.g., from the ticket submission form)
-DROP POLICY IF EXISTS "Allow public uploads to ticket-files" ON storage.objects;
-CREATE POLICY "Allow public uploads to ticket-files"
-ON storage.objects
-FOR INSERT
-TO public -- 'public' includes the 'anon' role for unauthenticated users
-WITH CHECK (bucket_id = 'ticket-files');
-
--- Policy for authenticated users to view/download files
-DROP POLICY IF EXISTS "Allow authenticated downloads from ticket-files" ON storage.objects;
-CREATE POLICY "Allow authenticated downloads from ticket-files"
-ON storage.objects
-FOR SELECT
-USING (bucket_id = 'ticket-files' AND auth.role() = 'authenticated');
-
--- Policy for authenticated users to update their own files
-DROP POLICY IF EXISTS "Allow authenticated users to update their own files" ON storage.objects;
-CREATE POLICY "Allow authenticated users to update their own files"
-ON storage.objects
-FOR UPDATE
-USING (auth.uid() = owner AND bucket_id = 'ticket-files');
-
--- Policy for authenticated users to delete their own files
-DROP POLICY IF EXISTS "Allow authenticated users to delete their own files" ON storage.objects;
-CREATE POLICY "Allow authenticated users to delete their own files"
-ON storage.objects
-FOR DELETE
-USING (auth.uid() = owner AND bucket_id = 'ticket-files');
+-- Define as políticas de acesso para o bucket 'ticket-files'
+CREATE POLICY "Permitir SELECT público para todos os usuários" ON storage.objects FOR SELECT USING (bucket_id = 'ticket-files');
+CREATE POLICY "Permitir INSERT para usuários anônimos" ON storage.objects FOR INSERT WITH CHECK ( bucket_id = 'ticket-files' AND auth.role() = 'anon' );
+CREATE POLICY "Permitir UPDATE para usuários autenticados" ON storage.objects FOR UPDATE USING (auth.role() = 'authenticated' AND bucket_id = 'ticket-files');
+CREATE POLICY "Permitir DELETE para usuários autenticados" ON storage.objects FOR DELETE USING (auth.role() = 'authenticated' AND bucket_id = 'ticket-files');
