@@ -66,7 +66,7 @@ export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
           </Badge>
         </div>
         <CardDescription className="text-xs text-muted-foreground flex items-center gap-1 pt-1">
-          <CalendarDays className="h-3.5 w-3.5" /> Recebido em: {format(parseISO(ticket.submissionDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+          <CalendarDays className="h-3.5 w-3.5" /> Recebido em: {format(parseISO(ticket.submission_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 text-sm flex-grow">
@@ -76,7 +76,7 @@ export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
         </div>
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
-          <span>Resposta: {ticket.estimatedResponseTime}</span>
+          <span>Resposta: {ticket.estimated_response_time}</span>
         </div>
         
         <div className="flex items-center gap-2">

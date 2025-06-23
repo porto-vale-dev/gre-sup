@@ -6,9 +6,9 @@ export interface Ticket {
   name: string;
   phone: string;
   reason: string;
-  estimatedResponseTime: string;
+  estimated_response_time: string;
   observations?: string | null;
-  submissionDate: string; 
+  submission_date: string; 
   status: TicketStatus;
   responsible?: string | null;
   user_id?: string | null; 

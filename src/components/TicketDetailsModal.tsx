@@ -65,11 +65,11 @@ export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsMod
               </div>
               <div>
                 <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />Data de Abertura:</strong>
-                <p>{format(parseISO(ticket.submissionDate), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</p>
+                <p>{format(parseISO(ticket.submission_date), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</p>
               </div>
               <div>
                 <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Clock className="h-4 w-4" />Previsão de Resposta:</strong>
-                <p>{ticket.estimatedResponseTime}</p>
+                <p>{ticket.estimated_response_time}</p>
               </div>
                <div>
                 <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Tag className="h-4 w-4" />Responsável:</strong>

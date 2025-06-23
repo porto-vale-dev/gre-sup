@@ -82,7 +82,7 @@ export function TicketForm() {
       name: data.name,
       phone: data.phone,
       reason: data.reason,
-      estimatedResponseTime: selectedReason?.responseTime || "N/A",
+      estimated_response_time: selectedReason?.responseTime || "N/A",
       observations: data.observations,
       file: selectedFile || undefined, // Pass the File object to addTicket
     };

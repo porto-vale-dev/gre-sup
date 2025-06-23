@@ -48,8 +48,8 @@ export function ArchivedTicketsClient() {
         return searchMatch && responsibleMatch;
       })
       .sort((a, b) => {
-        const dateA = new Date(a.submissionDate).getTime();
-        const dateB = new Date(b.submissionDate).getTime();
+        const dateA = new Date(a.submission_date).getTime();
+        const dateB = new Date(b.submission_date).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
   }, [archivedTickets, searchTerm, responsibleFilter, sortOrder]);

@@ -18,7 +18,7 @@ interface TicketContextType {
     name: string;
     phone: string;
     reason: string;
-    estimatedResponseTime: string;
+    estimated_response_time: string;
     observations?: string;
     file?: File;
   }) => Promise<void>;
@@ -51,7 +51,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       const { data, error: fetchError } = await supabase
         .from('tickets')
         .select('*')
-        .order('submissionDate', { ascending: false });
+        .order('submission_date', { ascending: false });
 
       if (fetchError) {
         throw fetchError;
@@ -77,7 +77,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     name: string;
     phone: string;
     reason: string;
-    estimatedResponseTime: string;
+    estimated_response_time: string;
     observations?: string;
     file?: File;
   }) => {
@@ -89,10 +89,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       if (ticketData.file) {
         const file = ticketData.file;
         fileName = file.name;
-        // Use a more robust unique name for the file in storage
         const newFileName = `${crypto.randomUUID()}-${fileName}`;
-        // The user ID helps organize files in storage, but we'll use a public path for simplicity
-        // as per the RLS which allows insert for anon.
         filePath = `public/${newFileName}`; 
 
         const { error: uploadError } = await supabase.storage
@@ -108,11 +105,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         name: ticketData.name,
         phone: ticketData.phone,
         reason: ticketData.reason,
-        estimatedResponseTime: ticketData.estimatedResponseTime,
+        estimated_response_time: ticketData.estimated_response_time,
         observations: ticketData.observations,
-        submissionDate: new Date().toISOString(),
+        submission_date: new Date().toISOString(),
         status: "Novo" as TicketStatus,
-        user_id: user?.id, // user_id is nullable; handles anon ticket submission
+        user_id: user?.id,
         file_path: filePath,
         file_name: fileName,
       };
@@ -124,7 +121,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       }
 
       toast({ title: "Ticket Criado", description: "Seu ticket foi registrado com sucesso." });
-      if(isAuthenticated) await fetchTickets(); // Refresh the list if user is logged in
+      if(isAuthenticated) await fetchTickets(); 
 
     } catch (error: any) {
       toast({ title: "Erro ao Criar Ticket", description: error.message || "Ocorreu um erro.", variant: "destructive" });

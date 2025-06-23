@@ -1,49 +1,82 @@
--- Apaga a tabela existente se ela existir, para garantir um início limpo.
--- Isso é útil durante o desenvolvimento, mas pode ser perigoso em produção se você tiver dados.
-DROP TABLE IF EXISTS public.tickets CASCADE;
+-- Enable Row Level Security
+ALTER TABLE
+  tickets ENABLE ROW LEVEL SECURITY;
 
--- Cria a tabela de tickets
-CREATE TABLE public.tickets (
-    id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
-    submissionDate timestamp with time zone DEFAULT now() NOT NULL,
-    name text NOT NULL,
-    phone text NOT NULL,
-    reason text NOT NULL,
-    estimatedResponseTime text,
-    observations text,
-    status text DEFAULT 'Novo'::text,
-    responsible text,
-    user_id uuid REFERENCES auth.users(id),
-    file_path text,
-    file_name text
+-- Drop existing policies to avoid conflicts
+DROP POLICY IF EXISTS "Allow public read access on tickets" ON tickets;
+DROP POLICY IF EXISTS "Allow anon insert access on tickets" ON tickets;
+DROP POLICY IF EXISTS "Allow individual user read access" ON tickets;
+DROP POLICY IF EXISTS "Allow user update access" ON tickets;
+DROP POLICY IF EXISTS "Allow user delete access" ON tickets;
+DROP POLICY IF EXISTS "Allow anon file uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Allow authenticated user file downloads" ON storage.objects;
+
+-- Drop the table if it exists to apply new schema.
+-- WARNING: This will delete all existing ticket data.
+DROP TABLE IF EXISTS public.tickets;
+
+-- Create table for tickets with snake_case naming convention
+CREATE TABLE
+  IF NOT EXISTS public.tickets (
+    id UUID DEFAULT gen_random_uuid () PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    estimated_response_time TEXT NOT NULL,
+    observations TEXT,
+    submission_date TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    status TEXT DEFAULT 'Novo'::TEXT NOT NULL,
+    responsible TEXT,
+    user_id UUID REFERENCES auth.users (id),
+    file_path TEXT,
+    file_name TEXT
+  );
+
+-- Grant usage on the schema to the anon and authenticated roles
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+
+-- Grant select, insert, update, delete permissions on the tickets table
+GRANT
+SELECT,
+INSERT,
+UPDATE,
+DELETE ON TABLE public.tickets TO anon,
+authenticated;
+
+-- POLICIES for tickets table
+-- Allow anonymous users to create tickets
+CREATE POLICY "Allow anon insert access on tickets" ON public.tickets FOR INSERT
+WITH
+  CHECK (TRUE);
+
+-- Allow authenticated users (e.g., admins) to read all tickets
+CREATE POLICY "Allow public read access on tickets" ON public.tickets FOR
+SELECT
+  USING (auth.role () = 'authenticated');
+
+-- Allow users to update their own tickets (or all if admin)
+CREATE POLICY "Allow user update access" ON public.tickets FOR
+UPDATE
+  USING (auth.uid () = user_id OR auth.role () = 'authenticated')
+WITH
+  CHECK (auth.uid () = user_id OR auth.role () = 'authenticated');
+
+-- Allow users to delete their own tickets (or all if admin)
+CREATE POLICY "Allow user delete access" ON public.tickets FOR DELETE USING (
+  auth.uid () = user_id
+  OR auth.role () = 'authenticated'
 );
 
--- Ativa a Segurança em Nível de Linha (RLS) para a tabela de tickets.
--- Isso é crucial para a segurança, garantindo que as políticas abaixo sejam aplicadas.
-ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
+-- POLICIES for storage.objects (our ticket-files bucket)
+-- Allow anonymous users to upload to the 'ticket-files' bucket
+CREATE POLICY "Allow anon file uploads" ON storage.objects FOR INSERT
+WITH
+  CHECK (bucket_id = 'ticket-files');
 
--- Apaga políticas antigas para garantir que as novas sejam aplicadas corretamente.
-DROP POLICY IF EXISTS "Permitir acesso de leitura para usuários autenticados" ON public.tickets;
-DROP POLICY IF EXISTS "Permitir inserção para todos os usuários (anon e auth)" ON public.tickets;
-DROP POLICY IF EXISTS "Permitir atualização para usuários autenticados" ON public.tickets;
-DROP POLICY IF EXISTS "Permitir exclusão para usuários autenticados" ON public.tickets;
-
--- Define as políticas de acesso para a tabela de tickets
-CREATE POLICY "Permitir acesso de leitura para usuários autenticados" ON public.tickets FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Permitir inserção para todos os usuários (anon e auth)" ON public.tickets FOR INSERT WITH CHECK (true);
-CREATE POLICY "Permitir atualização para usuários autenticados" ON public.tickets FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Permitir exclusão para usuários autenticados" ON public.tickets FOR DELETE USING (auth.role() = 'authenticated');
-
-
--- Políticas para o Armazenamento (Storage)
--- Apaga políticas antigas para o bucket 'ticket-files'
-DROP POLICY IF EXISTS "Permitir SELECT público para todos os usuários" ON storage.objects;
-DROP POLICY IF EXISTS "Permitir INSERT para usuários anônimos" ON storage.objects;
-DROP POLICY IF EXISTS "Permitir UPDATE para usuários autenticados" ON storage.objects;
-DROP POLICY IF EXISTS "Permitir DELETE para usuários autenticados" ON storage.objects;
-
--- Define as políticas de acesso para o bucket 'ticket-files'
-CREATE POLICY "Permitir SELECT público para todos os usuários" ON storage.objects FOR SELECT USING (bucket_id = 'ticket-files');
-CREATE POLICY "Permitir INSERT para usuários anônimos" ON storage.objects FOR INSERT WITH CHECK ( bucket_id = 'ticket-files' AND auth.role() = 'anon' );
-CREATE POLICY "Permitir UPDATE para usuários autenticados" ON storage.objects FOR UPDATE USING (auth.role() = 'authenticated' AND bucket_id = 'ticket-files');
-CREATE POLICY "Permitir DELETE para usuários autenticados" ON storage.objects FOR DELETE USING (auth.role() = 'authenticated' AND bucket_id = 'ticket-files');
+-- Allow authenticated users to download files from 'ticket-files' bucket
+CREATE POLICY "Allow authenticated user file downloads" ON storage.objects FOR
+SELECT
+  USING (
+    bucket_id = 'ticket-files'
+    AND auth.role () = 'authenticated'
+  );
