@@ -38,15 +38,20 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user, isAuthenticated, authIsLoading } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const fetchTickets = useCallback(async () => {
-    if (authIsLoading) {
-      return;
+    // We only fetch if the user is authenticated.
+    if (!isAuthenticated) {
+        setIsLoadingTickets(false);
+        // Clear existing tickets if user logs out
+        setTickets([]);
+        return;
     }
 
     setIsLoadingTickets(true);
     setError(null);
+
     try {
       const { data, error: queryError } = await supabase
         .from('tickets')
@@ -54,11 +59,12 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         .order('submissionDate', { ascending: false });
 
       if (queryError) {
-        throw queryError;
+        // Wrap the Supabase error in a standard Error object to ensure its properties are preserved and logged correctly.
+        throw new Error(`Supabase query failed: ${JSON.stringify(queryError, null, 2)}`);
       }
 
-      if (!data) {
-        throw new Error("Dados não recebidos do Supabase, mas nenhum erro explícito foi reportado.");
+      if (data === null) {
+          throw new Error("Dados não recebidos do Supabase (resultado nulo), mas nenhum erro explícito foi reportado.");
       }
 
       const formattedTickets = data.map(ticket => ({
@@ -74,68 +80,28 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       setTickets(formattedTickets);
 
     } catch (errorCaught: any) {
-      let errorMessage = "Ocorreu um erro desconhecido ao buscar os tickets.";
-      const originalError = errorCaught; // Keep a reference
-
-      // Attempt to extract a meaningful message
-      if (originalError && typeof originalError.message === 'string' && originalError.message.trim() !== '') {
-        errorMessage = originalError.message;
-        if (originalError.details) errorMessage += ` Detalhes: ${originalError.details}`;
-        if (originalError.hint) errorMessage += ` Dica: ${originalError.hint}`;
-      } else if (typeof originalError === 'string' && originalError.trim() !== '') {
-        errorMessage = originalError;
-      } else if (originalError) {
-        try {
-          const errorString = JSON.stringify(originalError);
-          if (errorString !== '{}') {
-            errorMessage = `Detalhes do erro: ${errorString}`;
-          } else if (originalError.toString && typeof originalError.toString === 'function') {
-            const objStr = originalError.toString();
-            if (objStr !== '[object Object]') {
-                errorMessage = `Erro: ${objStr}`;
-            }
-          }
-        } catch (e_stringify) {
-          // Stick with the generic message
-        }
-      }
+      // Now, errorCaught should be a standard Error object with a meaningful message.
+      const errorMessage = errorCaught instanceof Error ? errorCaught.message : 'Ocorreu um erro desconhecido.';
       
       toast({ 
         title: "Erro ao Carregar Tickets", 
-        description: errorMessage, 
+        description: errorMessage,
         variant: "destructive" 
       });
       setError(errorMessage);
 
-      // Enhanced console logging
-      console.error("Raw error object during fetchTickets:", originalError);
-      
-      let stringifiedErrorForOverlay;
-      try {
-        stringifiedErrorForOverlay = JSON.stringify(originalError, Object.getOwnPropertyNames(originalError));
-      } catch (e) {
-        stringifiedErrorForOverlay = "Não foi possível stringificar o objeto de erro para o overlay.";
-      }
-
-      console.error("Detailed error information during fetchTickets:", {
-        message: String(originalError?.message || 'N/A (Sem propriedade message)'),
-        details: String(originalError?.details || 'N/A (Sem propriedade details)'),
-        hint: String(originalError?.hint || 'N/A (Sem propriedade hint)'),
-        code: String(originalError?.code || 'N/A (Sem propriedade code)'),
-        raw_error_stringified_for_overlay: stringifiedErrorForOverlay,
-        fullErrorObject_direct_log: originalError 
-      });
+      // Log the error for debugging. The browser console will show the full object.
+      console.error("Erro completo ao buscar tickets:", errorCaught);
 
     } finally {
       setIsLoadingTickets(false);
     }
-  }, [toast, authIsLoading, isAuthenticated]);
+  }, [toast, isAuthenticated]);
 
   useEffect(() => {
-    if (!authIsLoading) {
-      fetchTickets();
-    }
-  }, [fetchTickets, authIsLoading]);
+    // This effect runs when the authentication state changes.
+    fetchTickets();
+  }, [fetchTickets]);
 
 
   const addTicket = async (ticketData: {
