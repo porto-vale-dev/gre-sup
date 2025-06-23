@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
@@ -27,6 +26,7 @@ interface TicketContextType {
   getTicketById: (ticketId: string) => Ticket | undefined;
   fetchTickets: () => void;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
+  getPublicUrl: (filePath: string) => string | null;
 }
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
@@ -54,14 +54,14 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         .order('submission_date', { ascending: false });
 
       if (fetchError) {
-        throw fetchError;
+        throw new Error(fetchError.message);
       }
       setTickets(data || []);
-    } catch (error: any) {
-        const errorMessage = error.message || 'Ocorreu um erro desconhecido.';
+    } catch (err: any) {
+        const errorMessage = err.message || 'Ocorreu um erro desconhecido ao buscar os tickets.';
         setError(errorMessage);
         toast({ title: "Erro ao Carregar Tickets", description: errorMessage, variant: "destructive" });
-        console.error("Error fetching tickets:", error);
+        console.error("Error fetching tickets:", err);
     } finally {
       setIsLoadingTickets(false);
     }
@@ -181,6 +181,16 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const getPublicUrl = (filePath: string): string | null => {
+    try {
+      const { data } = supabase.storage.from(TICKET_FILES_BUCKET).getPublicUrl(filePath);
+      return data?.publicUrl || null;
+    } catch (error) {
+      console.error("Error getting public URL:", error);
+      return null;
+    }
+  };
+
   return (
     <TicketContext.Provider value={{ 
         tickets, 
@@ -191,7 +201,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         updateTicketResponsible, 
         getTicketById, 
         fetchTickets, 
-        downloadFile 
+        downloadFile,
+        getPublicUrl
     }}>
       {children}
     </TicketContext.Provider>

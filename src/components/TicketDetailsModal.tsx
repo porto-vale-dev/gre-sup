@@ -17,8 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye } from 'lucide-react';
 import { useTickets } from '@/contexts/TicketContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface TicketDetailsModalProps {
   ticket: Ticket | null;
@@ -27,7 +28,8 @@ interface TicketDetailsModalProps {
 }
 
 export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsModalProps) {
-  const { downloadFile } = useTickets();
+  const { downloadFile, getPublicUrl } = useTickets();
+  const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
 
   if (!ticket) return null;
@@ -39,6 +41,26 @@ export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsMod
       setIsDownloading(false);
     }
   };
+
+  const handlePreview = () => {
+    if (ticket.file_path) {
+      const url = getPublicUrl(ticket.file_path);
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        toast({
+          title: "Erro ao Visualizar",
+          description: "Não foi possível gerar o link de visualização para o arquivo.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const isPreviewable = ticket.file_name && (
+    /\.(pdf|jpg|jpeg|png|gif|txt)$/i.test(ticket.file_name)
+  );
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -104,11 +126,19 @@ export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsMod
                 <div>
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Paperclip className="h-4 w-4" />Arquivo Anexado:</strong>
                   <div className="flex items-center justify-between">
-                    <p>{ticket.file_name}</p>
-                    <Button variant="outline" size="sm" onClick={handleDownload} disabled={isDownloading} aria-label={`Baixar ${ticket.file_name}`}>
-                      <Download className="mr-2 h-4 w-4" />
-                      {isDownloading ? 'Baixando...' : 'Baixar'}
-                    </Button>
+                    <p className="truncate mr-4" title={ticket.file_name}>{ticket.file_name}</p>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {isPreviewable && (
+                        <Button variant="outline" size="sm" onClick={handlePreview} aria-label={`Visualizar ${ticket.file_name}`}>
+                           <Eye className="mr-2 h-4 w-4" />
+                           Visualizar
+                        </Button>
+                      )}
+                      <Button variant="outline" size="sm" onClick={handleDownload} disabled={isDownloading} aria-label={`Baixar ${ticket.file_name}`}>
+                        <Download className="mr-2 h-4 w-4" />
+                        {isDownloading ? 'Baixando...' : 'Baixar'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </>
