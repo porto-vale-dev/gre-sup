@@ -29,8 +29,8 @@ export function SiteHeader() {
            <Link href="/" className="flex items-center gap-3 text-primary">
             <TicketIcon className="h-8 w-8" />
             <div className="flex flex-col leading-tight">
-              <span className="text-2xl sm:text-3xl font-headline font-bold">Tickets</span>
-              <span className="text-sm font-normal opacity-90">Porto Vale Consórcio</span>
+              <span className="text-2xl sm:text-3xl font-headline font-bold">Ticket Flow</span>
+              <span className="text-sm font-normal opacity-90">Porto Vale</span>
             </div>
           </Link>
         </div>
@@ -45,12 +45,12 @@ export function SiteHeader() {
         <Link
           href={!isLoading && isAuthenticated && isDashboardArea ? "/dashboard" : "/"}
           className="flex items-center gap-3 text-primary transition-colors hover:text-primary/80"
-          aria-label="Tickets - Porto Vale Consórcio Home"
+          aria-label="Ticket Flow - Porto Vale Home"
         >
           <TicketIcon className="h-8 w-8 sm:h-9 sm:w-9" />
           <div className="flex flex-col leading-tight">
-            <span className="text-xl sm:text-2xl font-headline font-bold">Tickets</span>
-            <span className="text-xs font-normal opacity-90">Porto Vale Consórcio</span>
+            <span className="text-xl sm:text-2xl font-headline font-bold">Ticket Flow</span>
+            <span className="text-xs font-normal opacity-90">Porto Vale</span>
           </div>
            {!isLoading && isAuthenticated && isDashboardArea && (
             <span className="text-sm sm:text-base font-normal text-muted-foreground hidden md:inline ml-1">
