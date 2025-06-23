@@ -4,6 +4,7 @@
 import type { Ticket } from '@/types';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -27,13 +28,15 @@ interface TicketDetailsModalProps {
 
 export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsModalProps) {
   const { downloadFile } = useTickets();
+  const [isDownloading, setIsDownloading] = useState(false);
 
   if (!ticket) return null;
 
-  const handleDownload = () => {
-    // Now uses file content (base64 data URL) from the ticket object
-    if (ticket.file?.content && ticket.file?.name) {
-      downloadFile(ticket.file.content, ticket.file.name);
+  const handleDownload = async () => {
+    if (ticket.file_path && ticket.file_name) {
+      setIsDownloading(true);
+      await downloadFile(ticket.file_path, ticket.file_name);
+      setIsDownloading(false);
     }
   };
 
@@ -95,31 +98,20 @@ export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsMod
               </>
             )}
 
-            {ticket.file && ticket.file.content && (
+            {ticket.file_path && ticket.file_name && (
               <>
                 <Separator />
                 <div>
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Paperclip className="h-4 w-4" />Arquivo Anexado:</strong>
                   <div className="flex items-center justify-between">
-                    <p>
-                      {ticket.file.name} ({ ticket.file.size && (ticket.file.size / 1024).toFixed(2) } KB)
-                    </p>
-                    <Button variant="outline" size="sm" onClick={handleDownload} aria-label={`Baixar ${ticket.file.name}`}>
+                    <p>{ticket.file_name}</p>
+                    <Button variant="outline" size="sm" onClick={handleDownload} disabled={isDownloading} aria-label={`Baixar ${ticket.file_name}`}>
                       <Download className="mr-2 h-4 w-4" />
-                      Baixar
+                      {isDownloading ? 'Baixando...' : 'Baixar'}
                     </Button>
                   </div>
                 </div>
               </>
-            )}
-             {ticket.file && !ticket.file.content && (
-                 <>
-                    <Separator />
-                    <div>
-                        <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Paperclip className="h-4 w-4" />Arquivo Anexado:</strong>
-                        <p>{ticket.file.name} (Conteúdo do arquivo não disponível para download)</p>
-                    </div>
-                </>
             )}
           </div>
         </ScrollArea>

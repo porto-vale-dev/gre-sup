@@ -28,9 +28,9 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(data: LoginFormData) {
+  async function onSubmit(data: LoginFormData) {
     setIsLoading(true);
-    const { success, error } = login(data); // Now synchronous
+    const { success, error } = await login(data);
     setIsLoading(false);
 
     if (success) {

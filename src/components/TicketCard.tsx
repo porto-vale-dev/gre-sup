@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ChangeEvent } from 'react';
@@ -38,16 +39,16 @@ export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
   const [responsible, setResponsible] = useState(ticket.responsible || "");
   const [isEditingResponsible, setIsEditingResponsible] = useState(false);
 
-  const handleStatusChange = (status: string) => {
-    updateTicketStatus(ticket.id, status as TicketStatus);
+  const handleStatusChange = async (status: string) => {
+    await updateTicketStatus(ticket.id, status as TicketStatus);
   };
 
   const handleResponsibleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setResponsible(e.target.value);
   };
 
-  const saveResponsible = () => {
-    updateTicketResponsible(ticket.id, responsible);
+  const saveResponsible = async () => {
+    await updateTicketResponsible(ticket.id, responsible);
     setIsEditingResponsible(false);
   };
 

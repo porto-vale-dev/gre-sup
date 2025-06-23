@@ -3,51 +3,78 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { supabase } from '@/lib/supabaseClient';
+import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 import type { LoginFormData } from '@/lib/schemas';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: string | null;
+  user: User | null;
   isLoading: boolean;
-  login: (data: LoginFormData) => { success: boolean; error?: string };
-  logout: () => void;
+  login: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
 }
-
-// Hardcoded users for local demonstration
-const USERS: { [key: string]: string } = {
-  'erick@portovaleconsorcios.com.br': 'Er270397@@',
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useLocalStorage<string | null>('auth_user', null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // This just prevents a flicker on initial load.
-    // The actual state is already loaded by useLocalStorage.
-    setIsLoading(false);
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    };
+    
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      }
+    );
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
   }, []);
 
-  const login = (data: LoginFormData): { success: boolean; error?: string } => {
-    const expectedPassword = USERS[data.username.toLowerCase()];
-    if (expectedPassword && expectedPassword === data.password) {
-      setUser(data.username);
-      return { success: true };
+  const login = async (data: LoginFormData): Promise<{ success: boolean; error?: string }> => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.username,
+      password: data.password,
+    });
+
+    if (error) {
+        let friendlyMessage = "Usuário ou senha inválidos.";
+        if (error.message.includes("Invalid login credentials")) {
+            friendlyMessage = "Credenciais de login inválidas. Verifique seu e-mail e senha.";
+        } else if (error.message.includes("Email not confirmed")) {
+            friendlyMessage = "Por favor, confirme seu e-mail antes de fazer login.";
+        }
+        return { success: false, error: friendlyMessage };
     }
-    return { success: false, error: 'Usuário ou senha inválidos.' };
+    return { success: true };
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 
-  const isAuthenticated = !!user;
+  const value = {
+    isAuthenticated: !!user,
+    user,
+    isLoading,
+    login,
+    logout,
+  };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, isLoading, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

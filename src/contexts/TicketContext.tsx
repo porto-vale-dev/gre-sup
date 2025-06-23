@@ -2,22 +2,13 @@
 "use client";
 
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useState } from 'react';
-import type { Ticket, TicketStatus, TicketFile } from '@/types';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import type { Ticket, TicketStatus } from '@/types';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
 
-// Helper function to read a file as a Base64 data URL
-const readFileAsDataURL = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(file);
-  });
-};
-
+const TICKET_FILES_BUCKET = 'ticket-files';
 
 interface TicketContextType {
   tickets: Ticket[];
@@ -31,19 +22,56 @@ interface TicketContextType {
     observations?: string;
     file?: File;
   }) => Promise<void>;
-  updateTicketStatus: (ticketId: string, status: TicketStatus) => void;
-  updateTicketResponsible: (ticketId: string, responsible: string) => void;
+  updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
+  updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
   getTicketById: (ticketId: string) => Ticket | undefined;
-  fetchTickets: () => void; // Kept for component compatibility, but is a no-op
-  downloadFile: (fileContent: string, fileName: string) => void;
+  fetchTickets: () => void;
+  downloadFile: (filePath: string, fileName: string) => Promise<void>;
 }
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
 
 export function TicketProvider({ children }: { children: ReactNode }) {
-  const [tickets, setTickets] = useLocalStorage<Ticket[]>('tickets', []);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [isLoadingTickets, setIsLoadingTickets] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
+
+  const fetchTickets = useCallback(async () => {
+    if (!isAuthenticated) {
+        setIsLoadingTickets(false);
+        setTickets([]);
+        return;
+    }
+    
+    setIsLoadingTickets(true);
+    setError(null);
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('tickets')
+        .select('*')
+        .order('submissionDate', { ascending: false });
+
+      if (fetchError) {
+        throw fetchError;
+      }
+      setTickets(data || []);
+    } catch (error: any) {
+        const errorMessage = error.message || 'Ocorreu um erro desconhecido.';
+        setError(errorMessage);
+        toast({ title: "Erro ao Carregar Tickets", description: errorMessage, variant: "destructive" });
+        console.error("Error fetching tickets:", error);
+    } finally {
+      setIsLoadingTickets(false);
+    }
+  }, [isAuthenticated, toast]);
+
+  useEffect(() => {
+    if (!authIsLoading) {
+        fetchTickets();
+    }
+  }, [authIsLoading, fetchTickets]);
 
   const addTicket = async (ticketData: {
     name: string;
@@ -53,75 +81,102 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     observations?: string;
     file?: File;
   }) => {
+    
+    let filePath: string | undefined = undefined;
+    let fileName: string | undefined = undefined;
+
     try {
-      let fileDetails: TicketFile | undefined = undefined;
       if (ticketData.file) {
-        const fileContent = await readFileAsDataURL(ticketData.file);
-        fileDetails = {
-          name: ticketData.file.name,
-          type: ticketData.file.type,
-          size: ticketData.file.size,
-          content: fileContent,
-        };
+        const file = ticketData.file;
+        fileName = file.name;
+        // Use a more robust unique name for the file in storage
+        const newFileName = `${crypto.randomUUID()}-${fileName}`;
+        // The user ID helps organize files in storage, but we'll use a public path for simplicity
+        // as per the RLS which allows insert for anon.
+        filePath = `public/${newFileName}`; 
+
+        const { error: uploadError } = await supabase.storage
+          .from(TICKET_FILES_BUCKET)
+          .upload(filePath, file);
+
+        if (uploadError) {
+          throw new Error(`Erro no upload do arquivo: ${uploadError.message}`);
+        }
       }
 
-      const newTicket: Ticket = {
-        id: crypto.randomUUID(),
+      const newTicketData = {
         name: ticketData.name,
         phone: ticketData.phone,
         reason: ticketData.reason,
         estimatedResponseTime: ticketData.estimatedResponseTime,
         observations: ticketData.observations,
-        file: fileDetails,
         submissionDate: new Date().toISOString(),
-        status: "Novo",
-        user_id: user || undefined,
+        status: "Novo" as TicketStatus,
+        user_id: user?.id, // user_id is nullable; handles anon ticket submission
+        file_path: filePath,
+        file_name: fileName,
       };
 
-      setTickets(prevTickets => [newTicket, ...prevTickets]);
+      const { error: insertError } = await supabase.from('tickets').insert([newTicketData]);
+
+      if (insertError) {
+        throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
+      }
+
       toast({ title: "Ticket Criado", description: "Seu ticket foi registrado com sucesso." });
+      if(isAuthenticated) await fetchTickets(); // Refresh the list if user is logged in
 
     } catch (error: any) {
-      toast({ title: "Erro ao Criar Ticket", description: error.message || "Ocorreu um erro ao processar o arquivo.", variant: "destructive" });
+      toast({ title: "Erro ao Criar Ticket", description: error.message || "Ocorreu um erro.", variant: "destructive" });
       console.error("Error adding ticket:", error);
     }
   };
 
-  const updateTicketStatus = (ticketId: string, status: TicketStatus) => {
-    setTickets(prevTickets =>
-      prevTickets.map(t =>
-        t.id === ticketId ? { ...t, status } : t
-      )
-    );
-    toast({ title: "Status Atualizado", description: `Status do ticket alterado para ${status}.` });
+  const updateTicketStatus = async (ticketId: string, status: TicketStatus) => {
+    const { error } = await supabase
+      .from('tickets')
+      .update({ status })
+      .eq('id', ticketId);
+
+    if (error) {
+      toast({ title: "Erro ao Atualizar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Status Atualizado", description: `Status do ticket alterado para ${status}.` });
+      await fetchTickets();
+    }
   };
 
-  const updateTicketResponsible = (ticketId: string, responsible: string) => {
-    setTickets(prevTickets =>
-      prevTickets.map(t =>
-        t.id === ticketId ? { ...t, responsible } : t
-      )
-    );
-    toast({ title: "Responsável Atualizado", description: `Responsável pelo ticket alterado para ${responsible}.` });
+  const updateTicketResponsible = async (ticketId: string, responsible: string) => {
+    const { error } = await supabase
+      .from('tickets')
+      .update({ responsible })
+      .eq('id', ticketId);
+
+    if (error) {
+      toast({ title: "Erro ao Atualizar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Responsável Atualizado", description: `Responsável pelo ticket alterado para ${responsible}.` });
+      await fetchTickets();
+    }
   };
 
   const getTicketById = (ticketId: string): Ticket | undefined => {
     return tickets.find(ticket => ticket.id === ticketId);
   };
   
-  const fetchTickets = () => {
-    // This function is a no-op in local storage mode, but is kept for compatibility
-    // with components that might call it (e.g., on an error boundary).
-  };
-
-  const downloadFile = (fileContent: string, fileName: string) => {
+  const downloadFile = async (filePath: string, fileName: string) => {
     try {
+      const { data, error } = await supabase.storage.from(TICKET_FILES_BUCKET).download(filePath);
+      if (error) throw error;
+      
+      const url = URL.createObjectURL(data);
       const link = document.createElement('a');
-      link.href = fileContent; // The content is a Base64 data URL
+      link.href = url;
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       toast({ title: "Download Iniciado", description: `Baixando ${fileName}...` });
     } catch (error: any) {
         toast({ title: "Erro no Download", description: `Não foi possível baixar o arquivo: ${error.message || "Erro desconhecido."}`, variant: "destructive" });
@@ -132,8 +187,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   return (
     <TicketContext.Provider value={{ 
         tickets, 
-        isLoadingTickets: false, // Always false in local storage mode
-        error: null, // Always null in local storage mode
+        isLoadingTickets,
+        error, 
         addTicket, 
         updateTicketStatus, 
         updateTicketResponsible, 
