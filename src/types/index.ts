@@ -5,20 +5,20 @@ export interface TicketFile {
   name: string;
   type: string;
   size: number;
-  path?: string; // Path in Supabase Storage, or public URL
-  // content?: string; // No longer storing base64 content directly in ticket data
+  content: string; // Base64 data URL content
+  path?: string; // Kept for potential future use, but not for local storage
 }
 
 export interface Ticket {
-  id: string; // Supabase will generate this
+  id: string; 
   name: string;
   phone: string;
   reason: string;
   estimatedResponseTime: string;
   observations?: string;
-  file?: TicketFile; // Contains file metadata including its path in storage
-  submissionDate: string; // Supabase calls this created_at, will be handled
+  file?: TicketFile; 
+  submissionDate: string; 
   status: TicketStatus;
   responsible?: string;
-  user_id?: string; // Optional: if linking to an auth user
+  user_id?: string; // Stores the username of the logged-in user
 }

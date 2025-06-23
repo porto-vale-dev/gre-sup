@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download } from 'lucide-react';
-import { useTickets } from '@/contexts/TicketContext'; // Import useTickets
+import { useTickets } from '@/contexts/TicketContext';
 
 interface TicketDetailsModalProps {
   ticket: Ticket | null;
@@ -26,13 +26,14 @@ interface TicketDetailsModalProps {
 }
 
 export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsModalProps) {
-  const { downloadFile } = useTickets(); // Get downloadFile function from context
+  const { downloadFile } = useTickets();
 
   if (!ticket) return null;
 
-  const handleDownload = async () => {
-    if (ticket.file?.path && ticket.file?.name) {
-      await downloadFile(ticket.file.path, ticket.file.name);
+  const handleDownload = () => {
+    // Now uses file content (base64 data URL) from the ticket object
+    if (ticket.file?.content && ticket.file?.name) {
+      downloadFile(ticket.file.content, ticket.file.name);
     }
   };
 
@@ -94,7 +95,7 @@ export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsMod
               </>
             )}
 
-            {ticket.file && ticket.file.path && (
+            {ticket.file && ticket.file.content && (
               <>
                 <Separator />
                 <div>
@@ -111,12 +112,12 @@ export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsMod
                 </div>
               </>
             )}
-             {ticket.file && !ticket.file.path && (
+             {ticket.file && !ticket.file.content && (
                  <>
                     <Separator />
                     <div>
                         <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Paperclip className="h-4 w-4" />Arquivo Anexado:</strong>
-                        <p>{ticket.file.name} (Detalhes do download não disponíveis)</p>
+                        <p>{ticket.file.name} (Conteúdo do arquivo não disponível para download)</p>
                     </div>
                 </>
             )}

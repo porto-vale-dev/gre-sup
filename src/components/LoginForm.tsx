@@ -23,14 +23,14 @@ export function LoginForm() {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "", // Supabase expects email here
+      username: "",
       password: "",
     },
   });
 
-  async function onSubmit(data: LoginFormData) {
+  function onSubmit(data: LoginFormData) {
     setIsLoading(true);
-    const { success, error } = await login(data);
+    const { success, error } = login(data); // Now synchronous
     setIsLoading(false);
 
     if (success) {
@@ -45,8 +45,6 @@ export function LoginForm() {
         description: error || "Usuário ou senha inválidos. Tente novamente.",
         variant: "destructive",
       });
-      // Do not set form error for "password" specifically unless the error confirms it's a password issue
-      // form.setError("password", { message: "Credenciais inválidas" });
     }
   }
 
