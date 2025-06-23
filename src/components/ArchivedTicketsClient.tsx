@@ -12,12 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, Info, LayoutGrid, List, User } from 'lucide-react';
+import { Search, Info, LayoutGrid, List, User, AlertCircle } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Button } from './ui/button';
 
 export function ArchivedTicketsClient() {
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
-  const { tickets, isLoadingTickets, fetchTickets } = useTickets(); // Added isLoadingTickets
+  const { tickets, isLoadingTickets, error, fetchTickets } = useTickets();
   const router = useRouter();
 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -31,9 +32,6 @@ export function ArchivedTicketsClient() {
     if (!authIsLoading && !isAuthenticated) {
       router.push('/login');
     }
-    // if (isAuthenticated) {
-    //   fetchTickets(); // Fetch tickets when authenticated
-    // }
   }, [isAuthenticated, authIsLoading, router]);
 
   const archivedTickets = useMemo(() => {
@@ -70,7 +68,7 @@ export function ArchivedTicketsClient() {
     return ["Todos", ...new Set(archivedTickets.map(t => t.responsible).filter(Boolean) as string[])];
   }, [archivedTickets]);
 
-  if (authIsLoading || isLoadingTickets || (!isAuthenticated && !authIsLoading) ) { // Added isLoadingTickets
+  if (authIsLoading || isLoadingTickets || (!isAuthenticated && !authIsLoading) ) {
      return (
       <div className="space-y-6">
          <div className="flex flex-col lg:flex-row gap-2 items-center w-full p-4 bg-card border rounded-lg shadow">
@@ -85,6 +83,20 @@ export function ArchivedTicketsClient() {
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-72 rounded-lg" />)}
         </div>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mt-6">
+        <AlertCircle className="h-5 w-5" />
+        <AlertTitle>Erro ao Carregar os Tickets</AlertTitle>
+        <AlertDescription>
+          <p>Não foi possível buscar os dados do banco de dados. Isso pode ser causado por um problema de permissão (Row Level Security no Supabase) ou de conexão.</p>
+          <p className="mt-2 text-xs"><strong>Detalhes do erro:</strong> {error}</p>
+          <Button onClick={() => fetchTickets()} className="mt-4">Tentar Novamente</Button>
+        </AlertDescription>
+      </Alert>
     );
   }
 

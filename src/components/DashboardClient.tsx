@@ -12,13 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, ListFilter, Info, LayoutGrid, List, User } from 'lucide-react';
-// import { Button } from './ui/button'; // Not used directly here anymore
+import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle } from 'lucide-react';
+import { Button } from './ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export function DashboardClient() {
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
-  const { tickets, isLoadingTickets, fetchTickets } = useTickets(); // Added isLoadingTickets and fetchTickets
+  const { tickets, isLoadingTickets, error, fetchTickets } = useTickets();
   const router = useRouter();
 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -33,10 +33,6 @@ export function DashboardClient() {
     if (!authIsLoading && !isAuthenticated) {
       router.push('/login');
     }
-    // Optionally refresh tickets when auth state is confirmed or component mounts
-    // if (isAuthenticated) {
-    //   fetchTickets();
-    // }
   }, [isAuthenticated, authIsLoading, router]);
 
 
@@ -81,7 +77,7 @@ export function DashboardClient() {
   }, [activeTickets]);
 
 
-  if (authIsLoading || isLoadingTickets || (!isAuthenticated && !authIsLoading) ) { // Added isLoadingTickets check
+  if (authIsLoading || isLoadingTickets || (!isAuthenticated && !authIsLoading) ) {
     return (
       <div className="space-y-6">
          <div className="flex flex-col lg:flex-row gap-2 items-center w-full p-4 bg-card border rounded-lg shadow">
@@ -100,6 +96,20 @@ export function DashboardClient() {
     );
   }
   
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mt-6">
+        <AlertCircle className="h-5 w-5" />
+        <AlertTitle>Erro ao Carregar os Tickets</AlertTitle>
+        <AlertDescription>
+          <p>Não foi possível buscar os dados do banco de dados. Isso pode ser causado por um problema de permissão (Row Level Security no Supabase) ou de conexão.</p>
+          <p className="mt-2 text-xs"><strong>Detalhes do erro:</strong> {error}</p>
+          <Button onClick={() => fetchTickets()} className="mt-4">Tentar Novamente</Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="p-4 bg-card border rounded-lg shadow">

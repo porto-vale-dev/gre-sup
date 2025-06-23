@@ -15,6 +15,7 @@ const TICKET_FILES_BUCKET = 'ticket-files';
 interface TicketContextType {
   tickets: Ticket[];
   isLoadingTickets: boolean;
+  error: string | null;
   addTicket: (ticketData: {
     name: string;
     phone: string;
@@ -35,8 +36,9 @@ const TicketContext = createContext<TicketContextType | undefined>(undefined);
 export function TicketProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
+  const { user, isAuthenticated, authIsLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
     if (authIsLoading) {
@@ -44,6 +46,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
 
     setIsLoadingTickets(true);
+    setError(null);
     try {
       const { data, error: queryError } = await supabase
         .from('tickets')
@@ -102,6 +105,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         description: errorMessage, 
         variant: "destructive" 
       });
+      setError(errorMessage);
 
       // Enhanced console logging
       console.error("Raw error object during fetchTickets:", originalError);
@@ -263,7 +267,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <TicketContext.Provider value={{ tickets, isLoadingTickets, addTicket, updateTicketStatus, updateTicketResponsible, getTicketById, fetchTickets, downloadFile }}>
+    <TicketContext.Provider value={{ tickets, isLoadingTickets, error, addTicket, updateTicketStatus, updateTicketResponsible, getTicketById, fetchTickets, downloadFile }}>
       {children}
     </TicketContext.Provider>
   );
