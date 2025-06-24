@@ -9,15 +9,18 @@ import type { Ticket, TicketStatus } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TICKET_STATUSES } from '@/lib/constants';
 import { useTickets } from '@/contexts/TicketContext';
 import { CalendarDays, Clock, FileText, User, Tag, Edit3, Check, AlertTriangle, Hourglass, CheckCircle2, ExternalLink } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { cn } from '@/lib/utils';
 
 interface TicketCardProps {
   ticket: Ticket;
   onOpenDetails: (ticket: Ticket) => void;
+  responsibleSuggestions: string[];
 }
 
 const statusColors: Record<TicketStatus, string> = {
@@ -34,7 +37,7 @@ const statusIcons: Record<TicketStatus, React.ElementType> = {
   "Concluído": CheckCircle2,
 };
 
-export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
+export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] }: TicketCardProps) {
   const { updateTicketStatus, updateTicketResponsible } = useTickets();
   const [responsible, setResponsible] = useState(ticket.responsible || "");
   const [isEditingResponsible, setIsEditingResponsible] = useState(false);
@@ -43,16 +46,21 @@ export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
     await updateTicketStatus(ticket.id, status as TicketStatus);
   };
 
-  const handleResponsibleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setResponsible(e.target.value);
-  };
-
   const saveResponsible = async () => {
-    await updateTicketResponsible(ticket.id, responsible);
+    if (responsible.trim() !== ticket.responsible) {
+      await updateTicketResponsible(ticket.id, responsible.trim());
+    }
     setIsEditingResponsible(false);
   };
+  
+  const handleSelectResponsible = async (value: string) => {
+    setResponsible(value);
+    await updateTicketResponsible(ticket.id, value);
+    setIsEditingResponsible(false);
+  }
 
   const StatusIcon = statusIcons[ticket.status];
+  const filteredSuggestions = responsibleSuggestions.filter(s => s.toLowerCase().includes(responsible.toLowerCase()) && s.toLowerCase() !== responsible.toLowerCase());
 
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
@@ -82,19 +90,38 @@ export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
         <div className="flex items-center gap-2">
           <Tag className="h-4 w-4 text-muted-foreground" />
           {isEditingResponsible ? (
-            <div className="flex items-center gap-1 w-full">
-              <Input
-                type="text"
-                value={responsible}
-                onChange={handleResponsibleChange}
-                placeholder="Nome do responsável"
-                className="h-8 text-xs flex-grow"
-                aria-label="Responsável"
-              />
-              <Button size="icon" variant="ghost" onClick={saveResponsible} className="h-8 w-8 shrink-0" aria-label="Salvar responsável">
-                <Check className="h-4 w-4 text-green-600" />
-              </Button>
-            </div>
+             <div className="relative w-full">
+              <Command>
+                 <CommandInput
+                    placeholder="Nome do responsável"
+                    value={responsible}
+                    onValueChange={setResponsible}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        saveResponsible();
+                      }
+                    }}
+                    onBlur={saveResponsible}
+                    className="h-8 text-xs"
+                    autoFocus
+                  />
+                  {filteredSuggestions.length > 0 && (
+                    <CommandList className="absolute top-9 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md">
+                      <CommandEmpty>Nenhum responsável encontrado.</CommandEmpty>
+                      <CommandGroup heading="Sugestões">
+                        {filteredSuggestions.map((suggestion) => (
+                          <CommandItem
+                            key={suggestion}
+                            onSelect={() => handleSelectResponsible(suggestion)}
+                          >
+                            {suggestion}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  )}
+              </Command>
+             </div>
           ) : (
             <div className="flex items-center gap-1 w-full justify-between">
               <span className={ticket.responsible ? "" : "italic text-muted-foreground"}>

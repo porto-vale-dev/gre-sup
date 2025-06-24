@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 export function DashboardClient() {
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
@@ -28,6 +29,7 @@ export function DashboardClient() {
   const [responsibleFilter, setResponsibleFilter] = useState<string>("Todos");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc"); // desc for newest first
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [responsibleHistory, setResponsibleHistory] = useLocalStorage<string[]>('responsibleHistory', []);
 
   useEffect(() => {
     if (!authIsLoading && !isAuthenticated) {
@@ -75,6 +77,23 @@ export function DashboardClient() {
   const responsibleNamesForFilter = useMemo(() => {
     return ["Todos", ...new Set(activeTickets.map(t => t.responsible).filter(Boolean) as string[])];
   }, [activeTickets]);
+
+  const responsibleSuggestions = useMemo(() => {
+    const allNames = new Set([
+        ...responsibleHistory, 
+        ...tickets.map(t => t.responsible).filter(Boolean) as string[]
+    ]);
+    return Array.from(allNames).sort();
+  }, [tickets, responsibleHistory]);
+
+  useEffect(() => {
+    if (tickets.length > 0) {
+      const newNames = new Set(tickets.map(t => t.responsible).filter(Boolean) as string[]);
+      const updatedHistory = new Set([...responsibleHistory, ...newNames]);
+      setResponsibleHistory(Array.from(updatedHistory));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tickets, setResponsibleHistory]);
 
 
   if (authIsLoading || isLoadingTickets || (!isAuthenticated && !authIsLoading) ) {
@@ -183,7 +202,7 @@ export function DashboardClient() {
       ) : (
         <div className={`gap-6 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'space-y-4'}`}>
           {filteredAndSortedTickets.map(ticket => (
-            <TicketCard key={ticket.id} ticket={ticket} onOpenDetails={handleOpenDetails} />
+            <TicketCard key={ticket.id} ticket={ticket} onOpenDetails={handleOpenDetails} responsibleSuggestions={responsibleSuggestions} />
           ))}
         </div>
       )}
