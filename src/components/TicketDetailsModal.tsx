@@ -147,7 +147,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="flex-grow pr-6 -mr-6">
+        <ScrollArea className="flex-grow min-h-0 pr-6 -mr-6">
           <div className="space-y-6 py-4">
             {/* Ticket Information */}
             <div className="space-y-4">
@@ -224,7 +224,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
 
               <div className="space-y-2">
                 <Label htmlFor="solution-files-upload">Arquivos da Solução</Label>
-
+                
                 {/* File Input */}
                 <div className="relative">
                   <Input
