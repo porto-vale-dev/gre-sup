@@ -1,48 +1,45 @@
+
 import { useState, useEffect } from 'react';
 
-// A function to get value from localStorage, handling server-side rendering
-function getValueFromLocalStorage<T>(key: string, initialValue: T | (() => T)): T {
-  // If running on the server, return initialValue
-  if (typeof window === 'undefined') {
-    return typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue;
-  }
-  try {
-    const item = window.localStorage.getItem(key);
-    // Parse stored json or if none return initialValue
-    return item ? JSON.parse(item) : (typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue);
-  } catch (error) {
-    // If error, return initialValue and log the error
-    console.warn(`Error reading localStorage key "${key}":`, error);
-    return typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue;
-  }
-}
-
-// Custom hook for using localStorage
+// Custom hook for using localStorage that is safe for SSR (avoids hydration errors)
 export function useLocalStorage<T>(key: string, initialValue: T | (() => T)): [T, React.Dispatch<React.SetStateAction<T>>] {
-  // State to store our value
-  // Pass initial state function to useState so logic is only executed once
-  const [storedValue, setStoredValue] = useState<T>(() => getValueFromLocalStorage(key, initialValue));
+  // Initialize state with the initial value. This is what's used on the server.
+  const [storedValue, setStoredValue] = useState<T>(initialValue);
 
-  // useEffect to update localStorage when the state changes
+  // This effect runs only once on the client after the component has mounted.
   useEffect(() => {
+    // Only run this on the client
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+      // On the client, read the value from localStorage.
+      const item = window.localStorage.getItem(key);
+      // If a value is found, update the state.
+      if (item) {
+        setStoredValue(JSON.parse(item));
+      }
+    } catch (error) {
+      // If there's an error reading from localStorage, log it.
+      console.warn(`Error reading localStorage key "${key}":`, error);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this runs only on mount (client-side)
+
+  // This effect runs whenever the stored value changes, updating localStorage.
+  useEffect(() => {
+    // Only run this on the client
     if (typeof window !== 'undefined') {
       try {
-        // Allow value to be a function so we have the same API as useState
+        // Save the updated value to localStorage.
         window.localStorage.setItem(key, JSON.stringify(storedValue));
       } catch (error) {
-        // A more advanced implementation would handle the error case
+        // Handle potential errors, e.g., storage is full.
         console.warn(`Error setting localStorage key "${key}":`, error);
       }
     }
   }, [key, storedValue]);
-  
-    // This effect ensures that the state is synchronized with localStorage on initial client-side render
-    // This is important for hydration if the server-rendered value is different
-    useEffect(() => {
-        setStoredValue(getValueFromLocalStorage(key, initialValue));
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
 
   return [storedValue, setStoredValue];
 }
