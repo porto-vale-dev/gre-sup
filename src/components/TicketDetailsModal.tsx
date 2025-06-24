@@ -223,34 +223,10 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="solution-files">Arquivos da Solução</Label>
-                
-                {/* Existing Solution Files */}
-                {ticket.solution_files && ticket.solution_files.length > 0 && (
-                  <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border p-2">
-                    {ticket.solution_files.map((file) => (
-                       <FilePreviewItem key={file.file_path} file={file} onDownload={downloadFile} onPreview={createPreviewUrl} />
-                    ))}
-                  </div>
-                )}
+                <Label htmlFor="solution-files-upload">Arquivos da Solução</Label>
 
-                {/* Staged Files for Upload */}
-                {stagedFiles.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Novos arquivos para upload:</p>
-                    {stagedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 border rounded-md">
-                        <span className="text-sm truncate">{file.name}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeStagedFile(index)} disabled={isSaving}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
                 {/* File Input */}
-                <div className="relative mt-2">
+                <div className="relative">
                   <Input
                     id="solution-files-upload"
                     type="file"
@@ -269,9 +245,33 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
                   </Label>
                 </div>
                  <p className="text-xs text-muted-foreground">Tamanho máximo por arquivo: 100MB.</p>
+                
+                {/* Staged Files for Upload */}
+                {stagedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Novos arquivos para upload:</p>
+                    {stagedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 border rounded-md">
+                        <span className="text-sm truncate">{file.name}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeStagedFile(index)} disabled={isSaving}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Existing Solution Files */}
+                {ticket.solution_files && ticket.solution_files.length > 0 && (
+                  <div className="space-y-2 rounded-md border p-2">
+                     <p className="text-sm text-muted-foreground">Arquivos anexados:</p>
+                    {ticket.solution_files.map((file) => (
+                       <FilePreviewItem key={file.file_path} file={file} onDownload={downloadFile} onPreview={createPreviewUrl} />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-
           </div>
         </ScrollArea>
         
