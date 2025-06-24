@@ -227,7 +227,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
                 
                 {/* Existing Solution Files */}
                 {ticket.solution_files && ticket.solution_files.length > 0 && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border p-2">
                     {ticket.solution_files.map((file) => (
                        <FilePreviewItem key={file.file_path} file={file} onDownload={downloadFile} onPreview={createPreviewUrl} />
                     ))}
