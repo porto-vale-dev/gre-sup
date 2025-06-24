@@ -1,11 +1,13 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Ticket, TicketStatus } from '@/types';
+import type { Ticket, TicketStatus, SolutionFile } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
+import { MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
 
 const TICKET_FILES_BUCKET = 'ticket-files';
 
@@ -23,6 +25,7 @@ interface TicketContextType {
   }) => Promise<void>;
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
   updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
+  updateTicketSolution: (ticketId: string, solution: string, newFiles: File[]) => Promise<void>;
   getTicketById: (ticketId: string) => Ticket | undefined;
   fetchTickets: () => void;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
@@ -112,6 +115,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         user_id: user?.id,
         file_path: filePath,
         file_name: fileName,
+        solution: null,
+        solution_files: null,
       };
 
       const { error: insertError } = await supabase.from('tickets').insert([newTicketData]);
@@ -156,6 +161,56 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       await fetchTickets();
     }
   };
+  
+  const updateTicketSolution = async (ticketId: string, solution: string, newFiles: File[]) => {
+    try {
+      const currentTicket = tickets.find(t => t.id === ticketId);
+      if (!currentTicket) throw new Error("Ticket não encontrado.");
+
+      let uploadedFiles: SolutionFile[] = [];
+
+      // Upload new files
+      for (const file of newFiles) {
+        if (file.size > MAX_SOLUTION_FILE_SIZE) {
+          throw new Error(`O arquivo ${file.name} excede o limite de 100MB.`);
+        }
+        const fileName = file.name;
+        const newFileName = `${crypto.randomUUID()}-${fileName}`;
+        const filePath = `solutions/${ticketId}/${newFileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from(TICKET_FILES_BUCKET)
+          .upload(filePath, file);
+        
+        if (uploadError) {
+          throw new Error(`Erro no upload do arquivo ${fileName}: ${uploadError.message}`);
+        }
+
+        uploadedFiles.push({ file_path: filePath, file_name: fileName });
+      }
+
+      const existingFiles = currentTicket.solution_files || [];
+      const updatedSolutionFiles = [...existingFiles, ...uploadedFiles];
+
+      const { error: updateError } = await supabase
+        .from('tickets')
+        .update({ solution: solution, solution_files: updatedSolutionFiles })
+        .eq('id', ticketId);
+
+      if (updateError) {
+        throw new Error(`Erro ao salvar a solução: ${updateError.message}`);
+      }
+
+      toast({ title: "Solução Salva", description: "As informações da solução foram salvas com sucesso." });
+      await fetchTickets();
+
+    } catch (error: any) {
+      toast({ title: "Erro ao Salvar Solução", description: error.message, variant: "destructive" });
+      console.error("Error updating ticket solution:", error);
+      throw error; // Re-throw to be caught in component
+    }
+  };
+
 
   const getTicketById = (ticketId: string): Ticket | undefined => {
     return tickets.find(ticket => ticket.id === ticketId);
@@ -183,6 +238,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const createPreviewUrl = async (filePath: string): Promise<string | null> => {
     try {
+      // Use createSignedUrl for all files as bucket is private
       const { data, error } = await supabase.storage
         .from(TICKET_FILES_BUCKET)
         .createSignedUrl(filePath, 60); // Link válido por 60 segundos
@@ -209,7 +265,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         error, 
         addTicket, 
         updateTicketStatus, 
-        updateTicketResponsible, 
+        updateTicketResponsible,
+        updateTicketSolution, 
         getTicketById, 
         fetchTickets, 
         downloadFile,

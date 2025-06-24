@@ -48,4 +48,5 @@ export const ALLOWED_FILE_TYPES = [
 ];
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+export const MAX_SOLUTION_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 export const MAX_OBSERVATIONS_LENGTH = 10000;

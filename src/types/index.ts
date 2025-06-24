@@ -1,6 +1,11 @@
 
 export type TicketStatus = "Novo" | "Em Andamento" | "Atrasado" | "Concluído";
 
+export interface SolutionFile {
+  file_path: string;
+  file_name: string;
+}
+
 export interface Ticket {
   id: string; 
   name: string;
@@ -16,4 +21,8 @@ export interface Ticket {
   // File properties matching the database schema
   file_path?: string | null;
   file_name?: string | null;
+
+  // New solution fields
+  solution?: string | null;
+  solution_files?: SolutionFile[] | null;
 }
