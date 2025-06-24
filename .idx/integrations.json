@@ -1,7 +1,3 @@
 {
-  "cloud_run_deploy": {
-    "region": "southamerica-east1",
-    "sourceFlag": "--source .",
-    "allowUnauthenticatedInvocationsFlag": "--allow-unauthenticated"
-  }
+  "cloud_run_deploy": {}
 }
