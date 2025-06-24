@@ -77,20 +77,24 @@ const FilePreviewItem: React.FC<{
   );
 };
 
-export function TicketDetailsModal({ ticket, isOpen, onClose }: TicketDetailsModalProps) {
-  const { downloadFile, createPreviewUrl, updateTicketSolution } = useTickets();
+export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: TicketDetailsModalProps) {
+  const { downloadFile, createPreviewUrl, updateTicketSolution, getTicketById } = useTickets();
   const { toast } = useToast();
   
+  // The ticket from props can be stale. Get the live version from the context.
+  const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
+
   const [solutionText, setSolutionText] = useState('');
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    // This effect now only resets the form state when a new ticket is opened.
     if (ticket) {
       setSolutionText(ticket.solution || '');
-      setStagedFiles([]); // Reset staged files when ticket changes
+      setStagedFiles([]);
     }
-  }, [ticket]);
+  }, [ticket?.id]); // Depend on ticket.id to re-initialize only when the ticket changes.
 
   if (!ticket) return null;
 
