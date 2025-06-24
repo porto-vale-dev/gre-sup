@@ -1,3 +1,4 @@
+
 import type { TicketStatus } from '@/types';
 
 export const TICKET_REASONS = [
@@ -18,6 +19,7 @@ export const TICKET_REASONS = [
   { value: "Contrato assinado pela Porto", label: "Contrato assinado pela Porto", responseTime: "7 dias úteis" },
   { value: "Contrato 2° via simples", label: "Contrato 2° via simples", responseTime: "1 dia útil" },
   { value: "Parcela divergente", label: "Parcela divergente", responseTime: "prazo variável" },
+  { value: "Outros", label: "Outros", responseTime: "consultar" },
 ];
 
 export const TICKET_STATUSES: TicketStatus[] = ["Novo", "Em Andamento", "Atrasado", "Concluído"];

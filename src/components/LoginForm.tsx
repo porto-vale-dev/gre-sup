@@ -67,7 +67,7 @@ export function LoginForm() {
                   <FormItem>
                     <FormLabel className="flex items-center gap-1.5"><User className="h-4 w-4 text-muted-foreground" /> Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="seu@email.com" {...field} />
+                      <Input type="email" placeholder="email@portovaleconsorcios.com.br" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

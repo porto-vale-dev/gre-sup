@@ -36,8 +36,8 @@ export default function RootLayout({
             {children}
           </main>
           <footer className="text-center p-6 text-sm text-muted-foreground border-t mt-auto">
-            <p>© Porto Vale. Todos os direitos reservados.</p>
-            <p className="mt-1">Sistema de atendimento GRE - Suporte comercial</p>
+            <p>© 2025 Porto Vale. Todos os direitos reservados.</p>
+            <p className="mt-1">Marketing Power Porto Vale Consórcio</p>
           </footer>
         </AppProviders>
       </body>
