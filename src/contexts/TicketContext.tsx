@@ -91,9 +91,12 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     try {
       if (ticketData.file) {
         const file = ticketData.file;
-        fileName = file.name;
-        const newFileName = `${crypto.randomUUID()}-${fileName}`;
-        filePath = `public/${newFileName}`; 
+        fileName = file.name; // Keep original name for the database `file_name` column
+        
+        // Sanitize the file name for use in the storage path
+        const sanitizedFileName = fileName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+        const newFileNameForPath = `${crypto.randomUUID()}-${sanitizedFileName}`;
+        filePath = `public/${newFileNameForPath}`;
 
         const { error: uploadError } = await supabase.storage
           .from(TICKET_FILES_BUCKET)
@@ -174,9 +177,12 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         if (file.size > MAX_SOLUTION_FILE_SIZE) {
           throw new Error(`O arquivo ${file.name} excede o limite de 100MB.`);
         }
-        const fileName = file.name;
-        const newFileName = `${crypto.randomUUID()}-${fileName}`;
-        const filePath = `solutions/${ticketId}/${newFileName}`;
+        const fileName = file.name; // Original file name for display
+
+        // Sanitize file name for the path
+        const sanitizedFileName = fileName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+        const newFileNameForPath = `${crypto.randomUUID()}-${sanitizedFileName}`;
+        const filePath = `solutions/${ticketId}/${newFileNameForPath}`;
 
         const { error: uploadError } = await supabase.storage
           .from(TICKET_FILES_BUCKET)
