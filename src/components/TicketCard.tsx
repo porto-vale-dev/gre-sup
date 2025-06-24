@@ -98,12 +98,12 @@ export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] 
                     onValueChange={setResponsible}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
+                        e.preventDefault(); // Prevent form submission
                         saveResponsible();
                       }
                     }}
                     onBlur={saveResponsible}
                     className="h-8 text-xs"
-                    autoFocus
                   />
                   {filteredSuggestions.length > 0 && (
                     <CommandList className="absolute top-9 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md">

@@ -3,41 +3,31 @@ import { useState, useEffect } from 'react';
 
 // Custom hook for using localStorage that is safe for SSR (avoids hydration errors)
 export function useLocalStorage<T>(key: string, initialValue: T | (() => T)): [T, React.Dispatch<React.SetStateAction<T>>] {
-  // Initialize state with the initial value. This is what's used on the server.
+  // Initialize state with the initial value. This is what's used on the server
+  // and for the first client-side render to prevent hydration mismatches.
   const [storedValue, setStoredValue] = useState<T>(initialValue);
 
-  // This effect runs only once on the client after the component has mounted.
+  // This effect runs on the client after mount to read the value from localStorage.
   useEffect(() => {
-    // Only run this on the client
-    if (typeof window === 'undefined') {
-        return;
-    }
-
     try {
-      // On the client, read the value from localStorage.
       const item = window.localStorage.getItem(key);
-      // If a value is found, update the state.
+      // If a value is found in storage, update the state.
+      // This will cause a re-render on the client with the hydrated value.
       if (item) {
         setStoredValue(JSON.parse(item));
       }
     } catch (error) {
-      // If there's an error reading from localStorage, log it.
-      console.warn(`Error reading localStorage key "${key}":`, error);
+      console.warn(`Error reading localStorage key “${key}”:`, error);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array ensures this runs only on mount (client-side)
+  }, [key]);
 
-  // This effect runs whenever the stored value changes, updating localStorage.
+  // This effect persists the state to localStorage whenever it changes.
+  // It only runs on the client.
   useEffect(() => {
-    // Only run this on the client
-    if (typeof window !== 'undefined') {
-      try {
-        // Save the updated value to localStorage.
-        window.localStorage.setItem(key, JSON.stringify(storedValue));
-      } catch (error) {
-        // Handle potential errors, e.g., storage is full.
-        console.warn(`Error setting localStorage key "${key}":`, error);
-      }
+    try {
+      window.localStorage.setItem(key, JSON.stringify(storedValue));
+    } catch (error) {
+      console.warn(`Error setting localStorage key “${key}”:`, error);
     }
   }, [key, storedValue]);
 
