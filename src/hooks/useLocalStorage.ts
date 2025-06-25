@@ -1,4 +1,6 @@
 
+"use client";
+
 import { useState, useEffect } from 'react';
 
 // Custom hook for using localStorage that is safe for SSR (avoids hydration errors)
@@ -7,7 +9,7 @@ export function useLocalStorage<T>(key: string, initialValue: T | (() => T)): [T
   // and for the first client-side render to prevent hydration mismatches.
   const [storedValue, setStoredValue] = useState<T>(initialValue);
 
-  // This effect runs on the client after mount to read the value from localStorage.
+  // This effect runs ONCE on the client after mount to read the value from localStorage.
   useEffect(() => {
     try {
       const item = window.localStorage.getItem(key);
@@ -16,16 +18,20 @@ export function useLocalStorage<T>(key: string, initialValue: T | (() => T)): [T
       if (item) {
         setStoredValue(JSON.parse(item));
       }
-    } catch (error) {
+    } catch (error) => {
       console.warn(`Error reading localStorage key “${key}”:`, error);
     }
-  }, [key]);
+  // This hook should run only once on mount to hydrate the state
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // This effect persists the state to localStorage whenever it changes.
-  // It only runs on the client.
   useEffect(() => {
     try {
-      window.localStorage.setItem(key, JSON.stringify(storedValue));
+      // Check if we are on the client side before accessing localStorage
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(storedValue));
+      }
     } catch (error) {
       console.warn(`Error setting localStorage key “${key}”:`, error);
     }

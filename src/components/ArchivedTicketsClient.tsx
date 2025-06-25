@@ -80,11 +80,21 @@ export function ArchivedTicketsClient() {
 
   useEffect(() => {
     if (tickets.length > 0) {
-      const newNames = new Set(tickets.map(t => t.responsible).filter(Boolean) as string[]);
-      const updatedHistory = new Set([...responsibleHistory, ...newNames]);
-      setResponsibleHistory(Array.from(updatedHistory));
+       setResponsibleHistory(prevHistory => {
+        const currentHistorySet = new Set(prevHistory);
+        const newNames = tickets.map(t => t.responsible).filter(Boolean) as string[];
+        
+        let hasChanged = false;
+        newNames.forEach(name => {
+          if (!currentHistorySet.has(name)) {
+            currentHistorySet.add(name);
+            hasChanged = true;
+          }
+        });
+
+        return hasChanged ? Array.from(currentHistorySet).sort() : prevHistory;
+      });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tickets, setResponsibleHistory]);
 
   if (authIsLoading || isLoadingTickets || (!isAuthenticated && !authIsLoading) ) {
