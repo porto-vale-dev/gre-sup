@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -18,7 +17,7 @@ export function useLocalStorage<T>(key: string, initialValue: T | (() => T)): [T
       if (item) {
         setStoredValue(JSON.parse(item));
       }
-    } catch (error) => {
+    } catch (error) {
       console.warn(`Error reading localStorage key “${key}”:`, error);
     }
   // This hook should run only once on mount to hydrate the state
