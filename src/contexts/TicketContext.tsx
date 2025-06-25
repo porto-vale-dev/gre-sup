@@ -91,9 +91,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     try {
       if (ticketData.file) {
         const file = ticketData.file;
-        fileName = file.name; // Keep original name for the database `file_name` column
+        fileName = file.name;
         
-        // Sanitize the file name for use in the storage path
         const sanitizedFileName = fileName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
         const newFileNameForPath = `${crypto.randomUUID()}-${sanitizedFileName}`;
         filePath = `public/${newFileNameForPath}`;
@@ -132,7 +131,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
       }
 
-      // Fire and forget webhook
       if (insertedData) {
         const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/34817f2f-1b3f-4432-a139-e159248dd070";
         const webhookPayload = {
@@ -151,7 +149,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(webhookPayload),
         }).catch(webhookError => {
-          // Log the error but don't bother the user
           console.error("Webhook failed to send:", webhookError);
         });
       }
@@ -195,19 +192,16 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   
   const updateTicketSolution = async (ticketId: string, solution: string, newFiles: File[]) => {
     try {
-      const currentTicket = tickets.find(t => t.id === ticketId);
+      const currentTicket = getTicketById(ticketId);
       if (!currentTicket) throw new Error("Ticket não encontrado.");
 
       let uploadedFiles: SolutionFile[] = [];
 
-      // Upload new files
       for (const file of newFiles) {
         if (file.size > MAX_SOLUTION_FILE_SIZE) {
           throw new Error(`O arquivo ${file.name} excede o limite de 100MB.`);
         }
-        const fileName = file.name; // Original file name for display
-
-        // Sanitize file name for the path
+        const fileName = file.name; 
         const sanitizedFileName = fileName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
         const newFileNameForPath = `${crypto.randomUUID()}-${sanitizedFileName}`;
         const filePath = `solutions/${ticketId}/${newFileNameForPath}`;
@@ -241,7 +235,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       toast({ title: "Erro ao Salvar Solução", description: error.message, variant: "destructive" });
       console.error("Error updating ticket solution:", error);
-      throw error; // Re-throw to be caught in component
+      throw error;
     }
   };
 
@@ -272,10 +266,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const createPreviewUrl = async (filePath: string): Promise<string | null> => {
     try {
-      // Use createSignedUrl for all files as bucket is private
       const { data, error } = await supabase.storage
         .from(TICKET_FILES_BUCKET)
-        .createSignedUrl(filePath, 60); // Link válido por 60 segundos
+        .createSignedUrl(filePath, 60);
 
       if (error) {
         throw error;
