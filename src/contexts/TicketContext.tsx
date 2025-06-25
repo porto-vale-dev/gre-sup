@@ -122,10 +122,38 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         solution_files: null,
       };
 
-      const { error: insertError } = await supabase.from('tickets').insert([newTicketData]);
+      const { data: insertedData, error: insertError } = await supabase
+        .from('tickets')
+        .insert([newTicketData])
+        .select()
+        .single();
 
       if (insertError) {
         throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
+      }
+
+      // Fire and forget webhook
+      if (insertedData) {
+        const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/34817f2f-1b3f-4432-a139-e159248dd070";
+        const webhookPayload = {
+          id: insertedData.id,
+          name: insertedData.name,
+          phone: insertedData.phone,
+          reason: insertedData.reason,
+          estimated_response_time: insertedData.estimated_response_time,
+          observations: insertedData.observations,
+          submission_date: insertedData.submission_date,
+          status: insertedData.status,
+        };
+
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookPayload),
+        }).catch(webhookError => {
+          // Log the error but don't bother the user
+          console.error("Webhook failed to send:", webhookError);
+        });
       }
 
       toast({ title: "Ticket Criado", description: "Seu ticket foi registrado com sucesso." });
