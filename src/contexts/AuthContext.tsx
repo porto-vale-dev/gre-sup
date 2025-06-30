@@ -19,6 +19,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+async function fetchUserCargo(user: User | null): Promise<string | null> {
+  if (!user) return null;
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('cargo')
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      // It's common for a profile to not exist immediately, so don't throw.
+      console.warn('Could not fetch user profile:', error.message);
+      return null;
+    }
+    return data?.cargo || null;
+  } catch (err) {
+    console.error('Unexpected error fetching profile:', err);
+    return null;
+  }
+}
+
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [cargo, setCargo] = useState<string | null>(null);
@@ -26,20 +48,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
+    const updateUserSession = async (session: Session | null) => {
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+
+        if (currentUser) {
+            const userCargo = await fetchUserCargo(currentUser);
+            setCargo(userCargo);
+        } else {
+            setCargo(null);
+        }
+        setIsLoading(false);
+    };
+
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setCargo(session?.user?.user_metadata?.cargo ?? null);
-      setIsLoading(false);
+      await updateUserSession(session);
     };
     
     getSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event: AuthChangeEvent, session: Session | null) => {
-        setUser(session?.user ?? null);
-        setCargo(session?.user?.user_metadata?.cargo ?? null);
-        setIsLoading(false);
+      async (event: AuthChangeEvent, session: Session | null) => {
+        await updateUserSession(session);
       }
     );
 
@@ -63,13 +94,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return { success: false, error: friendlyMessage };
     }
+    // After successful login, the onAuthStateChange listener will handle updating user and cargo
     return { success: true };
   };
 
   const logout = async () => {
     await supabase.auth.signOut();
-    setUser(null);
-    setCargo(null);
+    // The onAuthStateChange listener will clear user and cargo
     router.push('/');
   };
 
