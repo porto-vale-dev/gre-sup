@@ -7,8 +7,9 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Ticket, ArrowRight } from 'lucide-react';
+import { Crown, Users, Target, Award, ArrowRight, ArrowLeft } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Service {
   title: string;
@@ -17,9 +18,11 @@ interface Service {
   description: string;
 }
 
-const services: Service[] = [
-    { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho." },
-    { title: "Sistema de chamados GRE", href: "/dashboard", Icon: Ticket, description: "Gerencie e acompanhe os chamados de suporte." },
+const rankingServices: Service[] = [
+  { title: "Ranking Diretor", href: "/rankings/diretor", Icon: Crown, description: "Visualize o ranking de diretores." },
+  { title: "Ranking Gerente", href: "/rankings/gerente", Icon: Users, description: "Acompanhe o desempenho dos gerentes." },
+  { title: "Ranking Campanha", href: "/rankings/campanha", Icon: Target, description: "Confira os resultados da campanha atual." },
+  { title: "Ranking Trimestral", href: "/rankings/trimestral", Icon: Award, description: "Veja o balanço do trimestre." },
 ];
 
 const ServiceCard = ({ service }: { service: Service }) => (
@@ -41,15 +44,15 @@ const ServiceCard = ({ service }: { service: Service }) => (
   </Link>
 );
 
-
-const HubSkeleton = () => (
+const RankingsSkeleton = () => (
     <div className="space-y-8">
+        <Skeleton className="h-10 w-40" />
         <div>
             <Skeleton className="h-9 w-48 mb-2" />
             <Skeleton className="h-6 w-72" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[...Array(2)].map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
                 <Card key={i} className="h-full">
                     <CardContent className="p-6 flex flex-col items-start gap-4">
                         <div className="flex justify-between items-center w-full">
@@ -67,9 +70,8 @@ const HubSkeleton = () => (
     </div>
 );
 
-
-export default function HubPage() {
-    const { isAuthenticated, isLoading, user, cargo } = useAuth();
+export default function RankingsPage() {
+    const { isAuthenticated, isLoading } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
@@ -79,18 +81,24 @@ export default function HubPage() {
     }, [isLoading, isAuthenticated, router]);
 
     if (isLoading || !isAuthenticated) {
-        return <HubSkeleton />;
+        return <RankingsSkeleton />;
     }
     
     return (
         <div className="space-y-8">
+            <Link href="/hub" passHref>
+                <Button variant="outline">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Hub
+                </Button>
+            </Link>
+
             <div>
-                <h1 className="text-3xl font-bold font-headline text-primary">Hub de Serviços</h1>
-                <p className="text-muted-foreground mt-1">Selecione um serviço para continuar.</p>
+                <h1 className="text-3xl font-bold font-headline text-primary">Rankings</h1>
+                <p className="text-muted-foreground mt-1">Selecione um ranking para visualizar.</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                {services.map(service => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {rankingServices.map(service => (
                     <ServiceCard key={service.href} service={service} />
                 ))}
             </div>
