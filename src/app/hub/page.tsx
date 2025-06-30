@@ -47,7 +47,7 @@ const HubSkeleton = () => (
             <Skeleton className="h-9 w-48 mb-2" />
             <Skeleton className="h-6 w-72" />
         </div>
-        <div className="grid grid-cols-1 gap-6 max-w-sm mx-auto">
+        <div className="grid grid-cols-1 gap-6 max-w-sm">
             {[...Array(1)].map((_, i) => (
                 <Card key={i} className="h-full">
                     <CardContent className="p-6 flex flex-col items-start gap-4">
@@ -88,7 +88,7 @@ export default function HubPage() {
                 <p className="text-muted-foreground mt-1">Selecione um serviço para continuar.</p>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 max-w-sm mx-auto">
+            <div className="grid grid-cols-1 gap-6 max-w-sm">
                 {services.map(service => (
                     <ServiceCard key={service.href} service={service} />
                 ))}
