@@ -132,7 +132,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       }
 
       if (insertedData) {
-        const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/34817f2f-1b3f-4432-a139-e159248dd070";
+        const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
         const webhookPayload = {
           id: insertedData.id,
           name: insertedData.name,

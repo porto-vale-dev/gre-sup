@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ChangeEvent } from 'react';
@@ -47,7 +46,7 @@ export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] 
   };
 
   const saveResponsible = async () => {
-    if (responsible.trim() !== ticket.responsible) {
+    if (responsible.trim() !== (ticket.responsible || "").trim()) {
       await updateTicketResponsible(ticket.id, responsible.trim());
     }
     setIsEditingResponsible(false);
@@ -113,6 +112,7 @@ export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] 
                           <CommandItem
                             key={suggestion}
                             onSelect={() => handleSelectResponsible(suggestion)}
+                            onMouseDown={(e) => e.preventDefault()}
                           >
                             {suggestion}
                           </CommandItem>
