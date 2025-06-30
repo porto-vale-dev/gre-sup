@@ -66,9 +66,9 @@ function TicketManagerLoginForm() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-1.5"><User className="h-4 w-4 text-muted-foreground" /> Email</FormLabel>
+                    <FormLabel className="flex items-center gap-1.5"><User className="h-4 w-4 text-muted-foreground" /> Usuário ou Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="email@portovaleconsorcios.com.br" {...field} />
+                      <Input type="text" placeholder="adm ou email@portovale.com.br" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

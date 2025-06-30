@@ -80,27 +80,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (data: LoginFormData): Promise<{ success: boolean; error?: string }> => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.username,
+    // Etapa 1: Obter o e-mail a partir do identificador de login (username ou email)
+    const { data: email, error: rpcError } = await supabase
+      .rpc('get_email_for_login', { p_login_identifier: data.username });
+
+    if (rpcError || !email) {
+      // A mensagem de erro é genérica para não revelar se um usuário existe ou não.
+      return { success: false, error: "Usuário ou senha inválidos." };
+    }
+
+    // Etapa 2: Fazer login com o e-mail recuperado e a senha fornecida
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: email,
       password: data.password,
     });
 
-    if (error) {
+    if (signInError) {
         let friendlyMessage = "Usuário ou senha inválidos.";
-        if (error.message.includes("Invalid login credentials")) {
-            friendlyMessage = "Credenciais de login inválidas. Verifique seu e-mail e senha.";
-        } else if (error.message.includes("Email not confirmed")) {
+        if (signInError.message.includes("Invalid login credentials")) {
+            friendlyMessage = "Credenciais de login inválidas. Verifique seu usuário/email e senha.";
+        } else if (signInError.message.includes("Email not confirmed")) {
             friendlyMessage = "Por favor, confirme seu e-mail antes de fazer login.";
         }
         return { success: false, error: friendlyMessage };
     }
-    // After successful login, the onAuthStateChange listener will handle updating user and cargo
+    // Após o login bem-sucedido, o listener onAuthStateChange irá atualizar o usuário e o cargo
     return { success: true };
   };
 
   const logout = async () => {
     await supabase.auth.signOut();
-    // The onAuthStateChange listener will clear user and cargo
+    // O listener onAuthStateChange irá limpar o usuário e o cargo
     router.push('/');
   };
 
