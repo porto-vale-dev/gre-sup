@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Ticket, ArrowRight } from 'lucide-react';
+import { Trophy, ArrowRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Service {
@@ -19,7 +19,6 @@ interface Service {
 
 const services: Service[] = [
     { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho." },
-    { title: "Sistema de chamados GRE", href: "/dashboard", Icon: Ticket, description: "Gerencie e acompanhe os chamados de suporte." },
 ];
 
 const ServiceCard = ({ service }: { service: Service }) => (
@@ -48,8 +47,8 @@ const HubSkeleton = () => (
             <Skeleton className="h-9 w-48 mb-2" />
             <Skeleton className="h-6 w-72" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[...Array(2)].map((_, i) => (
+        <div className="grid grid-cols-1 gap-6 max-w-sm mx-auto">
+            {[...Array(1)].map((_, i) => (
                 <Card key={i} className="h-full">
                     <CardContent className="p-6 flex flex-col items-start gap-4">
                         <div className="flex justify-between items-center w-full">
@@ -89,7 +88,7 @@ export default function HubPage() {
                 <p className="text-muted-foreground mt-1">Selecione um serviço para continuar.</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 gap-6 max-w-sm mx-auto">
                 {services.map(service => (
                     <ServiceCard key={service.href} service={service} />
                 ))}
