@@ -39,7 +39,7 @@ function TicketManagerLoginForm() {
         title: "Login bem-sucedido!",
         description: "Redirecionando para o painel de tickets...",
       });
-      router.push('/dashboard');
+      router.push('/suporte-gre/dashboard');
     } else {
       toast({
         title: "Erro no Login",
@@ -126,7 +126,7 @@ export default function TicketManagerLoginPage() {
 
     useEffect(() => {
         if (!isLoading && isAuthenticated) {
-            router.push('/dashboard');
+            router.push('/suporte-gre/dashboard');
         }
     }, [isLoading, isAuthenticated, router]);
 

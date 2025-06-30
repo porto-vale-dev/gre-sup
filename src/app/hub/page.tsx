@@ -20,7 +20,7 @@ interface Service {
 
 const allServices: Service[] = [
     { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
-    { title: "Sistema Suporte GRE", href: "/dashboard", Icon: Ticket, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm"] },
+    { title: "Sistema Suporte GRE", href: "/suporte-gre/dashboard", Icon: Ticket, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm"] },
 ];
 
 const ServiceCard = ({ service }: { service: Service }) => (
