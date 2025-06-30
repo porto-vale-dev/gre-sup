@@ -29,7 +29,6 @@ async function fetchUserCargo(user: User | null): Promise<string | null> {
       .single();
 
     if (error) {
-      // It's common for a profile to not exist immediately, so don't throw.
       console.warn('Could not fetch user profile:', error.message);
       return null;
     }
