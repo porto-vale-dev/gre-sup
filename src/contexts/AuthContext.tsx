@@ -84,8 +84,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: email, error: rpcError } = await supabase
       .rpc('get_email_for_login', { p_login_identifier: data.username });
 
-    if (rpcError || !email) {
-      // A mensagem de erro é genérica para não revelar se um usuário existe ou não.
+    if (rpcError) {
+      // Log do erro real para o desenvolvedor no console
+      console.error("Erro na função RPC 'get_email_for_login':", rpcError.message);
+      // Mensagem genérica para o usuário por segurança
+      return { success: false, error: "Usuário ou senha inválidos." };
+    }
+
+    if (!email) {
+      // Acontece se o username/email não foi encontrado no banco de dados.
+      // Esta é uma falha de login normal, não um erro do sistema.
       return { success: false, error: "Usuário ou senha inválidos." };
     }
 
@@ -96,14 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (signInError) {
-        let friendlyMessage = "Usuário ou senha inválidos.";
-        if (signInError.message.includes("Invalid login credentials")) {
-            friendlyMessage = "Credenciais de login inválidas. Verifique seu usuário/email e senha.";
-        } else if (signInError.message.includes("Email not confirmed")) {
-            friendlyMessage = "Por favor, confirme seu e-mail antes de fazer login.";
-        }
-        return { success: false, error: friendlyMessage };
+        // Aqui, sabemos que o email existe, então o erro é provavelmente a senha.
+        // O Supabase retorna "Invalid login credentials" para ambos, então a mensagem genérica é mais segura.
+        return { success: false, error: "Usuário ou senha inválidos." };
     }
+
     // Após o login bem-sucedido, o listener onAuthStateChange irá atualizar o usuário e o cargo
     return { success: true };
   };
