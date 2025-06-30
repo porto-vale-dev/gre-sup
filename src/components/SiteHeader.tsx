@@ -18,8 +18,8 @@ export function SiteHeader() {
   };
 
   const isPortalArea = pathname.startsWith('/hub') || pathname.startsWith('/rankings');
-  const isTicketDashboardArea = pathname.startsWith('/suporte-gre/dashboard');
-  const isArchivedPage = pathname === '/suporte-gre/dashboard/archived';
+  const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel');
+  const isArchivedPage = pathname === '/suporte-gre/painel/archived';
   const isTicketFormPage = pathname === '/suporte-gre';
 
   const homeLink = isAuthenticated ? '/hub' : '/';
@@ -75,7 +75,7 @@ export function SiteHeader() {
     <header className="bg-card border-b sticky top-0 z-40 shadow-sm">
       <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
         <Link
-          href={isAuthenticated ? "/suporte-gre/dashboard" : "/suporte-gre"}
+          href={isAuthenticated ? "/suporte-gre/painel" : "/suporte-gre"}
           className="flex items-center gap-3 text-primary transition-colors hover:text-primary/80"
           aria-label="Ticket Flow Home"
         >
@@ -104,14 +104,14 @@ export function SiteHeader() {
                         </Button>
                     </Link>
                     {isArchivedPage ? (
-                    <Link href="/suporte-gre/dashboard" passHref>
+                    <Link href="/suporte-gre/painel" passHref>
                         <Button variant="ghost" size="sm" aria-label="Painel Principal">
                         <TicketIcon className="mr-1.5 h-4 w-4" />
                         Painel
                         </Button>
                     </Link>
                     ) : (
-                    <Link href="/suporte-gre/dashboard/archived" passHref>
+                    <Link href="/suporte-gre/painel/archived" passHref>
                         <Button variant="ghost" size="sm" aria-label="Tickets Arquivados">
                         <Archive className="mr-1.5 h-4 w-4" />
                         Arquivados

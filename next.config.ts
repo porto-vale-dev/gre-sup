@@ -7,11 +7,11 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/suporte-gre/dashboard',
+        source: '/suporte-gre/painel',
         destination: '/dashboard',
       },
       {
-        source: '/suporte-gre/dashboard/archived',
+        source: '/suporte-gre/painel/archived',
         destination: '/dashboard/archived',
       },
     ];
