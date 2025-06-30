@@ -21,7 +21,7 @@ export function SiteHeader() {
   const isTicketDashboardArea = pathname.startsWith('/dashboard');
   const isArchivedPage = pathname === '/dashboard/archived';
   const isMainDashboardPage = pathname === '/dashboard';
-  const isTicketFormPage = pathname === '/abrir-ticket';
+  const isTicketFormPage = pathname === '/suporte-gre';
 
   const homeLink = isAuthenticated ? '/hub' : '/';
   
@@ -76,7 +76,7 @@ export function SiteHeader() {
     <header className="bg-card border-b sticky top-0 z-40 shadow-sm">
       <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
         <Link
-          href={isAuthenticated ? "/dashboard" : "/abrir-ticket"}
+          href={isAuthenticated ? "/dashboard" : "/suporte-gre"}
           className="flex items-center gap-3 text-primary transition-colors hover:text-primary/80"
           aria-label="Ticket Flow Home"
         >

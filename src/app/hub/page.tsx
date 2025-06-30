@@ -23,7 +23,7 @@ const services: Service[] = [
   { title: "Ranking Campanha", href: "/rankings/campanha", Icon: Target, description: "Confira os resultados da campanha atual." },
   { title: "Ranking Trimestral", href: "/rankings/trimestral", Icon: Award, description: "Veja o balanço do trimestre." },
   { title: "Sistema de Tickets", href: "/dashboard", Icon: Ticket, description: "Gerencie e acompanhe os tickets de suporte." },
-  { title: "Abrir um Ticket", href: "/abrir-ticket", Icon: BookUser, description: "Crie um novo ticket de suporte." },
+  { title: "Abrir um Ticket", href: "/suporte-gre", Icon: BookUser, description: "Crie um novo ticket de suporte." },
 ];
 
 const ServiceCard = ({ service }: { service: Service }) => (
