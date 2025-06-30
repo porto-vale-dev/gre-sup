@@ -32,7 +32,7 @@ export function ArchivedTicketsClient() {
 
   useEffect(() => {
     if (!authIsLoading && !isAuthenticated) {
-      router.push('/');
+      router.push('/suporte-gre/login');
     }
   }, [isAuthenticated, authIsLoading, router]);
 

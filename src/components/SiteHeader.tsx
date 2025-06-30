@@ -128,7 +128,7 @@ export function SiteHeader() {
               </>
              )}
             {!isAuthenticated && isTicketFormPage && (
-              <Link href="/" passHref>
+              <Link href="/suporte-gre/login" passHref>
                 <Button variant="outline" size="sm" className="rounded-full">
                   <UserCircle className="mr-1.5 h-4 w-4" />
                   Acesso Restrito
