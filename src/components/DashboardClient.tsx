@@ -33,7 +33,7 @@ export function DashboardClient() {
 
   useEffect(() => {
     if (!authIsLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push('/');
     }
   }, [isAuthenticated, authIsLoading, router]);
 

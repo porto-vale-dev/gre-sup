@@ -3,6 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 import type { LoginFormData } from '@/lib/schemas';
@@ -10,6 +11,7 @@ import type { LoginFormData } from '@/lib/schemas';
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
+  cargo: string | null;
   isLoading: boolean;
   login: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -19,12 +21,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [cargo, setCargo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
+      setCargo(session?.user?.user_metadata?.cargo ?? null);
       setIsLoading(false);
     };
     
@@ -33,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event: AuthChangeEvent, session: Session | null) => {
         setUser(session?.user ?? null);
+        setCargo(session?.user?.user_metadata?.cargo ?? null);
         setIsLoading(false);
       }
     );
@@ -63,11 +69,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setCargo(null);
+    router.push('/');
   };
 
   const value = {
     isAuthenticated: !!user,
     user,
+    cargo,
     isLoading,
     login,
     logout,

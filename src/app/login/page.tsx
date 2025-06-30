@@ -1,7 +1,21 @@
-import { LoginForm } from "@/components/LoginForm";
+'use client';
 
-export default function LoginPage() {
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
+
+export default function OldLoginPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/');
+  }, [router]);
+
   return (
-    <LoginForm />
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem-theme(spacing.20))] space-y-4">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-24 w-80" />
+    </div>
   );
 }

@@ -1,9 +1,7 @@
-import { TicketForm } from "@/components/TicketForm";
+import { LoginForm } from "@/components/LoginForm";
 
-export default function HomePage() {
+export default function PortalLoginPage() {
   return (
-    <div className="py-8">
-      <TicketForm />
-    </div>
+    <LoginForm />
   );
 }

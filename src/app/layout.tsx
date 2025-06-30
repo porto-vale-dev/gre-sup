@@ -12,8 +12,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Ticket Flow Porto Vale Consórcio',
-  description: 'Sistema de abertura de tickets',
+  title: 'Portal Porto Vale Consórcio e Seguros',
+  description: 'Portal de serviços da Porto Vale Consórcio e Seguros',
   icons: {
     icon: '/favicon.ico', // Assuming you might add a favicon later
   },

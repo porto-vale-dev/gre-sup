@@ -36,9 +36,9 @@ export function LoginForm() {
     if (success) {
       toast({
         title: "Login bem-sucedido!",
-        description: "Redirecionando para o painel...",
+        description: "Redirecionando para o portal...",
       });
-      router.push('/dashboard');
+      router.push('/hub');
     } else {
       toast({
         title: "Erro no Login",
@@ -53,9 +53,9 @@ export function LoginForm() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl text-primary flex items-center justify-center gap-2">
-            <LogIn className="h-8 w-8" /> Acesso Restrito
+            <LogIn className="h-8 w-8" /> Portal Porto Vale
           </CardTitle>
-          <CardDescription>Faça login para acessar o painel do gestor. Use seu e-mail como usuário.</CardDescription>
+          <CardDescription>Faça login para acessar os serviços. Use seu e-mail como usuário.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

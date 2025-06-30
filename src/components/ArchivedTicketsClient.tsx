@@ -32,7 +32,7 @@ export function ArchivedTicketsClient() {
 
   useEffect(() => {
     if (!authIsLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push('/');
     }
   }, [isAuthenticated, authIsLoading, router]);
 
