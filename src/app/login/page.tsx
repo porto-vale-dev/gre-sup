@@ -1,13 +1,15 @@
+
 'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function OldLoginPage() {
+export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // This page is obsolete and now redirects to the main login page.
     router.replace('/');
   }, [router]);
 
