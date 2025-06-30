@@ -1,10 +1,22 @@
+'use client';
 
-import { TicketForm } from "@/components/TicketForm";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default function AbrirTicketPage() {
+export default function ObsoleteTicketPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // This page is obsolete and now redirects to the main support page.
+    router.replace('/suporte-gre');
+  }, [router]);
+
   return (
-    <div className="py-8">
-      <TicketForm />
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem-theme(spacing.20))] space-y-4">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-24 w-80" />
     </div>
   );
 }
