@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,13 +16,15 @@ interface Service {
   href: string;
   Icon: LucideIcon;
   description: string;
+  allowedRoles: string[]; // <-- 1. Adicionamos a lista de cargos permitidos
 }
 
-const rankingServices: Service[] = [
-  { title: "Ranking Diretor", href: "/rankings/diretor", Icon: Crown, description: "Visualize o ranking de diretores." },
-  { title: "Ranking Gerente", href: "/rankings/gerente", Icon: Users, description: "Acompanhe o desempenho dos gerentes." },
-  { title: "Ranking Campanha", href: "/rankings/campanha", Icon: Target, description: "Confira os resultados da campanha atual." },
-  { title: "Ranking Trimestral", href: "/rankings/trimestral", Icon: Award, description: "Veja o balanço do trimestre." },
+// 2. Definimos quais cargos podem ver cada card
+const allRankingServices: Service[] = [
+  { title: "Ranking Diretor", href: "/rankings/diretor", Icon: Crown, description: "Visualize o ranking de diretores.", allowedRoles: ["Diretor", "adm"] },
+  { title: "Ranking Gerente", href: "/rankings/gerente", Icon: Users, description: "Acompanhe o desempenho dos gerentes.", allowedRoles: ["Diretor", "Gerente", "adm"] },
+  { title: "Ranking Campanha", href: "/rankings/campanha", Icon: Target, description: "Confira os resultados da campanha atual.", allowedRoles: ["Gerente", "Colaborador", "adm"] },
+  { title: "Ranking Trimestral", href: "/rankings/trimestral", Icon: Award, description: "Veja o balanço do trimestre.", allowedRoles: ["Diretor", "adm"] },
 ];
 
 const ServiceCard = ({ service }: { service: Service }) => (
@@ -71,7 +73,7 @@ const RankingsSkeleton = () => (
 );
 
 export default function RankingsPage() {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading, cargo } = useAuth(); // <-- 3. Pegamos o 'cargo' do usuário
     const router = useRouter();
 
     useEffect(() => {
@@ -79,6 +81,12 @@ export default function RankingsPage() {
             router.push('/');
         }
     }, [isLoading, isAuthenticated, router]);
+    
+    // 4. Filtramos a lista de serviços com base no cargo do usuário
+    const accessibleServices = useMemo(() => {
+      if (!cargo) return [];
+      return allRankingServices.filter(service => service.allowedRoles.includes(cargo));
+    }, [cargo]);
 
     if (isLoading || !isAuthenticated) {
         return <RankingsSkeleton />;
@@ -97,11 +105,16 @@ export default function RankingsPage() {
                 <p className="text-muted-foreground mt-1">Selecione um ranking para visualizar.</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {rankingServices.map(service => (
-                    <ServiceCard key={service.href} service={service} />
-                ))}
-            </div>
+            {accessibleServices.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* 5. Renderizamos apenas os cards filtrados */}
+                    {accessibleServices.map(service => (
+                        <ServiceCard key={service.href} service={service} />
+                    ))}
+                </div>
+            ) : (
+                <p className="text-muted-foreground">Você não tem acesso a nenhum ranking no momento.</p>
+            )}
         </div>
     )
 }
