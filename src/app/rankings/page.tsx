@@ -21,10 +21,10 @@ interface Service {
 
 // Definição das permissões para cada card de acordo com a nova lógica
 const allRankingServices: Service[] = [
-  { title: "Ranking Diretor", href: "/rankings/diretor", Icon: Crown, description: "Visualize o ranking de diretores.", allowedRoles: ["adm", "Diretor"] },
-  { title: "Ranking Gerente", href: "/rankings/gerente", Icon: Users, description: "Acompanhe o desempenho dos gerentes.", allowedRoles: ["adm", "Diretor", "Gerente"] },
-  { title: "Ranking Campanha", href: "/rankings/campanha", Icon: Target, description: "Confira os resultados da campanha atual.", allowedRoles: ["adm", "Diretor", "Gerente", "Colaborador"] },
-  { title: "Ranking Trimestral", href: "/rankings/trimestral", Icon: Award, description: "Veja o balanço do trimestre.", allowedRoles: ["adm", "Diretor"] },
+  { title: "Ranking Diretor", href: "/rankings/diretor", Icon: Crown, description: "Visualize o ranking de diretores.", allowedRoles: ["adm", "diretor"] },
+  { title: "Ranking Gerente", href: "/rankings/gerente", Icon: Users, description: "Acompanhe o desempenho dos gerentes.", allowedRoles: ["adm", "diretor", "gerente"] },
+  { title: "Ranking Campanha", href: "/rankings/campanha", Icon: Target, description: "Confira os resultados da campanha atual.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
+  { title: "Ranking Trimestral", href: "/rankings/trimestral", Icon: Award, description: "Veja o balanço do trimestre.", allowedRoles: ["adm", "diretor"] },
 ];
 
 const ServiceCard = ({ service }: { service: Service }) => (
@@ -84,8 +84,8 @@ export default function RankingsPage() {
     
     // Filtra a lista de serviços com base no cargo do usuário
     const accessibleServices = useMemo(() => {
-      // Trata usuários com cargo nulo, vazio ou indefinido como "Colaborador"
-      const userRole = cargo || 'Colaborador';
+      // Trata usuários com cargo nulo, vazio ou indefinido como "colaborador"
+      const userRole = cargo || 'colaborador';
       return allRankingServices.filter(service => service.allowedRoles.includes(userRole));
     }, [cargo]);
 
