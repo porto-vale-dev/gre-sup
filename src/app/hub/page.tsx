@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, ArrowRight } from 'lucide-react';
+import { Trophy, ArrowRight, Ticket } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Service {
@@ -15,10 +15,12 @@ interface Service {
   href: string;
   Icon: LucideIcon;
   description: string;
+  allowedRoles: string[];
 }
 
-const services: Service[] = [
-    { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho." },
+const allServices: Service[] = [
+    { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
+    { title: "Sistema Suporte GRE", href: "/dashboard", Icon: Ticket, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm"] },
 ];
 
 const ServiceCard = ({ service }: { service: Service }) => (
@@ -47,8 +49,8 @@ const HubSkeleton = () => (
             <Skeleton className="h-9 w-40 mb-2" />
             <Skeleton className="h-6 w-80" />
         </div>
-        <div className="grid grid-cols-1 gap-6 max-w-sm">
-            {[...Array(1)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(2)].map((_, i) => (
                 <Card key={i} className="h-full">
                     <CardContent className="p-6 flex flex-col items-start gap-4">
                         <div className="flex justify-between items-center w-full">
@@ -68,7 +70,7 @@ const HubSkeleton = () => (
 
 
 export default function HubPage() {
-    const { isAuthenticated, isLoading, user, cargo } = useAuth();
+    const { isAuthenticated, isLoading, cargo } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
@@ -76,6 +78,13 @@ export default function HubPage() {
             router.push('/');
         }
     }, [isLoading, isAuthenticated, router]);
+    
+    const accessibleServices = useMemo(() => {
+      // Trata usuários com cargo nulo, vazio ou indefinido como "colaborador"
+      const userRole = cargo || 'colaborador';
+      return allServices.filter(service => service.allowedRoles.includes(userRole));
+    }, [cargo]);
+
 
     if (isLoading || !isAuthenticated) {
         return <HubSkeleton />;
@@ -87,12 +96,16 @@ export default function HubPage() {
                 <h1 className="text-3xl font-bold font-headline text-primary">Ferramentas</h1>
                 <p className="text-muted-foreground mt-1">Selecione uma ferramenta para continuar.</p>
             </div>
-
-            <div className="grid grid-cols-1 gap-6 max-w-sm">
-                {services.map(service => (
-                    <ServiceCard key={service.href} service={service} />
-                ))}
-            </div>
+            
+            {accessibleServices.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {accessibleServices.map(service => (
+                        <ServiceCard key={service.href} service={service} />
+                    ))}
+                </div>
+            ) : (
+                <p className="text-muted-foreground">Você não tem acesso a nenhuma ferramenta no momento.</p>
+            )}
         </div>
     )
 }
