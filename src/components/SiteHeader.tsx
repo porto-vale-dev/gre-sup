@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -58,7 +57,6 @@ export function SiteHeader() {
             <div className="flex items-center gap-2 sm:gap-4">
                 <div className="text-right hidden sm:block">
                     <p className="text-sm font-medium text-foreground">Bem-vindo, {cargo || user?.email?.split('@')[0]}</p>
-                    <p className="text-xs text-muted-foreground">{user?.email}</p>
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Sair da conta">
                   <LogOut className="mr-1.5 h-4 w-4" />
