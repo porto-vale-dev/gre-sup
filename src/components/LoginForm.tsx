@@ -55,7 +55,7 @@ export function LoginForm() {
           <CardTitle className="font-headline text-3xl text-primary flex items-center justify-center gap-2">
             <LogIn className="h-8 w-8" /> Portal Porto Vale
           </CardTitle>
-          <CardDescription>Faça login para acessar os serviços. Use seu e-mail como usuário.</CardDescription>
+          <CardDescription>Faça login para acessar os serviços.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -65,9 +65,9 @@ export function LoginForm() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-1.5"><User className="h-4 w-4 text-muted-foreground" /> Email</FormLabel>
+                    <FormLabel className="flex items-center gap-1.5"><User className="h-4 w-4 text-muted-foreground" /> Usuário ou Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="email@portovaleconsorcios.com.br" {...field} />
+                      <Input type="text" placeholder="usuário" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
