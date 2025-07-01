@@ -8,10 +8,16 @@ import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 import type { LoginFormData } from '@/lib/schemas';
 
+interface UserProfile {
+  cargo: string | null;
+  username: string | null;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   cargo: string | null;
+  username: string | null;
   isLoading: boolean;
   login: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -19,12 +25,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-async function fetchUserCargo(user: User | null): Promise<string | null> {
+async function fetchUserProfile(user: User | null): Promise<UserProfile | null> {
   if (!user) return null;
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('cargo')
+      .select('cargo, username')
       .eq('id', user.id)
       .single();
 
@@ -32,7 +38,7 @@ async function fetchUserCargo(user: User | null): Promise<string | null> {
       console.warn('Could not fetch user profile:', error.message);
       return null;
     }
-    return data?.cargo || null;
+    return data ? { cargo: data.cargo, username: data.username } : null;
   } catch (err) {
     console.error('Unexpected error fetching profile:', err);
     return null;
@@ -43,6 +49,7 @@ async function fetchUserCargo(user: User | null): Promise<string | null> {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [cargo, setCargo] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -52,10 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(currentUser);
 
         if (currentUser) {
-            const userCargo = await fetchUserCargo(currentUser);
-            setCargo(userCargo);
+            const profile = await fetchUserProfile(currentUser);
+            setCargo(profile?.cargo || null);
+            setUsername(profile?.username || null);
         } else {
             setCargo(null);
+            setUsername(null);
         }
         setIsLoading(false);
     };
@@ -79,42 +88,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (data: LoginFormData): Promise<{ success: boolean; error?: string }> => {
-    // Etapa 1: Obter o e-mail a partir do identificador de login (username ou email)
     const { data: email, error: rpcError } = await supabase
       .rpc('get_email_for_login', { p_login_identifier: data.username });
 
     if (rpcError) {
-      // Log do erro real para o desenvolvedor no console
       console.error("Erro na função RPC 'get_email_for_login':", rpcError.message);
-      // Mensagem genérica para o usuário por segurança
       return { success: false, error: "Usuário ou senha inválidos." };
     }
 
     if (!email) {
-      // Acontece se o username/email não foi encontrado no banco de dados.
-      // Esta é uma falha de login normal, não um erro do sistema.
       return { success: false, error: "Usuário ou senha inválidos." };
     }
 
-    // Etapa 2: Fazer login com o e-mail recuperado e a senha fornecida
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: email,
       password: data.password,
     });
 
     if (signInError) {
-        // Aqui, sabemos que o email existe, então o erro é provavelmente a senha.
-        // O Supabase retorna "Invalid login credentials" para ambos, então a mensagem genérica é mais segura.
         return { success: false, error: "Usuário ou senha inválidos." };
     }
-
-    // Após o login bem-sucedido, o listener onAuthStateChange irá atualizar o usuário e o cargo
     return { success: true };
   };
 
   const logout = async () => {
     await supabase.auth.signOut();
-    // O listener onAuthStateChange irá limpar o usuário e o cargo
     router.push('/');
   };
 
@@ -122,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     user,
     cargo,
+    username,
     isLoading,
     login,
     logout,
