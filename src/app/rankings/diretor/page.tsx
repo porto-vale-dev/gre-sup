@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function DiretorPage() {
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-12rem)]">
+    <div className="flex flex-col gap-4 h-[calc(100vh-10rem)]">
       <div>
         <Link href="/rankings" passHref>
           <Button variant="outline" size="sm">
