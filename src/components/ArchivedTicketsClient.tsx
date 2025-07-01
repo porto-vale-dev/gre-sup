@@ -15,7 +15,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Search, Info, LayoutGrid, List, User, AlertCircle } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from './ui/button';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 export function ArchivedTicketsClient() {
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
@@ -28,7 +27,6 @@ export function ArchivedTicketsClient() {
   const [responsibleFilter, setResponsibleFilter] = useState<string>("Todos");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [responsibleHistory, setResponsibleHistory] = useLocalStorage<string[]>('responsibleHistory', []);
 
   useEffect(() => {
     if (!authIsLoading && !isAuthenticated) {
@@ -69,33 +67,6 @@ export function ArchivedTicketsClient() {
   const responsibleNamesForFilter = useMemo(() => {
     return ["Todos", ...new Set(archivedTickets.map(t => t.responsible).filter(Boolean) as string[])];
   }, [archivedTickets]);
-
-  const responsibleSuggestions = useMemo(() => {
-    const allNames = new Set([
-        ...responsibleHistory, 
-        ...tickets.map(t => t.responsible).filter(Boolean) as string[]
-    ]);
-    return Array.from(allNames).sort();
-  }, [tickets, responsibleHistory]);
-
-  useEffect(() => {
-    if (tickets.length > 0) {
-       setResponsibleHistory(prevHistory => {
-        const currentHistorySet = new Set(prevHistory);
-        const newNames = tickets.map(t => t.responsible).filter(Boolean) as string[];
-        
-        let hasChanged = false;
-        newNames.forEach(name => {
-          if (!currentHistorySet.has(name)) {
-            currentHistorySet.add(name);
-            hasChanged = true;
-          }
-        });
-
-        return hasChanged ? Array.from(currentHistorySet).sort() : prevHistory;
-      });
-    }
-  }, [tickets, setResponsibleHistory]);
 
   if (authIsLoading || isLoadingTickets || (!isAuthenticated && !authIsLoading) ) {
      return (
@@ -190,7 +161,7 @@ export function ArchivedTicketsClient() {
       ) : (
         <div className={`gap-6 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'space-y-4'}`}>
           {filteredAndSortedTickets.map(ticket => (
-            <TicketCard key={ticket.id} ticket={ticket} onOpenDetails={handleOpenDetails} responsibleSuggestions={responsibleSuggestions} />
+            <TicketCard key={ticket.id} ticket={ticket} onOpenDetails={handleOpenDetails} />
           ))}
         </div>
       )}

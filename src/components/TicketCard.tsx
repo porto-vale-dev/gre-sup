@@ -1,25 +1,22 @@
+
 "use client";
 
-import type { ChangeEvent } from 'react';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Ticket, TicketStatus } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TICKET_STATUSES } from '@/lib/constants';
 import { useTickets } from '@/contexts/TicketContext';
-import { CalendarDays, Clock, FileText, User, Tag, Edit3, Check, AlertTriangle, Hourglass, CheckCircle2, ExternalLink } from 'lucide-react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { cn } from '@/lib/utils';
+import { CalendarDays, Clock, FileText, User, Tag, Edit3, Check, AlertTriangle, Hourglass, CheckCircle2, ExternalLink, X } from 'lucide-react';
 
 interface TicketCardProps {
   ticket: Ticket;
   onOpenDetails: (ticket: Ticket) => void;
-  responsibleSuggestions: string[];
 }
 
 const statusColors: Record<TicketStatus, string> = {
@@ -36,11 +33,10 @@ const statusIcons: Record<TicketStatus, React.ElementType> = {
   "Concluído": CheckCircle2,
 };
 
-export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] }: TicketCardProps) {
+export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
   const { updateTicketStatus, updateTicketResponsible } = useTickets();
   const [responsible, setResponsible] = useState(ticket.responsible || "");
   const [isEditingResponsible, setIsEditingResponsible] = useState(false);
-  const commandContainerRef = useRef<HTMLDivElement>(null);
 
   const handleStatusChange = async (status: string) => {
     await updateTicketStatus(ticket.id, status as TicketStatus);
@@ -52,22 +48,13 @@ export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] 
     }
     setIsEditingResponsible(false);
   };
-  
-  const handleSelectResponsible = async (value: string) => {
-    setResponsible(value);
-    await updateTicketResponsible(ticket.id, value);
+
+  const cancelEdit = () => {
+    setResponsible(ticket.responsible || "");
     setIsEditingResponsible(false);
-  }
-  
-  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
-    if (commandContainerRef.current && !commandContainerRef.current.contains(event.relatedTarget as Node)) {
-      saveResponsible();
-    }
   };
 
-
   const StatusIcon = statusIcons[ticket.status];
-  const filteredSuggestions = responsibleSuggestions.filter(s => s.toLowerCase().includes(responsible.toLowerCase()) && s.toLowerCase() !== responsible.toLowerCase());
 
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
@@ -97,38 +84,25 @@ export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] 
         <div className="flex items-center gap-2">
           <Tag className="h-4 w-4 text-muted-foreground" />
           {isEditingResponsible ? (
-             <div ref={commandContainerRef} onBlur={handleBlur} className="relative w-full">
-              <Command>
-                 <CommandInput
+            <div className="flex items-center gap-1 w-full">
+                <Input
                     autoFocus
-                    placeholder="Nome do responsável"
                     value={responsible}
-                    onValueChange={setResponsible}
+                    onChange={(e) => setResponsible(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault(); // Prevent form submission
-                        saveResponsible();
-                      }
+                        if (e.key === 'Enter') saveResponsible();
+                        if (e.key === 'Escape') cancelEdit();
                     }}
                     className="h-8 text-xs"
-                  />
-                  {filteredSuggestions.length > 0 && (
-                    <CommandList className="absolute top-9 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md">
-                      <CommandEmpty>Nenhum responsável encontrado.</CommandEmpty>
-                      <CommandGroup heading="Sugestões">
-                        {filteredSuggestions.map((suggestion) => (
-                          <CommandItem
-                            key={suggestion}
-                            onSelect={() => handleSelectResponsible(suggestion)}
-                          >
-                            {suggestion}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  )}
-              </Command>
-             </div>
+                    placeholder="Nome do responsável"
+                />
+                <Button size="icon" variant="ghost" onClick={saveResponsible} className="h-7 w-7 shrink-0" aria-label="Salvar responsável">
+                    <Check className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={cancelEdit} className="h-7 w-7 shrink-0" aria-label="Cancelar edição">
+                    <X className="h-4 w-4" />
+                </Button>
+            </div>
           ) : (
             <div className="flex items-center gap-1 w-full justify-between">
               <span className={ticket.responsible ? "" : "italic text-muted-foreground"}>
