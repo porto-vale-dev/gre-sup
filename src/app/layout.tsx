@@ -35,7 +35,7 @@ export default function RootLayout({
           <main className="flex-grow container mx-auto py-6 sm:py-8 px-4 sm:px-6 md:px-8">
             {children}
           </main>
-          <footer className="text-center p-6 text-sm text-muted-foreground border-t mt-auto">
+          <footer className="text-center p-6 text-xs text-muted-foreground border-t mt-auto">
             <p>Marketing Power - Porto Vale</p>
           </footer>
         </AppProviders>
