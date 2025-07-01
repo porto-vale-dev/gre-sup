@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent } from 'react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Ticket, TicketStatus } from '@/types';
@@ -40,6 +40,7 @@ export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] 
   const { updateTicketStatus, updateTicketResponsible } = useTickets();
   const [responsible, setResponsible] = useState(ticket.responsible || "");
   const [isEditingResponsible, setIsEditingResponsible] = useState(false);
+  const commandContainerRef = useRef<HTMLDivElement>(null);
 
   const handleStatusChange = async (status: string) => {
     await updateTicketStatus(ticket.id, status as TicketStatus);
@@ -57,6 +58,13 @@ export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] 
     await updateTicketResponsible(ticket.id, value);
     setIsEditingResponsible(false);
   }
+  
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    if (commandContainerRef.current && !commandContainerRef.current.contains(event.relatedTarget as Node)) {
+      saveResponsible();
+    }
+  };
+
 
   const StatusIcon = statusIcons[ticket.status];
   const filteredSuggestions = responsibleSuggestions.filter(s => s.toLowerCase().includes(responsible.toLowerCase()) && s.toLowerCase() !== responsible.toLowerCase());
@@ -89,9 +97,10 @@ export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] 
         <div className="flex items-center gap-2">
           <Tag className="h-4 w-4 text-muted-foreground" />
           {isEditingResponsible ? (
-             <div className="relative w-full">
+             <div ref={commandContainerRef} onBlur={handleBlur} className="relative w-full">
               <Command>
                  <CommandInput
+                    autoFocus
                     placeholder="Nome do responsável"
                     value={responsible}
                     onValueChange={setResponsible}
@@ -101,7 +110,6 @@ export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] 
                         saveResponsible();
                       }
                     }}
-                    onBlur={saveResponsible}
                     className="h-8 text-xs"
                   />
                   {filteredSuggestions.length > 0 && (
@@ -112,7 +120,6 @@ export function TicketCard({ ticket, onOpenDetails, responsibleSuggestions = [] 
                           <CommandItem
                             key={suggestion}
                             onSelect={() => handleSelectResponsible(suggestion)}
-                            onMouseDown={(e) => e.preventDefault()}
                           >
                             {suggestion}
                           </CommandItem>
