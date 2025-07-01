@@ -68,7 +68,7 @@ function LoginForm() {
                   <FormItem>
                     <FormLabel className="flex items-center gap-1.5"><User className="h-4 w-4 text-muted-foreground" /> Usuário ou Email</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="diretor ou email@portovale.com.br" {...field} />
+                      <Input type="text" placeholder="usuário" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
