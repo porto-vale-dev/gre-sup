@@ -32,8 +32,8 @@ export function SiteHeader() {
            <Link href="/" className="flex items-center gap-3 text-primary">
             <LayoutDashboard className="h-8 w-8" />
             <div className="flex flex-col leading-tight">
-              <span className="text-2xl sm:text-3xl font-headline font-bold">Portal Porto Vale</span>
-              <span className="text-sm font-normal opacity-90">Consórcio e Seguros</span>
+              <span className="text-2xl sm:text-3xl font-headline font-bold">Portal</span>
+              <span className="text-sm font-normal opacity-90">Porto Vale</span>
             </div>
           </Link>
         </div>
@@ -49,7 +49,8 @@ export function SiteHeader() {
            <Link href="/hub" className="flex items-center gap-3 text-primary">
             <LayoutDashboard className="h-8 w-8" />
             <div className="flex flex-col leading-tight">
-              <span className="text-2xl sm:text-3xl font-headline font-bold">Portal Porto Vale</span>
+              <span className="text-2xl sm:text-3xl font-headline font-bold">Portal</span>
+              <span className="text-sm font-normal opacity-90">Porto Vale</span>
             </div>
           </Link>
 
@@ -82,7 +83,7 @@ export function SiteHeader() {
           <TicketIcon className="h-8 w-8 sm:h-9 sm:w-9" />
           <div className="flex flex-col leading-tight">
             <span className="text-xl sm:text-2xl font-headline font-bold">Ticket Flow</span>
-            <span className="text-xs font-normal opacity-90">Porto Vale Consórcio</span>
+            <span className="text-xs font-normal opacity-90">Porto Vale</span>
           </div>
            {isAuthenticated && isTicketDashboardArea && (
             <span className="text-sm sm:text-base font-normal text-muted-foreground hidden md:inline ml-1">

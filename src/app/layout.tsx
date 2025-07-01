@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Portal Porto Vale Consórcio e Seguros',
+  title: 'Portal Porto Vale',
   description: 'Portal de serviços da Porto Vale Consórcio e Seguros',
   icons: {
     icon: '/favicon.ico', // Assuming you might add a favicon later
@@ -36,8 +36,7 @@ export default function RootLayout({
             {children}
           </main>
           <footer className="text-center p-6 text-sm text-muted-foreground border-t mt-auto">
-            <p>© 2025 Portal Porto Vale. Todos os direitos reservados.</p>
-            <p className="mt-1">Marketing Power Porto Vale Consórcio</p>
+            <p>Marketing Power - Porto Vale</p>
           </footer>
         </AppProviders>
       </body>
