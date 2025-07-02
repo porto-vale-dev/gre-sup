@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function DiretorPage() {
   return (
     <div className="flex flex-col gap-4 h-[calc(100vh-10rem)]">
