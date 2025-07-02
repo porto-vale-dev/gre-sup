@@ -1,38 +1,41 @@
-# 1. Base Stage: Instala as dependências
-FROM node:18-alpine AS base
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
 
-# 2. Build Stage: Compila a aplicação Next.js
-FROM base AS builder
+# Stage 1: Install dependencies
+FROM node:18-alpine AS deps
+# See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md#handling-kernel-signals
+RUN apk add --no-cache tini
 WORKDIR /app
-COPY --from=base /app/node_modules ./node_modules
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Stage 2: Build the Next.js app
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# As variáveis de ambiente públicas são necessárias durante o build
-# Certifique-se de passá-las para o seu processo de build no Cloud Run
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
 RUN npm run build
 
-# 3. Production Stage: Executa a aplicação
-FROM base AS production
+# Stage 3: Production image
+FROM node:18-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
+ENV NODE_ENV production
 
-# Copia os artefatos da build standalone
+# Create a non-root user and group for security purposes
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy the built app from the builder stage
 COPY --from=builder /app/public ./public
+
+# Copy standalone output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# As variáveis de ambiente também são necessárias em tempo de execução
-# O Cloud Run irá injetá-las no contêiner
-# ENV NEXT_PUBLIC_SUPABASE_URL ...
-# ENV NEXT_PUBLIC_SUPABASE_ANON_KEY ...
+# Set the user to run the app
+USER nextjs
 
-# A porta padrão para o Cloud Run é 8080
-ENV PORT 8080
+EXPOSE 3000
+ENV PORT 3000
 
+# Run the app with tini to handle signals correctly
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "server.js"]
