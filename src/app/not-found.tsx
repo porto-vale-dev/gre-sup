@@ -7,7 +7,7 @@ import { Frown } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <div className="grid place-items-center h-full">
+    <div className="grid place-items-center h-[calc(100vh-12rem)]">
       <Card className="w-full max-w-md text-center shadow-xl">
         <CardHeader>
           <div className="mx-auto bg-primary/10 text-primary p-4 rounded-full w-fit">
