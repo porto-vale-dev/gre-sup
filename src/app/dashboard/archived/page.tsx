@@ -1,6 +1,8 @@
 
 import { ArchivedTicketsClient } from "@/components/ArchivedTicketsClient";
 
+export const dynamic = 'force-dynamic';
+
 export default function ArchivedTicketsPage() {
   return (
     <div>

@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from '@/components/ui/skeleton';
 import { LogIn, KeyRound, User } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 function LoginForm() {
   const router = useRouter();
   const { login } = useAuth();
