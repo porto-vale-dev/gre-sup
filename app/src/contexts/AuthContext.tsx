@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (rpcError) {
       console.error("Erro na função RPC 'get_email_for_login':", rpcError.message);
-      return { success: false, error: "Usuário ou senha inválidos." };
+      return { success: false, error: "Ocorreu um erro interno. Verifique as permissões da função no Supabase." };
     }
 
     if (!email) {
