@@ -99,7 +99,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (rpcError) {
       console.error("Erro na função RPC 'get_email_for_login':", rpcError.message);
-      return { success: false, error: "Falha ao consultar o usuário. Verifique a função 'get_email_for_login' no Supabase e suas permissões." };
+      const specificError = rpcError.message.includes('fetch') 
+        ? "Erro de conexão com o servidor. Verifique as configurações de CORS no Supabase." 
+        : `Falha ao consultar o usuário. Detalhes: ${rpcError.message}`;
+      return { success: false, error: specificError };
     }
 
     if (!email) {
