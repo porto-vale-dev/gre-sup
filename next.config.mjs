@@ -14,9 +14,6 @@ const nextConfig = {
       },
     ];
   },
-  allowedDevOrigins: [
- 'https://9000-firebase-studio-1749749009211.cluster-m7tpz3bmgjgoqrktlvd4ykrc2m.cloudworkstations.dev',
-  ],
   typescript: {
     // Forçar a verificação de tipos no build para garantir a qualidade do código
     ignoreBuildErrors: false,
