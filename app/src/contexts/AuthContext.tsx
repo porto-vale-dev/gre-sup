@@ -2,7 +2,7 @@
 "use client";
 
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
@@ -88,21 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (data: LoginFormData): Promise<{ success: boolean; error?: string }> => {
-    // Server-side check for environment variables in Cloud Run
-    if (typeof window === 'undefined' && (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
-      console.error("Supabase environment variables not found on the server.");
-      return { success: false, error: "Erro de configuração do servidor: As chaves do Supabase não foram encontradas." };
-    }
-    
     const { data: email, error: rpcError } = await supabase
       .rpc('get_email_for_login', { p_login_identifier: data.username });
 
     if (rpcError) {
       console.error("Erro na função RPC 'get_email_for_login':", rpcError.message);
-      const specificError = rpcError.message.includes('fetch') 
-        ? "Erro de conexão com o servidor. Verifique as configurações de CORS no Supabase." 
-        : `Falha ao consultar o usuário. Detalhes: ${rpcError.message}`;
-      return { success: false, error: specificError };
+      return { success: false, error: "Usuário ou senha inválidos." };
     }
 
     if (!email) {
