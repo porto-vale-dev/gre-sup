@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (data: LoginFormData): Promise<{ success: boolean; error?: string }> => {
     // Server-side check for environment variables in Cloud Run
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (typeof window === 'undefined' && (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
       console.error("Supabase environment variables not found on the server.");
       return { success: false, error: "Erro de configuração do servidor: As chaves do Supabase não foram encontradas." };
     }
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (rpcError) {
       console.error("Erro na função RPC 'get_email_for_login':", rpcError.message);
-      return { success: false, error: "Ocorreu um erro interno. Verifique as permissões da função no Supabase." };
+      return { success: false, error: "Falha ao consultar o usuário. Verifique a função 'get_email_for_login' no Supabase e suas permissões." };
     }
 
     if (!email) {
