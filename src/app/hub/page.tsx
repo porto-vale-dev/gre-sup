@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, ArrowRight, Ticket } from 'lucide-react';
+import { Trophy, ArrowRight, Ticket, Megaphone } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Service {
@@ -19,6 +19,7 @@ interface Service {
 }
 
 const allServices: Service[] = [
+    { title: "Mural de Avisos", href: "/mural-de-avisos", Icon: Megaphone, description: "Veja os últimos avisos e comunicados.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
     { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
     { title: "Sistema Suporte GRE", href: "/suporte-gre/painel", Icon: Ticket, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm"] },
 ];
@@ -50,7 +51,7 @@ const HubSkeleton = () => (
             <Skeleton className="h-6 w-80" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(2)].map((_, i) => (
+            {[...Array(3)].map((_, i) => (
                 <Card key={i} className="h-full">
                     <CardContent className="p-6 flex flex-col items-start gap-4">
                         <div className="flex justify-between items-center w-full">
