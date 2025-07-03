@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Frown } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
-
 export default function NotFound() {
   return (
     <div className="grid place-items-center h-[calc(100vh-12rem)]">

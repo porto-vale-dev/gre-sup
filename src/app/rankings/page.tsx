@@ -10,8 +10,6 @@ import { Crown, Users, Target, Award, ArrowRight, ArrowLeft } from 'lucide-react
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export const dynamic = 'force-dynamic';
-
 interface Service {
   title: string;
   href: string;

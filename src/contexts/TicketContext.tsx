@@ -75,8 +75,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       setTickets([]);
       setIsLoadingTickets(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, authIsLoading]);
+  }, [isAuthenticated, authIsLoading, fetchTickets]);
 
 
   const addTicket = async (ticketData: {

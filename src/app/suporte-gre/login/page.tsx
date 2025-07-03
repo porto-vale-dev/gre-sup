@@ -14,8 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from '@/components/ui/skeleton';
 import { LogIn, KeyRound, User, Ticket } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
-
 function TicketManagerLoginForm() {
   const router = useRouter();
   const { login } = useAuth();

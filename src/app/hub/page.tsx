@@ -9,8 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Trophy, ArrowRight, Ticket, Megaphone } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
-
 interface Service {
   title: string;
   href: string;

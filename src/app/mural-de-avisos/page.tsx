@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
-
 const MuralSkeleton = () => (
     <div className="flex flex-col gap-4 h-[calc(100vh-12rem)]">
         <Skeleton className="h-9 w-36" />

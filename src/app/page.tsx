@@ -12,15 +12,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { loginSchema, type LoginFormData } from '@/lib/schemas';
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from '@/components/ui/skeleton';
-import { LogIn, KeyRound, User } from 'lucide-react';
-
-export const dynamic = 'force-dynamic';
+import { LogIn, KeyRound, User, Loader2 } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
   const { login } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -31,22 +29,24 @@ function LoginForm() {
   });
 
   async function onSubmit(data: LoginFormData) {
-    setIsLoading(true);
+    setIsLoggingIn(true);
     const { success, error } = await login(data);
-    setIsLoading(false);
 
     if (success) {
       toast({
         title: "Login bem-sucedido!",
         description: "Redirecionando para o portal...",
       });
+      // O hook de autenticação e a página principal cuidarão do redirecionamento.
+      // Apenas esperamos que o estado de autenticação seja atualizado.
       router.push('/hub');
     } else {
       toast({
         title: "Erro no Login",
-        description: error || "Usuário ou senha inválidos. Tente novamente.",
+        description: error, // A mensagem de erro agora é mais específica
         variant: "destructive",
       });
+      setIsLoggingIn(false);
     }
   }
 
@@ -69,7 +69,7 @@ function LoginForm() {
                   <FormItem>
                     <FormLabel className="flex items-center gap-1.5"><User className="h-4 w-4 text-muted-foreground" /> Usuário ou Email</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="usuário" {...field} />
+                      <Input type="text" placeholder="usuário" {...field} disabled={isLoggingIn} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -82,14 +82,15 @@ function LoginForm() {
                   <FormItem>
                     <FormLabel className="flex items-center gap-1.5"><KeyRound className="h-4 w-4 text-muted-foreground" /> Senha</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoggingIn} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Entrando..." : "Entrar"}
+              <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                 {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoggingIn ? "Entrando..." : "Entrar"}
               </Button>
             </form>
           </Form>
