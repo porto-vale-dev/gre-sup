@@ -87,18 +87,15 @@ export function TicketForm() {
       file: selectedFile || undefined, // Pass the File object to addTicket
     };
 
-    try {
-        await addTicket(ticketPayload);
-        // Toast for success is handled within addTicket now
-        form.reset();
-        setSelectedReason(null);
-        setFileName(null);
-        setSelectedFile(null);
-        const fileInput = document.getElementById('file-upload') as HTMLInputElement;
-        if (fileInput) fileInput.value = "";
-    } catch (error) {
-        // Error toast is handled within addTicket
-        console.error("Submission error in TicketForm:", error);
+    const success = await addTicket(ticketPayload);
+
+    if (success) {
+      form.reset();
+      setSelectedReason(null);
+      setFileName(null);
+      setSelectedFile(null);
+      const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+      if (fileInput) fileInput.value = "";
     }
   }
 

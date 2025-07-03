@@ -22,7 +22,7 @@ interface TicketContextType {
     estimated_response_time: string;
     observations?: string;
     file?: File;
-  }) => Promise<void>;
+  }) => Promise<boolean>; // Return boolean for success
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
   updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
   updateTicketSolution: (ticketId: string, solution: string, newFiles: File[]) => Promise<void>;
@@ -85,7 +85,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     estimated_response_time: string;
     observations?: string;
     file?: File;
-  }) => {
+  }): Promise<boolean> => {
     
     let filePath: string | undefined = undefined;
     let fileName: string | undefined = undefined;
@@ -116,7 +116,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         observations: ticketData.observations,
         submission_date: new Date().toISOString(),
         status: "Novo" as TicketStatus,
-        user_id: user?.id,
+        user_id: user ? user.id : null,
         file_path: filePath,
         file_name: fileName,
         solution: null,
@@ -130,7 +130,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (insertError) {
-        throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
+        // This will now catch the RLS error
+        throw new Error(insertError.message);
       }
 
       if (insertedData) {
@@ -157,10 +158,18 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
       toast({ title: "Ticket Criado", description: "Seu ticket foi registrado com sucesso." });
       if(isAuthenticated) await fetchTickets(); 
+      return true;
 
     } catch (error: any) {
-      toast({ title: "Erro ao Criar Ticket", description: error.message || "Ocorreu um erro.", variant: "destructive" });
+      const defaultMessage = "Ocorreu um erro ao registrar o ticket.";
+      // Check for the specific RLS error message
+      const description = error.message.includes('violates row-level security policy') 
+          ? "Falha de segurança: seu usuário não tem permissão para criar um ticket. Contate o administrador."
+          : error.message || defaultMessage;
+      
+      toast({ title: "Erro ao Criar Ticket", description, variant: "destructive" });
       console.error("Error adding ticket:", error);
+      return false;
     }
   };
 
