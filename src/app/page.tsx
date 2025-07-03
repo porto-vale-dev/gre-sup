@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -11,10 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { loginSchema, type LoginFormData } from '@/lib/schemas';
 import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from '@/components/ui/skeleton';
 import { LogIn, KeyRound, User, Loader2 } from 'lucide-react';
 
-function LoginForm() {
+export default function PortalLoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const { toast } = useToast();
@@ -37,13 +37,11 @@ function LoginForm() {
         title: "Login bem-sucedido!",
         description: "Redirecionando para o portal...",
       });
-      // O hook de autenticação e a página principal cuidarão do redirecionamento.
-      // Apenas esperamos que o estado de autenticação seja atualizado.
-      router.push('/hub');
+      // The AuthGuard will handle the redirect
     } else {
       toast({
         title: "Erro no Login",
-        description: error, // A mensagem de erro agora é mais específica
+        description: error,
         variant: "destructive",
       });
       setIsLoggingIn(false);
@@ -98,44 +96,4 @@ function LoginForm() {
       </Card>
     </div>
   );
-}
-
-const AuthLoadingSkeleton = () => (
-    <div className="flex items-center justify-center min-h-[calc(100vh-10rem-theme(spacing.20))]">
-        <div className="w-full max-w-md space-y-6">
-            <div className="text-center space-y-2">
-                <Skeleton className="h-9 w-64 mx-auto" />
-                <Skeleton className="h-5 w-80 mx-auto" />
-            </div>
-            <div className="space-y-6 rounded-lg border bg-card p-6 shadow-sm">
-                <div className="space-y-2">
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                <Skeleton className="h-10 w-full" />
-            </div>
-        </div>
-    </div>
-);
-
-
-export default function PortalLoginPage() {
-    const { isAuthenticated, isLoading } = useAuth();
-    const router = useRouter();
-
-    useEffect(() => {
-        if (!isLoading && isAuthenticated) {
-            router.push('/hub');
-        }
-    }, [isLoading, isAuthenticated, router]);
-
-    if (isLoading || isAuthenticated) {
-        return <AuthLoadingSkeleton />;
-    }
-
-    return <LoginForm />;
 }

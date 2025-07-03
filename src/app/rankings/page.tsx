@@ -1,11 +1,10 @@
+
 "use client";
 
-import { useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Crown, Users, Target, Award, ArrowRight, ArrowLeft } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -45,41 +44,8 @@ const ServiceCard = ({ service }: { service: Service }) => (
   </Link>
 );
 
-const RankingsSkeleton = () => (
-    <div className="space-y-8">
-        <Skeleton className="h-10 w-40" />
-        <div>
-            <Skeleton className="h-9 w-48 mb-2" />
-            <Skeleton className="h-6 w-72" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-                <Card key={i} className="h-full">
-                    <CardContent className="p-6 flex flex-col items-start gap-4">
-                        <div className="flex justify-between items-center w-full">
-                           <Skeleton className="h-12 w-12 rounded-lg" />
-                           <Skeleton className="h-5 w-5 rounded-full" />
-                        </div>
-                        <div>
-                            <Skeleton className="h-6 w-3/4 mb-2" />
-                            <Skeleton className="h-4 w-full" />
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
-    </div>
-);
-
 export default function RankingsPage() {
-    const { isAuthenticated, isLoading, cargo } = useAuth(); 
-    const router = useRouter();
-
-    useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.push('/');
-        }
-    }, [isLoading, isAuthenticated, router]);
+    const { cargo } = useAuth(); 
     
     // Filtra a lista de serviços com base no cargo do usuário
     const accessibleServices = useMemo(() => {
@@ -87,10 +53,6 @@ export default function RankingsPage() {
       const userRole = cargo || 'colaborador';
       return allRankingServices.filter(service => service.allowedRoles.includes(userRole));
     }, [cargo]);
-
-    if (isLoading || !isAuthenticated) {
-        return <RankingsSkeleton />;
-    }
     
     return (
         <div className="space-y-8">

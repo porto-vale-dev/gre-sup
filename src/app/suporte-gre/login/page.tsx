@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -11,10 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { loginSchema, type LoginFormData } from '@/lib/schemas';
 import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from '@/components/ui/skeleton';
 import { LogIn, KeyRound, User, Ticket } from 'lucide-react';
 
-function TicketManagerLoginForm() {
+export default function TicketManagerLoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const { toast } = useToast();
@@ -31,13 +31,14 @@ function TicketManagerLoginForm() {
   async function onSubmit(data: LoginFormData) {
     setIsLoading(true);
     const { success, error } = await login(data);
-    setIsLoading(false);
-
+    
     if (success) {
       toast({
         title: "Login bem-sucedido!",
         description: "Redirecionando para o painel de tickets...",
       });
+      // The AuthGuard will handle redirecting away from login pages,
+      // but we can push to the specific panel page first.
       router.push('/suporte-gre/painel');
     } else {
       toast({
@@ -45,6 +46,7 @@ function TicketManagerLoginForm() {
         description: error || "Usuário ou senha inválidos. Tente novamente.",
         variant: "destructive",
       });
+      setIsLoading(false);
     }
   }
 
@@ -67,7 +69,7 @@ function TicketManagerLoginForm() {
                   <FormItem>
                     <FormLabel className="flex items-center gap-1.5"><User className="h-4 w-4 text-muted-foreground" /> Usuário ou Email</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="usuário" {...field} />
+                      <Input type="text" placeholder="usuário" {...field} disabled={isLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -80,7 +82,7 @@ function TicketManagerLoginForm() {
                   <FormItem>
                     <FormLabel className="flex items-center gap-1.5"><KeyRound className="h-4 w-4 text-muted-foreground" /> Senha</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -95,43 +97,4 @@ function TicketManagerLoginForm() {
       </Card>
     </div>
   );
-}
-
-const AuthLoadingSkeleton = () => (
-    <div className="flex items-center justify-center min-h-[calc(100vh-10rem-theme(spacing.20))]">
-        <div className="w-full max-w-md space-y-6">
-            <div className="text-center space-y-2">
-                <Skeleton className="h-9 w-64 mx-auto" />
-                <Skeleton className="h-5 w-80 mx-auto" />
-            </div>
-            <div className="space-y-6 rounded-lg border bg-card p-6 shadow-sm">
-                <div className="space-y-2">
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                <Skeleton className="h-10 w-full" />
-            </div>
-        </div>
-    </div>
-);
-
-export default function TicketManagerLoginPage() {
-    const { isAuthenticated, isLoading } = useAuth();
-    const router = useRouter();
-
-    useEffect(() => {
-        if (!isLoading && isAuthenticated) {
-            router.push('/suporte-gre/painel');
-        }
-    }, [isLoading, isAuthenticated, router]);
-
-    if (isLoading || isAuthenticated) {
-        return <AuthLoadingSkeleton />;
-    }
-
-    return <TicketManagerLoginForm />;
 }

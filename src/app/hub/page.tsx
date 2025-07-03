@@ -1,11 +1,10 @@
+
 "use client";
 
-import { useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Trophy, ArrowRight, Ticket, Megaphone } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -42,53 +41,14 @@ const ServiceCard = ({ service }: { service: Service }) => (
   </Link>
 );
 
-
-const HubSkeleton = () => (
-    <div className="space-y-8">
-        <div>
-            <Skeleton className="h-9 w-40 mb-2" />
-            <Skeleton className="h-6 w-80" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-                <Card key={i} className="h-full">
-                    <CardContent className="p-6 flex flex-col items-start gap-4">
-                        <div className="flex justify-between items-center w-full">
-                           <Skeleton className="h-12 w-12 rounded-lg" />
-                           <Skeleton className="h-5 w-5 rounded-full" />
-                        </div>
-                        <div>
-                            <Skeleton className="h-6 w-3/4 mb-2" />
-                            <Skeleton className="h-4 w-full" />
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
-    </div>
-);
-
-
 export default function HubPage() {
-    const { isAuthenticated, isLoading, cargo } = useAuth();
-    const router = useRouter();
-
-    useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.push('/');
-        }
-    }, [isLoading, isAuthenticated, router]);
+    const { cargo } = useAuth();
     
     const accessibleServices = useMemo(() => {
       // Trata usuários com cargo nulo, vazio ou indefinido como "colaborador"
       const userRole = cargo || 'colaborador';
       return allServices.filter(service => service.allowedRoles.includes(userRole));
     }, [cargo]);
-
-
-    if (isLoading || !isAuthenticated) {
-        return <HubSkeleton />;
-    }
     
     return (
         <div className="space-y-8">

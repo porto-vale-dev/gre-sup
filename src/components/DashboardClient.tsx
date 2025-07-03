@@ -1,9 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState, useMemo } from 'react';
 import { useTickets } from '@/contexts/TicketContext';
 import type { Ticket } from '@/types';
 import { TicketCard } from '@/components/TicketCard';
@@ -17,10 +15,8 @@ import { Button } from './ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export function DashboardClient() {
-  const { isAuthenticated, isLoading: authIsLoading } = useAuth();
   const { tickets, isLoadingTickets, error, fetchTickets } = useTickets();
-  const router = useRouter();
-
+  
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,13 +24,6 @@ export function DashboardClient() {
   const [responsibleFilter, setResponsibleFilter] = useState<string>("Todos");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc"); // desc for newest first
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
-  useEffect(() => {
-    if (!authIsLoading && !isAuthenticated) {
-      router.push('/suporte-gre/login');
-    }
-  }, [isAuthenticated, authIsLoading, router]);
-
 
   const activeTickets = useMemo(() => {
     return tickets.filter(ticket => ticket.status !== "Concluído");
@@ -76,7 +65,7 @@ export function DashboardClient() {
     return ["Todos", ...new Set(activeTickets.map(t => t.responsible).filter(Boolean) as string[])];
   }, [activeTickets]);
 
-  if (authIsLoading || isLoadingTickets || (!isAuthenticated && !authIsLoading) ) {
+  if (isLoadingTickets) {
     return (
       <div className="space-y-6">
          <div className="flex flex-col lg:flex-row gap-2 items-center w-full p-4 bg-card border rounded-lg shadow">

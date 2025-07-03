@@ -4,9 +4,7 @@ import { Inter } from 'next/font/google'; // Using next/font for Inter
 import './globals.css';
 import { AppProviders } from '@/components/AppProviders';
 import { SiteHeader } from '@/components/SiteHeader';
-
-// Force dynamic rendering to access runtime environment variables on the server.
-export const dynamic = 'force-dynamic';
+import { AuthGuard } from '@/components/AuthGuard';
 
 // Initialize Inter font
 const inter = Inter({
@@ -48,7 +46,7 @@ export default function RootLayout({
         <AppProviders>
           <SiteHeader />
           <main className="flex-grow container mx-auto py-6 sm:py-8 px-4 sm:px-6 md:px-8">
-            {children}
+            <AuthGuard>{children}</AuthGuard>
           </main>
           <footer className="text-center p-6 text-xs text-muted-foreground border-t mt-auto">
             <p>Marketing Power - Porto Vale</p>
