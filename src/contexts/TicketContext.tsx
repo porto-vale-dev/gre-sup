@@ -65,13 +65,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   useEffect(() => {
-    if (authIsLoading) {
-      return;
-    }
-    
-    if (isAuthenticated) {
+    // Only fetch tickets if auth has loaded and user is authenticated.
+    if (!authIsLoading && isAuthenticated) {
       fetchTickets();
-    } else {
+    } else if (!authIsLoading && !isAuthenticated) {
+      // If not authenticated and auth has loaded, clear tickets and stop loading.
       setTickets([]);
       setIsLoadingTickets(false);
     }
@@ -108,7 +106,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const newTicketData = {
+      const newTicketDataBase = {
         name: ticketData.name,
         phone: ticketData.phone,
         reason: ticketData.reason,
@@ -116,22 +114,26 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         observations: ticketData.observations,
         submission_date: new Date().toISOString(),
         status: "Novo" as TicketStatus,
-        user_id: user ? user.id : null,
         file_path: filePath,
         file_name: fileName,
         solution: null,
         solution_files: null,
       };
 
+      // Only add user_id if the user is authenticated
+      const newTicketPayload = user 
+        ? { ...newTicketDataBase, user_id: user.id }
+        : newTicketDataBase;
+
+
       const { data: insertedData, error: insertError } = await supabase
         .from('tickets')
-        .insert([newTicketData])
+        .insert([newTicketPayload])
         .select()
         .single();
 
       if (insertError) {
-        // This will now catch the RLS error
-        throw new Error(insertError.message);
+        throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
       }
 
       if (insertedData) {
@@ -161,13 +163,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       return true;
 
     } catch (error: any) {
-      const defaultMessage = "Ocorreu um erro ao registrar o ticket.";
-      // Check for the specific RLS error message
-      const description = error.message.includes('violates row-level security policy') 
-          ? "Falha de segurança: seu usuário não tem permissão para criar um ticket. Contate o administrador."
-          : error.message || defaultMessage;
-      
-      toast({ title: "Erro ao Criar Ticket", description, variant: "destructive" });
+      toast({ title: "Erro ao Criar Ticket", description: error.message, variant: "destructive" });
       console.error("Error adding ticket:", error);
       return false;
     }
