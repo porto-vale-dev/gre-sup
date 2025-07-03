@@ -42,12 +42,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
-    if (!isAuthenticated) {
-        setIsLoadingTickets(false);
-        setTickets([]);
-        return;
-    }
-    
+    // The check for isAuthenticated is removed from here.
+    // The useEffect that calls this function will now handle that logic.
     setIsLoadingTickets(true);
     setError(null);
     try {
@@ -68,13 +64,24 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoadingTickets(false);
     }
-  }, [isAuthenticated, toast]);
+  }, [toast]);
 
+  // This useEffect is now the single source of truth for fetching tickets based on auth state.
   useEffect(() => {
-    if (!authIsLoading) {
-        fetchTickets();
+    // Don't do anything while auth is still loading.
+    if (authIsLoading) {
+      return;
     }
-  }, [authIsLoading, fetchTickets]);
+    
+    if (isAuthenticated) {
+      fetchTickets();
+    } else {
+      // If user is not logged in, clear tickets and ensure loading is false.
+      setTickets([]);
+      setIsLoadingTickets(false);
+    }
+  }, [isAuthenticated, authIsLoading, fetchTickets]);
+
 
   const addTicket = async (ticketData: {
     name: string;
