@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (rpcError) {
       console.error("Erro na função RPC 'get_email_for_login':", rpcError.message);
-      return { success: false, error: "Usuário ou senha inválidos." };
+      return { success: false, error: "Falha ao consultar o usuário. Verifique as permissões da função no Supabase." };
     }
 
     if (!email) {
@@ -105,6 +105,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await supabase.auth.signOut();
+    // Manually clear state to trigger an immediate UI update before redirecting.
+    // The onAuthStateChange listener will still fire but result in a no-op.
+    setUser(null);
+    setCargo(null);
+    setUsername(null);
     router.push('/');
   };
 
