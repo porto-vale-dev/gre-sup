@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -59,11 +60,6 @@ export function SiteHeader() {
               height={56}
               priority
             />
-             {isAuthenticated && isTicketDashboardArea && (
-              <span className="text-sm sm:text-base font-normal text-muted-foreground hidden md:inline ml-1">
-                {isArchivedPage ? "- Arquivados" : "- Painel do Gestor"}
-              </span>
-            )}
           </Link>
 
           {!isLoading && (
