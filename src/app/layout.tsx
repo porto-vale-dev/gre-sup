@@ -6,6 +6,9 @@ import { AppProviders } from '@/components/AppProviders';
 import { SiteHeader } from '@/components/SiteHeader';
 import { AuthGuard } from '@/components/AuthGuard';
 
+// Force dynamic rendering to ensure server-side environment variables are available at runtime.
+export const dynamic = 'force-dynamic';
+
 // Initialize Inter font
 const inter = Inter({
   subsets: ['latin'],
