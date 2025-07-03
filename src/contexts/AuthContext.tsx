@@ -54,7 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const updateUserSession = async (session: Session | null) => {
+    setIsLoading(true);
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
         const currentUser = session?.user ?? null;
         setUser(currentUser);
 
@@ -66,19 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCargo(null);
             setUsername(null);
         }
+        
         setIsLoading(false);
-    };
-
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      await updateUserSession(session);
-    };
-    
-    getSession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event: AuthChangeEvent, session: Session | null) => {
-        await updateUserSession(session);
       }
     );
 
