@@ -53,7 +53,7 @@ export function SiteHeader() {
             aria-label="Portal Porto Vale Home"
           >
             <Image
-              src="/logo.png"
+              src="logo_portal_pv.webp"
               alt="Portal Porto Vale Logo"
               width={160}
               height={56}

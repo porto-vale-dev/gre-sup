@@ -24,7 +24,15 @@ const supabaseAnonKey =
     ? window.NEXT_PUBLIC_SUPABASE_ANON_KEY
     : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// The non-null assertions (!) are used here to ensure that the app will fail fast
-// if the environment variables are not available at runtime, which is the correct
-// behavior as the app cannot function without them.
-export const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+// Throw a more helpful error if the variables are missing.
+// This helps distinguish between a server-side environment issue and a client-side injection issue.
+if (!supabaseUrl) {
+  throw new Error('Supabase URL is missing. Ensure NEXT_PUBLIC_SUPABASE_URL is set in your environment.');
+}
+if (!supabaseAnonKey) {
+  throw new Error('Supabase Anon Key is missing. Ensure NEXT_PUBLIC_SUPABASE_ANON_KEY is set in your environment.');
+}
+
+// The app cannot function without these, so we initialize the client.
+// The checks above replace the need for non-null assertions (!).
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
