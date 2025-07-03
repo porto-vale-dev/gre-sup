@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -36,12 +35,12 @@ export function SiteHeader() {
     );
   }
 
-  // Check if we are in the ticket system area
-  const isTicketSystemArea = pathname.startsWith('/suporte-gre');
+  // Check if we are in the ticket system area, accounting for rewrites
+  const isTicketSystemArea = pathname.startsWith('/suporte-gre') || pathname.startsWith('/dashboard');
 
   if (isTicketSystemArea) {
-    const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel');
-    const isArchivedPage = pathname === '/suporte-gre/painel/archived';
+    const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
+    const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
     const isTicketFormPage = pathname === '/suporte-gre';
 
     // Header for Ticket System (Dashboard, Form)
