@@ -23,7 +23,7 @@ export function SiteHeader() {
         <div className="container mx-auto h-20 flex items-center justify-center px-4">
            <Link href="/">
               <Image
-                src="/logo.png"
+                src="/logo_portal_pv.webp"
                 alt="Portal Porto Vale Logo"
                 width={160}
                 height={56}
@@ -53,7 +53,7 @@ export function SiteHeader() {
             aria-label="Portal Porto Vale Home"
           >
             <Image
-              src="logo_portal_pv.webp"
+              src="/logo_portal_pv.webp"
               alt="Portal Porto Vale Logo"
               width={160}
               height={56}
@@ -122,7 +122,7 @@ export function SiteHeader() {
       <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
          <Link href={isAuthenticated ? '/hub' : '/'}>
             <Image
-              src="/logo.png"
+              src="/logo_portal_pv.webp"
               alt="Portal Porto Vale Logo"
               width={160}
               height={56}
