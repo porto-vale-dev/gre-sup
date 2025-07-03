@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
@@ -18,7 +17,7 @@ interface AuthContextType {
   user: User | null;
   cargo: string | null;
   username: string | null;
-  isLoading: boolean; // Represents ONLY the initial auth check
+  isLoading: boolean;
   login: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
@@ -45,40 +44,48 @@ async function fetchUserProfile(user: User | null): Promise<UserProfile | null> 
   }
 }
 
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [cargo, setCargo] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Is the initial session still loading?
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Effect for handling user profile fetching, triggered when user object changes
+  // 🔹 Verificação imediata da sessão ao carregar
   useEffect(() => {
-    if (user) {
-      // Fetch profile in the background
-      fetchUserProfile(user).then((profile) => {
-        setCargo(profile?.cargo || null);
-        setUsername(profile?.username || null);
-      });
-    } else {
-      // No user, so clear profile
-      setCargo(null);
-      setUsername(null);
-    }
-  }, [user]);
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Erro ao buscar sessão:", error.message);
+      }
+      setUser(session?.user ?? null);
+      setIsLoading(false); // <- evita loading infinito
+    };
 
-  // Effect for handling auth state changes, runs once on mount and then on every auth event
-  useEffect(() => {
+    checkSession();
+
+    // 🔹 Listener de mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      setIsLoading(false); // Auth state is known, stop the main loading state.
     });
 
     return () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // 🔹 Quando o user muda, busca o perfil
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile(user).then((profile) => {
+        setCargo(profile?.cargo || null);
+        setUsername(profile?.username || null);
+      });
+    } else {
+      setCargo(null);
+      setUsername(null);
+    }
+  }, [user]);
 
   const login = async (data: LoginFormData): Promise<{ success: boolean; error?: string }> => {
     const { data: email, error: rpcError } = await supabase
@@ -94,21 +101,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: email,
+      email,
       password: data.password,
     });
 
     if (signInError) {
-        return { success: false, error: "Usuário ou senha inválidos." };
+      return { success: false, error: "Usuário ou senha inválidos." };
     }
-    // The onAuthStateChange listener will handle setting user state and triggering profile fetch.
+
     return { success: true };
   };
 
   const logout = async () => {
     await supabase.auth.signOut();
-    // onAuthStateChange will handle clearing user/profile state.
-    // We just need to redirect. This makes the logout flow simpler.
     router.push('/');
   };
 
