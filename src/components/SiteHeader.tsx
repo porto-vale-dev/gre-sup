@@ -123,8 +123,8 @@ export function SiteHeader() {
             <Image
               src={logoPortal}
               alt="Portal Porto Vale Logo"
-              width={160}
-              height={56}
+              width={130}
+              height={46}
               priority
             />
         </Link>
