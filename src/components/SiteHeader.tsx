@@ -8,6 +8,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import React from 'react';
 import Image from 'next/image';
 
+// Import local images
+import logoTicket from './logo_ticket_pv.webp';
+import logoPortal from './logo_portal_pv.webp';
+
 export function SiteHeader() {
   const pathname = usePathname();
   const { isAuthenticated, logout, isLoading, user, username } = useAuth();
@@ -23,7 +27,7 @@ export function SiteHeader() {
         <div className="container mx-auto h-20 flex items-center justify-center px-4">
            <Link href="/">
               <Image
-                src="/logo_portal_pv.webp"
+                src={logoPortal}
                 alt="Portal Porto Vale Logo"
                 width={160}
                 height={56}
@@ -53,7 +57,7 @@ export function SiteHeader() {
             aria-label="TicketFlow Home"
           >
             <Image
-              src="/logo_ticket_pv.webp"
+              src={logoTicket}
               alt="TicketFlow Logo"
               width={160}
               height={56}
@@ -117,7 +121,7 @@ export function SiteHeader() {
       <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
          <Link href={isAuthenticated ? '/hub' : '/'}>
             <Image
-              src="/logo_portal_pv.webp"
+              src={logoPortal}
               alt="Portal Porto Vale Logo"
               width={160}
               height={56}
