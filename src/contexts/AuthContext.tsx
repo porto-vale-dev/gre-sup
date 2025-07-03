@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 import type { LoginFormData } from '@/lib/schemas';
 
 interface UserProfile {
@@ -18,7 +18,7 @@ interface AuthContextType {
   user: User | null;
   cargo: string | null;
   username: string | null;
-  isLoading: boolean;
+  isLoading: boolean; // Represents ONLY the initial auth check
   login: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
@@ -50,32 +50,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [cargo, setCargo] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Is the initial session still loading?
   const router = useRouter();
 
+  // Effect for handling user profile fetching, triggered when user object changes
   useEffect(() => {
-    setIsLoading(true);
+    if (user) {
+      // Fetch profile in the background
+      fetchUserProfile(user).then((profile) => {
+        setCargo(profile?.cargo || null);
+        setUsername(profile?.username || null);
+      });
+    } else {
+      // No user, so clear profile
+      setCargo(null);
+      setUsername(null);
+    }
+  }, [user]);
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-
-        if (currentUser) {
-            const profile = await fetchUserProfile(currentUser);
-            setCargo(profile?.cargo || null);
-            setUsername(profile?.username || null);
-        } else {
-            setCargo(null);
-            setUsername(null);
-        }
-        
-        setIsLoading(false);
-      }
-    );
+  // Effect for handling auth state changes, runs once on mount and then on every auth event
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      setIsLoading(false); // Auth state is known, stop the main loading state.
+    });
 
     return () => {
-      authListener?.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -100,16 +101,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (signInError) {
         return { success: false, error: "Usuário ou senha inválidos." };
     }
+    // The onAuthStateChange listener will handle setting user state and triggering profile fetch.
     return { success: true };
   };
 
   const logout = async () => {
     await supabase.auth.signOut();
-    // Manually clear state to trigger an immediate UI update before redirecting.
-    // The onAuthStateChange listener will still fire but result in a no-op.
-    setUser(null);
-    setCargo(null);
-    setUsername(null);
+    // onAuthStateChange will handle clearing user/profile state.
+    // We just need to redirect. This makes the logout flow simpler.
     router.push('/');
   };
 

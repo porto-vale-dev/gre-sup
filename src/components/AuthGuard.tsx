@@ -31,34 +31,39 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const isPublicPath = PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/_next/');
-
+  const isPublicPath = PUBLIC_PATHS.includes(pathname);
+  
   useEffect(() => {
-    // Wait until auth state is confirmed
+    // Don't do anything while loading the session
     if (isLoading) {
       return;
     }
 
     const isLoginPage = pathname === '/' || pathname === '/login' || pathname === '/suporte-gre/login';
 
-    // If on a protected page and not logged in, redirect to main login
+    // If not authenticated and on a private page, redirect to login
     if (!isAuthenticated && !isPublicPath) {
-      router.push('/');
+      router.replace('/');
     }
 
-    // If logged in and on a login page, redirect to the hub
+    // If authenticated and on a login page, redirect to the main app page
     if (isAuthenticated && isLoginPage) {
-      router.push(AUTHENTICATED_ROOT);
+      router.replace(AUTHENTICATED_ROOT);
     }
   }, [isLoading, isAuthenticated, isPublicPath, pathname, router]);
 
-  const isLoginPage = pathname === '/' || pathname === '/login' || pathname === '/suporte-gre/login';
-  
-  // While loading or preparing for a redirect, show a skeleton to prevent content flashing
-  if (isLoading || (!isAuthenticated && !isPublicPath) || (isAuthenticated && isLoginPage)) {
+  // While loading the session, show a skeleton.
+  if (isLoading) {
     return <AuthLoadingSkeleton />;
   }
 
-  // Otherwise, render the page
+  const isLoginPage = pathname === '/' || pathname === '/login' || pathname === '/suporte-gre/login';
+  
+  // If a redirect is imminent, show the skeleton to prevent flashing the old page
+  if ((!isAuthenticated && !isPublicPath) || (isAuthenticated && isLoginPage)) {
+      return <AuthLoadingSkeleton />;
+  }
+
+  // If everything is fine, render the children
   return <>{children}</>;
 }
