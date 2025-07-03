@@ -87,6 +87,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     
     let filePath: string | undefined = undefined;
     let fileName: string | undefined = undefined;
+    const submissionDate = new Date().toISOString();
 
     try {
       if (ticketData.file) {
@@ -112,7 +113,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         reason: ticketData.reason,
         estimated_response_time: ticketData.estimated_response_time,
         observations: ticketData.observations,
-        submission_date: new Date().toISOString(),
+        submission_date: submissionDate,
         status: "Novo" as TicketStatus,
         file_path: filePath,
         file_name: fileName,
@@ -120,43 +121,37 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         solution_files: null,
       };
 
-      // Only add user_id if the user is authenticated
       const newTicketPayload = user 
         ? { ...newTicketDataBase, user_id: user.id }
         : newTicketDataBase;
 
 
-      const { data: insertedData, error: insertError } = await supabase
+      const { error: insertError } = await supabase
         .from('tickets')
-        .insert([newTicketPayload])
-        .select()
-        .single();
+        .insert([newTicketPayload]);
 
       if (insertError) {
         throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
       }
 
-      if (insertedData) {
-        const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
-        const webhookPayload = {
-          id: insertedData.id,
-          name: insertedData.name,
-          phone: insertedData.phone,
-          reason: insertedData.reason,
-          estimated_response_time: insertedData.estimated_response_time,
-          observations: insertedData.observations,
-          submission_date: insertedData.submission_date,
-          status: insertedData.status,
-        };
+      const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
+      const webhookPayload = {
+        name: ticketData.name,
+        phone: ticketData.phone,
+        reason: ticketData.reason,
+        estimated_response_time: ticketData.estimated_response_time,
+        observations: ticketData.observations,
+        submission_date: submissionDate,
+        status: "Novo",
+      };
 
-        fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookPayload),
-        }).catch(webhookError => {
-          console.error("Webhook failed to send:", webhookError);
-        });
-      }
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webhookPayload),
+      }).catch(webhookError => {
+        console.error("Webhook failed to send:", webhookError);
+      });
 
       toast({ title: "Ticket Criado", description: "Seu ticket foi registrado com sucesso." });
       if(isAuthenticated) await fetchTickets(); 
