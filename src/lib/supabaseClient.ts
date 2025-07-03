@@ -1,31 +1,30 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Esta é a solução definitiva e padrão para lidar com variáveis de ambiente no Next.js
-// quando se usa um serviço como o Cloud Run.
+// This setup ensures the Supabase client is initialized with the correct
+// runtime environment variables, both on the server (for SSR) and on the client.
 
-// 1. Função para obter a URL do Supabase
-const getSupabaseUrl = () => {
-  // No servidor (durante o build), se a variável não existir, usa uma URL temporária
-  // para permitir que o build seja concluído com sucesso.
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321';
+// Augment the window type to avoid TypeScript errors
+declare global {
+  interface Window {
+    NEXT_PUBLIC_SUPABASE_URL: string;
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
   }
-  // No navegador do cliente, a variável REAL do Cloud Run estará disponível.
-  // Usamos '!' para garantir que ela será usada, pois é obrigatória para o app funcionar.
-  return process.env.NEXT_PUBLIC_SUPABASE_URL!;
-};
+}
 
-// 2. Função para obter a Chave Anônima do Supabase
-const getSupabaseAnonKey = () => {
-  // Mesma lógica para a chave anônima.
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
-  }
-  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-};
+// On the client, we expect the variables to be injected into the `window` object
+// by the root layout. On the server, we read directly from `process.env`.
+const supabaseUrl =
+  typeof window !== 'undefined'
+    ? window.NEXT_PUBLIC_SUPABASE_URL
+    : process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-// 3. Criação do cliente Supabase
-// Este cliente agora é inteligente: ele sabe como se comportar durante o build e
-// como usar as credenciais corretas quando o aplicativo está no ar.
-export const supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey());
+const supabaseAnonKey =
+  typeof window !== 'undefined'
+    ? window.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// The non-null assertions (!) are used here to ensure that the app will fail fast
+// if the environment variables are not available at runtime, which is the correct
+// behavior as the app cannot function without them.
+export const supabase = createClient(supabaseUrl!, supabaseAnonKey!);

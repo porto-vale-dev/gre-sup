@@ -5,6 +5,9 @@ import './globals.css';
 import { AppProviders } from '@/components/AppProviders';
 import { SiteHeader } from '@/components/SiteHeader';
 
+// Force dynamic rendering to access runtime environment variables on the server.
+export const dynamic = 'force-dynamic';
+
 // Initialize Inter font
 const inter = Inter({
   subsets: ['latin'],
@@ -27,7 +30,19 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${inter.variable} h-full`} suppressHydrationWarning>
       <head>
-        {/* Google Fonts <link> tags are not needed when using next/font */}
+        {/*
+          This script passes runtime environment variables from the server to the client.
+          It's necessary for services like Cloud Run where client-side env vars aren't available at build time.
+          The 'dynamic' export ensures this layout is server-rendered at request time, making process.env available.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.NEXT_PUBLIC_SUPABASE_URL = "${process.env.NEXT_PUBLIC_SUPABASE_URL}";
+              window.NEXT_PUBLIC_SUPABASE_ANON_KEY = "${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}";
+            `,
+          }}
+        />
       </head>
       <body className="font-body antialiased bg-background text-foreground min-h-screen flex flex-col">
         <AppProviders>
