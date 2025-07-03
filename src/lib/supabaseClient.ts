@@ -24,8 +24,13 @@ const supabaseAnonKey =
     ? window.NEXT_PUBLIC_SUPABASE_ANON_KEY
     : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// The app cannot function without these, so we initialize the client.
-// The non-null assertions (!) tell TypeScript that we are sure these values
-// will be present at runtime. The script in layout.tsx helps ensure this.
-// The Supabase client itself will throw an error if the values are null/undefined.
-export const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+// Throw a clear error if the variables are not available at runtime.
+// The app cannot function without them.
+if (!supabaseUrl) {
+  throw new Error('Supabase URL is missing. Check your .env.local file or server environment variables for NEXT_PUBLIC_SUPABASE_URL.');
+}
+if (!supabaseAnonKey) {
+  throw new Error('Supabase Anon Key is missing. Check your .env.local file or server environment variables for NEXT_PUBLIC_SUPABASE_ANON_KEY.');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);

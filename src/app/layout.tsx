@@ -7,6 +7,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { AuthGuard } from '@/components/AuthGuard';
 
 // Force dynamic rendering to ensure server-side environment variables are available at runtime.
+// This is crucial for deployment environments where build-time variables are not available.
 export const dynamic = 'force-dynamic';
 
 // Initialize Inter font
@@ -32,10 +33,10 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${inter.variable} h-full`} suppressHydrationWarning>
       <head>
         {/*
-          This script passes runtime environment variables from the server to the client.
+          This script safely passes runtime environment variables from the server to the client.
           It's necessary for services like Cloud Run where client-side env vars aren't available at build time.
           The 'dynamic' export ensures this layout is server-rendered at request time, making process.env available.
-          Using JSON.stringify with a null fallback is a safer way to embed the variables.
+          JSON.stringify with a null fallback prevents syntax errors if a variable is missing.
         */}
         <script
           dangerouslySetInnerHTML={{
