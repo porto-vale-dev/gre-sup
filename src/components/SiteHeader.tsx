@@ -1,12 +1,12 @@
-
 "use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Ticket as TicketIcon, UserCircle, Archive, Home, LayoutDashboard } from 'lucide-react';
+import { LogOut, Ticket as TicketIcon, UserCircle, Archive, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import React from 'react';
+import Image from 'next/image';
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -21,12 +21,14 @@ export function SiteHeader() {
     return (
        <header className="bg-card border-b shadow-sm">
         <div className="container mx-auto h-20 flex items-center justify-center px-4">
-           <Link href="/" className="flex items-center gap-3 text-primary">
-            <LayoutDashboard className="h-8 w-8" />
-            <div className="flex flex-col leading-tight">
-              <span className="text-2xl sm:text-3xl font-headline font-bold">Portal</span>
-              <span className="text-sm font-normal opacity-90">Porto Vale</span>
-            </div>
+           <Link href="/">
+              <Image
+                src="/logo.png"
+                alt="Portal Porto Vale Logo"
+                width={160}
+                height={56}
+                priority
+              />
           </Link>
         </div>
       </header>
@@ -47,14 +49,16 @@ export function SiteHeader() {
         <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
           <Link
             href={isAuthenticated ? "/suporte-gre/painel" : "/suporte-gre"}
-            className="flex items-center gap-3 text-primary transition-colors hover:text-primary/80"
-            aria-label="Ticket Flow Home"
+            className="flex items-center gap-3 transition-colors"
+            aria-label="Portal Porto Vale Home"
           >
-            <TicketIcon className="h-8 w-8 sm:h-9 sm:w-9" />
-            <div className="flex flex-col leading-tight">
-              <span className="text-xl sm:text-2xl font-headline font-bold">Ticket Flow</span>
-              <span className="text-xs font-normal opacity-90">Porto Vale</span>
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Portal Porto Vale Logo"
+              width={160}
+              height={56}
+              priority
+            />
              {isAuthenticated && isTicketDashboardArea && (
               <span className="text-sm sm:text-base font-normal text-muted-foreground hidden md:inline ml-1">
                 {isArchivedPage ? "- Arquivados" : "- Painel do Gestor"}
@@ -116,12 +120,14 @@ export function SiteHeader() {
   return (
     <header className="bg-card border-b sticky top-0 z-40 shadow-sm">
       <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
-         <Link href={isAuthenticated ? '/hub' : '/'} className="flex items-center gap-3 text-primary">
-          <LayoutDashboard className="h-8 w-8" />
-          <div className="flex flex-col leading-tight">
-            <span className="text-2xl sm:text-3xl font-headline font-bold">Portal</span>
-            <span className="text-sm font-normal opacity-90">Porto Vale</span>
-          </div>
+         <Link href={isAuthenticated ? '/hub' : '/'}>
+            <Image
+              src="/logo.png"
+              alt="Portal Porto Vale Logo"
+              width={160}
+              height={56}
+              priority
+            />
         </Link>
 
         {!isLoading && isAuthenticated && (
