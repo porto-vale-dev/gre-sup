@@ -50,11 +50,11 @@ export function SiteHeader() {
           <Link
             href={isAuthenticated ? "/suporte-gre/painel" : "/suporte-gre"}
             className="flex items-center gap-3 transition-colors"
-            aria-label="Portal Porto Vale Home"
+            aria-label="TicketFlow Home"
           >
             <Image
-              src="/logo_portal_pv.webp"
-              alt="Portal Porto Vale Logo"
+              src="/logo_ticket_pv.webp"
+              alt="TicketFlow Logo"
               width={160}
               height={56}
               priority
