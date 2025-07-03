@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: 'Portal Porto Vale',
   description: 'Portal de serviços da Porto Vale Consórcio e Seguros',
   icons: {
-    icon: '/favicon.ico', // Assuming you might add a favicon later
+    icon: '/logo.png',
   },
 };
 
@@ -35,13 +35,13 @@ export default function RootLayout({
           This script passes runtime environment variables from the server to the client.
           It's necessary for services like Cloud Run where client-side env vars aren't available at build time.
           The 'dynamic' export ensures this layout is server-rendered at request time, making process.env available.
-          Using JSON.stringify is a safer way to embed the variables.
+          Using JSON.stringify with a null fallback is a safer way to embed the variables.
         */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              window.NEXT_PUBLIC_SUPABASE_URL = ${JSON.stringify(process.env.NEXT_PUBLIC_SUPABASE_URL)};
-              window.NEXT_PUBLIC_SUPABASE_ANON_KEY = ${JSON.stringify(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)};
+              window.NEXT_PUBLIC_SUPABASE_URL = ${JSON.stringify(process.env.NEXT_PUBLIC_SUPABASE_URL || null)};
+              window.NEXT_PUBLIC_SUPABASE_ANON_KEY = ${JSON.stringify(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || null)};
             `,
           }}
         />
