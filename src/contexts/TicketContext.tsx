@@ -121,10 +121,10 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         solution_files: null,
       };
 
-      const newTicketPayload = user 
-        ? { ...newTicketDataBase, user_id: user.id }
-        : newTicketDataBase;
-
+      const newTicketPayload = { 
+        ...newTicketDataBase, 
+        user_id: user ? user.id : null 
+      };
 
       const { error: insertError } = await supabase
         .from('tickets')
