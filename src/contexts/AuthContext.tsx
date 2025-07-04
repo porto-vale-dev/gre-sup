@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const processSession = async (session: Session | null) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
+      setIsLoading(false); // REVERTED: Set loading to false before profile fetch for faster page loads
 
       if (currentUser) {
         const profile = await fetchUserProfile(currentUser);
@@ -65,8 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCargo(null);
         setUsername(null);
       }
-      // Finished loading session and profile data
-      setIsLoading(false);
     };
 
     // Immediately check the session on mount
@@ -77,8 +76,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        // When auth state changes, re-enter loading state until profile is fetched
-        setIsLoading(true);
         processSession(session);
       }
     );

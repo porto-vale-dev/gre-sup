@@ -35,9 +35,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const isPublicPath = PUBLIC_PATHS.includes(pathname);
   const isAdminPath = ADMIN_PATHS.includes(pathname);
   
+  // A profile is considered loading if the user is authenticated but we don't have a cargo yet.
+  // We only need this extended loading check for admin paths to prevent content flashing.
+  const isAwaitingProfileForAdminPath = isAuthenticated && isAdminPath && cargo === null;
+
   useEffect(() => {
-    // Don't do anything while loading the session and profile
-    if (isLoading) {
+    // If the session is loading, or if we're on an admin path and the profile is still loading, wait.
+    if (isLoading || isAwaitingProfileForAdminPath) {
       return;
     }
 
@@ -60,10 +64,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       router.replace(AUTHENTICATED_ROOT);
       return;
     }
-  }, [isLoading, isAuthenticated, cargo, isPublicPath, isAdminPath, pathname, router]);
+  }, [isLoading, isAuthenticated, cargo, isPublicPath, isAdminPath, pathname, router, isAwaitingProfileForAdminPath]);
 
-  // While loading the session, show a skeleton.
-  if (isLoading) {
+  // While loading the session, or the profile for an admin path, show a skeleton.
+  if (isLoading || isAwaitingProfileForAdminPath) {
     return <AuthLoadingSkeleton />;
   }
 
