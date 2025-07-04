@@ -58,8 +58,8 @@ export function SiteHeader() {
             <Image
               src={logoTicket}
               alt="TicketFlow Logo"
-              width={100}
-              height={35}
+              width={149}
+              height={45}
               priority
             />
           </Link>
