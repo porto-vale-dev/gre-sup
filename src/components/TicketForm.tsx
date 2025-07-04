@@ -18,19 +18,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ticketSchema, type TicketFormData } from '@/lib/schemas';
-import { TICKET_REASONS, ALLOWED_FILE_TYPES, MAX_FILE_SIZE, MAX_OBSERVATIONS_LENGTH } from '@/lib/constants';
-// TicketFile type is now mainly for display, raw File object is used for submission
+import { TICKET_REASONS, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_COUNT } from '@/lib/constants';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Info, Send, Paperclip, UploadCloud, AlertTriangle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
-// readFileAsDataURL is no longer needed as we directly upload the File object
+import { FileText, Info, Send, Paperclip, UploadCloud, AlertTriangle, X } from 'lucide-react';
 
 export function TicketForm() {
   const [selectedReason, setSelectedReason] = useState<(typeof TICKET_REASONS)[0] | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null); // Store the selected File object
   const { addTicket } = useTickets();
   const { toast } = useToast();
 
@@ -41,51 +35,48 @@ export function TicketForm() {
       phone: "",
       reason: "",
       observations: "",
-      // file: undefined, // Zod schema handles this. We'll use selectedFile state.
+      file: undefined,
     },
   });
+
+  const selectedFiles = form.watch("file");
+  const selectedFilesArray = selectedFiles ? Array.from(selectedFiles) : [];
 
   const handleReasonChange = (value: string) => {
     const reason = TICKET_REASONS.find(r => r.value === value) || null;
     setSelectedReason(reason);
     form.setValue("reason", value);
   };
-
+  
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > MAX_FILE_SIZE) {
-        form.setError("file", { type: "manual", message: `Tamanho máximo do arquivo é ${MAX_FILE_SIZE / 1024 / 1024}MB.` });
-        setFileName(null);
-        setSelectedFile(null);
-        event.target.value = ""; 
-        return;
-      }
-      const isAllowedType = ALLOWED_FILE_TYPES.includes(file.type) || ALLOWED_FILE_TYPES.some(ext => file.name.toLowerCase().endsWith(ext.toLowerCase()));
-      if (!isAllowedType && !file.name.match(/\.(pdf|doc|docx|txt|xls|xlsx|csv|jpg|jpeg|png|gif)$/i) ) {
-         form.setError("file", { type: "manual", message: "Tipo de arquivo inválido." });
-         setFileName(null);
-         setSelectedFile(null);
-         event.target.value = ""; 
-        return;
-      }
-      form.clearErrors("file");
-      setFileName(file.name);
-      setSelectedFile(file); // Store the File object
-    } else {
-      setFileName(null);
-      setSelectedFile(null);
+    const files = event.target.files;
+    if (files) {
+        form.setValue("file", files, { shouldValidate: true });
     }
   };
 
+  const removeFile = (indexToRemove: number) => {
+    const currentFiles = selectedFilesArray;
+    const updatedFiles = currentFiles.filter((_, index) => index !== indexToRemove);
+
+    // Create a new FileList
+    const dataTransfer = new DataTransfer();
+    updatedFiles.forEach(file => dataTransfer.items.add(file));
+
+    form.setValue("file", dataTransfer.files, { shouldValidate: true });
+  };
+
+
   async function onSubmit(data: TicketFormData) {
+    const filesToUpload = data.file ? Array.from(data.file) : undefined;
+    
     const ticketPayload = {
       name: data.name,
       phone: data.phone,
       reason: data.reason,
       estimated_response_time: selectedReason?.responseTime || "N/A",
       observations: data.observations,
-      file: selectedFile || undefined, // Pass the File object to addTicket
+      files: filesToUpload,
     };
 
     const success = await addTicket(ticketPayload);
@@ -93,8 +84,6 @@ export function TicketForm() {
     if (success) {
       form.reset();
       setSelectedReason(null);
-      setFileName(null);
-      setSelectedFile(null);
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = "";
     }
@@ -203,18 +192,18 @@ export function TicketForm() {
             />
             <FormField
               control={form.control}
-              name="file" // Still needed for Zod validation linking
-              render={({ fieldState }) => ( // Only need fieldState for error display
+              name="file" 
+              render={({ fieldState }) => ( 
                 <FormItem>
-                  <FormLabel>Anexar Arquivo (Opcional)</FormLabel>
+                  <FormLabel>Anexar Arquivos (Opcional)</FormLabel>
                   <FormControl>
                     <div className="relative">
                         <Input 
                           id="file-upload" 
                           type="file" 
+                          multiple
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          onChange={handleFileChange} // Uses custom handler
-                          // onBlur, name, ref are not directly used from RHF for file input
+                          onChange={handleFileChange}
                           accept={ALLOWED_FILE_TYPES.join(',')}
                         />
                         <Label 
@@ -223,20 +212,33 @@ export function TicketForm() {
                         >
                           <UploadCloud className="h-6 w-6 text-muted-foreground" />
                           <span className="text-muted-foreground">
-                            {fileName ? fileName : "Clique para selecionar ou arraste um arquivo"}
+                            Clique para selecionar ou arraste os arquivos
                           </span>
                         </Label>
                     </div>
                   </FormControl>
-                  {fileName && (
-                    <FormDescription className="mt-2 text-primary flex items-center gap-1.5">
-                        <Paperclip className="h-4 w-4" /> Arquivo selecionado: {fileName}
-                    </FormDescription>
-                  )}
                    <FormDescription>
-                    Tipos permitidos: PDF, DOC(X), TXT, XLS(X), CSV, Imagens (JPG, PNG, GIF). Tamanho máx: 5MB.
+                    Máximo de {MAX_FILES_COUNT} arquivos. Tamanho máximo por arquivo: 50MB.
                   </FormDescription>
                   {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
+                  
+                  {selectedFilesArray.length > 0 && (
+                    <div className="space-y-2 pt-2">
+                        <p className="text-sm font-medium text-muted-foreground">Arquivos selecionados:</p>
+                        {selectedFilesArray.map((file, index) => (
+                           <div key={index} className="flex items-center justify-between p-2 text-sm border rounded-md bg-muted/50">
+                               <div className="flex items-center gap-2 truncate">
+                                    <Paperclip className="h-4 w-4 shrink-0" />
+                                    <span className="truncate">{file.name}</span>
+                               </div>
+                               <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeFile(index)}>
+                                   <X className="h-4 w-4" />
+                               </Button>
+                           </div>
+                        ))}
+                    </div>
+                  )}
+
                 </FormItem>
               )}
             />

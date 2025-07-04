@@ -31,7 +31,7 @@ interface TicketDetailsModalProps {
 }
 
 const FilePreviewItem: React.FC<{
-  file: SolutionFile;
+  file: { file_path: string; file_name: string; };
   onDownload: (filePath: string, fileName: string) => void;
   onPreview: (filePath: string) => Promise<string | null>;
 }> = ({ file, onDownload, onPreview }) => {
@@ -90,9 +90,46 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
       setSolutionText(ticket.solution || '');
       setStagedFiles([]);
     }
-  }, [ticket?.id]); 
+  }, [ticket?.id, isOpen]); 
 
   if (!ticket) return null;
+
+  const renderAttachments = () => {
+    if (!ticket.file_path || !ticket.file_name) {
+      return null;
+    }
+
+    try {
+      // New multi-file format: file_name is a JSON array of strings
+      const fileNames = JSON.parse(ticket.file_name);
+      if (Array.isArray(fileNames) && typeof ticket.file_path === 'string') {
+        return (
+          <div className="space-y-2">
+            {fileNames.map((name: string, index: number) => (
+              <FilePreviewItem 
+                key={index}
+                file={{ file_path: `${ticket.file_path}/${name}`, file_name: name }}
+                onDownload={downloadFile} 
+                onPreview={createPreviewUrl} 
+              />
+            ))}
+          </div>
+        );
+      }
+    } catch (e) {
+      // Fallback for old single-file format (or if file_name is not a JSON array)
+    }
+
+    // Old single-file format
+    return (
+      <FilePreviewItem 
+        file={{ file_path: ticket.file_path, file_name: ticket.file_name }}
+        onDownload={downloadFile} 
+        onPreview={createPreviewUrl} 
+      />
+    );
+  };
+
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -191,8 +228,8 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
                 <>
                   <Separator />
                   <div>
-                    <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Paperclip className="h-4 w-4" />Arquivo Anexado:</strong>
-                    <FilePreviewItem file={{ file_path: ticket.file_path, file_name: ticket.file_name }} onDownload={downloadFile} onPreview={createPreviewUrl} />
+                    <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Paperclip className="h-4 w-4" />Arquivos Anexados:</strong>
+                    {renderAttachments()}
                   </div>
                 </>
               )}

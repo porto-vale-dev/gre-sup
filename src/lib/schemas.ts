@@ -1,5 +1,6 @@
+
 import { z } from 'zod';
-import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH } from './constants';
+import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_COUNT } from './constants';
 
 export const ticketSchema = z.object({
   name: z.string().min(1, { message: "Nome é obrigatório." }),
@@ -8,11 +9,22 @@ export const ticketSchema = z.object({
   observations: z.string().min(1, { message: "Observações são obrigatórias." }).max(MAX_OBSERVATIONS_LENGTH, { message: `Observações não podem exceder ${MAX_OBSERVATIONS_LENGTH} caracteres.` }),
   file: z
     .custom<FileList>()
-    .refine((files) => files === undefined || files === null || files.length === 0 || (files?.[0]?.size <= MAX_FILE_SIZE), `Tamanho máximo do arquivo é 5MB.`)
-    .refine(
-      (files) => files === undefined || files === null || files.length === 0 || ALLOWED_FILE_TYPES.includes(files?.[0]?.type) || ALLOWED_FILE_TYPES.some(ext => files?.[0]?.name.endsWith(ext)),
-      "Tipos de arquivo permitidos: PDF, DOC, DOCX, TXT, XLS, XLSX, CSV, JPG, JPEG, PNG, GIF."
+    .refine((files) => !files || files.length <= MAX_FILES_COUNT, 
+      `Você pode anexar no máximo ${MAX_FILES_COUNT} arquivos.`
     )
+    .refine((files) => {
+      if (!files || files.length === 0) return true;
+      return Array.from(files).every(file => file.size <= MAX_FILE_SIZE);
+    }, `O tamanho máximo por arquivo é de 50MB.`)
+    .refine((files) => {
+       if (!files || files.length === 0) return true;
+       return Array.from(files).every(file => {
+          const isAllowedByName = ALLOWED_FILE_TYPES.some(ext => file.name.toLowerCase().endsWith(ext.toLowerCase()));
+          const isAllowedByType = ALLOWED_FILE_TYPES.includes(file.type);
+          const isAllowedByRegex = !!file.name.match(/\.(pdf|doc|docx|txt|xls|xlsx|csv|jpg|jpeg|png|gif)$/i);
+          return isAllowedByName || isAllowedByType || isAllowedByRegex;
+       });
+    }, "Um ou mais arquivos são de tipo inválido. Tipos permitidos: PDF, DOC(X), TXT, XLS(X), CSV, Imagens.")
     .optional(),
 });
 

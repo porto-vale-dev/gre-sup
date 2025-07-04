@@ -44,6 +44,7 @@ export const ALLOWED_FILE_TYPES = [
   "image/gif",
 ];
 
-export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+export const MAX_FILES_COUNT = 10;
 export const MAX_SOLUTION_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 export const MAX_OBSERVATIONS_LENGTH = 10000;

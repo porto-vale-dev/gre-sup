@@ -21,7 +21,7 @@ interface TicketContextType {
     reason: string;
     estimated_response_time: string;
     observations?: string;
-    file?: File;
+    files?: File[];
   }) => Promise<boolean>; // Return boolean for success
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
   updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
@@ -82,29 +82,32 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     reason: string;
     estimated_response_time: string;
     observations?: string;
-    file?: File;
+    files?: File[];
   }): Promise<boolean> => {
     
-    let filePath: string | undefined = undefined;
-    let fileName: string | undefined = undefined;
+    let filePath: string | null = null;
+    let fileName: string | null = null;
     const submissionDate = new Date().toISOString();
 
     try {
-      if (ticketData.file) {
-        const file = ticketData.file;
-        fileName = file.name;
+      if (ticketData.files && ticketData.files.length > 0) {
+        const folderPath = `public/${crypto.randomUUID()}`;
+        const uploadedFileNames: string[] = [];
         
-        const sanitizedFileName = fileName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
-        const newFileNameForPath = `${crypto.randomUUID()}-${sanitizedFileName}`;
-        filePath = `public/${newFileNameForPath}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from(TICKET_FILES_BUCKET)
-          .upload(filePath, file);
-
-        if (uploadError) {
-          throw new Error(`Erro no upload do arquivo: ${uploadError.message}`);
+        for (const file of ticketData.files) {
+          const pathInBucket = `${folderPath}/${file.name}`;
+          const { error: uploadError } = await supabase.storage
+            .from(TICKET_FILES_BUCKET)
+            .upload(pathInBucket, file);
+          
+          if (uploadError) {
+            throw new Error(`Erro no upload do arquivo ${file.name}: ${uploadError.message}`);
+          }
+          uploadedFileNames.push(file.name);
         }
+        
+        filePath = folderPath;
+        fileName = JSON.stringify(uploadedFileNames);
       }
 
       const newTicketDataBase = {
