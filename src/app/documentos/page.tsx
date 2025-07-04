@@ -8,7 +8,8 @@ import type { Document } from '@/lib/documentsData';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Landmark, Folder, ArrowLeft } from 'lucide-react';
+import { Landmark, Folder, ArrowLeft, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 
 const DocumentCard = ({ document }: { document: Document }) => (
@@ -36,6 +37,9 @@ export default function DocumentosPage() {
   const filteredDocuments = useMemo(() => {
     if (selectedSubCategory === 'Todos') {
       return documentsData;
+    }
+    if (selectedSubCategory === 'Financeiro') {
+      return documentsData.filter(doc => doc.category === 'Financeiro');
     }
     return documentsData.filter(doc => doc.subCategory === selectedSubCategory);
   }, [selectedSubCategory]);
@@ -72,10 +76,18 @@ export default function DocumentosPage() {
                     </Button>
                     <Accordion type="single" collapsible defaultValue="financeiro" className="w-full">
                     <AccordionItem value="financeiro" className="border-b-0">
-                        <AccordionTrigger className="font-medium py-2 px-3 hover:bg-muted rounded-md text-base">
-                        <div className="flex items-center gap-2">
-                            <Landmark className="h-4 w-4" /> Financeiro
-                        </div>
+                        <AccordionTrigger
+                          onClick={() => setSelectedSubCategory('Financeiro')}
+                          className={cn(
+                            "py-2 px-3 rounded-md text-base no-underline",
+                            selectedSubCategory === 'Financeiro'
+                                ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                : "hover:bg-accent hover:text-accent-foreground"
+                          )}
+                        >
+                          <div className="flex items-center gap-2 font-medium">
+                              <Landmark className="h-4 w-4" /> Financeiro
+                          </div>
                         </AccordionTrigger>
                         <AccordionContent className="pl-4 pt-1">
                         <div className="flex flex-col gap-1">
