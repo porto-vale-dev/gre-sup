@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trophy, ArrowRight, Ticket, Megaphone } from 'lucide-react';
+import { Trophy, ArrowRight, Ticket, Megaphone, FileText } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Service {
@@ -20,6 +20,7 @@ const allServices: Service[] = [
     { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
     { title: "Mural de Avisos", href: "/mural-de-avisos", Icon: Megaphone, description: "Veja os últimos avisos e comunicados.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
     { title: "Sistema Suporte GRE", href: "/suporte-gre/painel", Icon: Ticket, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm"] },
+    { title: "Documentos", href: "/documentos", Icon: FileText, description: "Acesse e gerencie documentos importantes.", allowedRoles: ["adm"] },
 ];
 
 const ServiceCard = ({ service }: { service: Service }) => (
@@ -55,7 +56,7 @@ export default function HubPage() {
     }, [accessibleServices]);
 
     const adminTools = useMemo(() => {
-      return accessibleServices.filter(s => s.title === "Sistema Suporte GRE");
+      return accessibleServices.filter(s => s.title === "Sistema Suporte GRE" || s.title === "Documentos");
     }, [accessibleServices]);
     
     return (
