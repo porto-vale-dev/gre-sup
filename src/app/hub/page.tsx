@@ -49,6 +49,14 @@ export default function HubPage() {
       const userRole = cargo || 'colaborador';
       return allServices.filter(service => service.allowedRoles.includes(userRole));
     }, [cargo]);
+
+    const generalTools = useMemo(() => {
+      return accessibleServices.filter(s => s.title === "Rankings" || s.title === "Mural de Avisos");
+    }, [accessibleServices]);
+
+    const adminTools = useMemo(() => {
+      return accessibleServices.filter(s => s.title === "Sistema Suporte GRE");
+    }, [accessibleServices]);
     
     return (
         <div className="space-y-8">
@@ -58,10 +66,28 @@ export default function HubPage() {
             </div>
             
             {accessibleServices.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {accessibleServices.map(service => (
-                        <ServiceCard key={service.href} service={service} />
-                    ))}
+                 <div className="space-y-10">
+                    {generalTools.length > 0 && (
+                        <section>
+                            <h2 className="text-2xl font-semibold tracking-tight border-b pb-2 mb-6">Geral</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {generalTools.map(service => (
+                                    <ServiceCard key={service.href} service={service} />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {adminTools.length > 0 && (
+                        <section>
+                            <h2 className="text-2xl font-semibold tracking-tight border-b pb-2 mb-6">Administrativo</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {adminTools.map(service => (
+                                    <ServiceCard key={service.href} service={service} />
+                                ))}
+                            </div>
+                        </section>
+                    )}
                 </div>
             ) : (
                 <p className="text-muted-foreground">Você não tem acesso a nenhuma ferramenta no momento.</p>
