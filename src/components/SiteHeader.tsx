@@ -59,8 +59,8 @@ export function SiteHeader() {
             <Image
               src={logoTicket}
               alt="TicketFlow Logo"
-              width={170}
-              height={59}
+              width={130}
+              height={45}
               priority
             />
           </Link>
@@ -73,21 +73,21 @@ export function SiteHeader() {
                       <>
                       <Link href="/hub" passHref>
                           <Button variant="outline" size="sm" aria-label="Portal Principal">
-                          <Home className="mr-1.5 h-4 w-4" />
+                          <Home />
                           Portal
                           </Button>
                       </Link>
                       {isArchivedPage ? (
                       <Link href="/suporte-gre/painel" passHref>
                           <Button variant="ghost" size="sm" aria-label="Painel Principal">
-                          <TicketIcon className="mr-1.5 h-4 w-4" />
+                          <TicketIcon />
                           Painel
                           </Button>
                       </Link>
                       ) : (
                       <Link href="/suporte-gre/painel/archived" passHref>
                           <Button variant="ghost" size="sm" aria-label="Tickets Arquivados">
-                          <Archive className="mr-1.5 h-4 w-4" />
+                          <Archive />
                           Arquivados
                           </Button>
                       </Link>
@@ -95,7 +95,7 @@ export function SiteHeader() {
                       </>
                   )}
                   <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Sair da conta">
-                    <LogOut className="mr-1.5 h-4 w-4" />
+                    <LogOut />
                     Sair
                   </Button>
                 </>
@@ -103,7 +103,7 @@ export function SiteHeader() {
               {!isAuthenticated && isTicketFormPage && (
                 <Link href="/suporte-gre/login" passHref>
                   <Button variant="outline" size="sm" className="rounded-full">
-                    <UserCircle className="mr-1.5 h-4 w-4" />
+                    <UserCircle />
                     Acesso Restrito
                   </Button>
                 </Link>
@@ -135,7 +135,7 @@ export function SiteHeader() {
                   <p className="text-sm font-medium text-foreground">Bem-vindo, {username || user?.email?.split('@')[0]}</p>
               </div>
               <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Sair da conta">
-                <LogOut className="mr-1.5 h-4 w-4" />
+                <LogOut />
                 Sair
               </Button>
           </div>
