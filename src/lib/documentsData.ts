@@ -11,9 +11,7 @@ export interface Document {
   downloadUrl: string;
 }
 
-// Nota: Os URLs apontam para um placeholder. Os arquivos reais precisam ser adicionados na pasta `public/documents`
-const placeholderUrl = '/documents/placeholder.pdf';
-
+// Nota: Os URLs apontam para os arquivos na pasta `public/documents`
 export const documentsData: Document[] = [
   {
     title: 'Solicitação de Contas a Pagar',
@@ -21,8 +19,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Contas a pagar',
     Icon: FileText,
-    previewUrl: placeholderUrl,
-    downloadUrl: placeholderUrl,
+    previewUrl: '/documents/solicitacao-contas-a-pagar.pdf',
+    downloadUrl: '/documents/solicitacao-contas-a-pagar.pdf',
   },
   {
     title: 'Solicitação de Reembolso',
@@ -30,8 +28,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Reembolso de despesas',
     Icon: Receipt,
-    previewUrl: placeholderUrl,
-    downloadUrl: placeholderUrl,
+    previewUrl: '/documents/solicitacao-reembolso.pdf',
+    downloadUrl: '/documents/solicitacao-reembolso.pdf',
   },
   {
     title: 'Adiantamento de Despesas',
@@ -39,8 +37,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Adiantamento de despesas',
     Icon: ArrowRightLeft,
-    previewUrl: placeholderUrl,
-    downloadUrl: placeholderUrl,
+    previewUrl: '/documents/adiantamento-despesas.pdf',
+    downloadUrl: '/documents/adiantamento-despesas.pdf',
   },
   {
     title: 'Locação de Veículos',
@@ -48,8 +46,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Locação de veículos',
     Icon: Car,
-    previewUrl: placeholderUrl,
-    downloadUrl: placeholderUrl,
+    previewUrl: '/documents/locacao-veiculos.pdf',
+    downloadUrl: '/documents/locacao-veiculos.pdf',
   },
   {
     title: 'Recebimento de Demonstrativo NF e Prestador de Serviço',
@@ -57,8 +55,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Recebimento de demonstrativo NF e Prestador de serviço',
     Icon: FileSpreadsheet,
-    previewUrl: placeholderUrl,
-    downloadUrl: placeholderUrl,
+    previewUrl: '/documents/recebimento-demonstrativo-nf.pdf',
+    downloadUrl: '/documents/recebimento-demonstrativo-nf.pdf',
   },
   {
     title: 'Pagamento de Premiação de Campanhas',
@@ -66,7 +64,7 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Pagamento de premiação de campanhas',
     Icon: Trophy,
-    previewUrl: placeholderUrl,
-    downloadUrl: placeholderUrl,
+    previewUrl: '/documents/pagamento-premiacao-campanhas.pdf',
+    downloadUrl: '/documents/pagamento-premiacao-campanhas.pdf',
   },
 ];
