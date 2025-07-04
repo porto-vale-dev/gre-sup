@@ -185,10 +185,10 @@ export function TicketForm() {
               name="observations"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Observações (Opcional)</FormLabel>
+                  <FormLabel>Observações</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Detalhe aqui sua solicitação ou problema..."
+                      placeholder="Detalhe aqui sua solicitação ou problema. Este campo é obrigatório."
                       className="min-h-[120px] resize-y"
                       maxLength={MAX_OBSERVATIONS_LENGTH}
                       {...field}

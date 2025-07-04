@@ -5,7 +5,7 @@ export const ticketSchema = z.object({
   name: z.string().min(1, { message: "Nome é obrigatório." }),
   phone: z.string().min(1, { message: "Telefone é obrigatório." }),
   reason: z.string().min(1, { message: "Motivo do ticket é obrigatório." }),
-  observations: z.string().max(MAX_OBSERVATIONS_LENGTH, { message: `Observações não podem exceder ${MAX_OBSERVATIONS_LENGTH} caracteres.` }).optional(),
+  observations: z.string().min(1, { message: "Observações são obrigatórias." }).max(MAX_OBSERVATIONS_LENGTH, { message: `Observações não podem exceder ${MAX_OBSERVATIONS_LENGTH} caracteres.` }),
   file: z
     .custom<FileList>()
     .refine((files) => files === undefined || files === null || files.length === 0 || (files?.[0]?.size <= MAX_FILE_SIZE), `Tamanho máximo do arquivo é 5MB.`)
