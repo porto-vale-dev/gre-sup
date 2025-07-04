@@ -171,7 +171,7 @@ export function TicketForm() {
                     </SelectContent>
                   </Select>
                   {selectedReason && (
-                    <FormDescription className="mt-2 text-accent flex items-center gap-1.5">
+                    <FormDescription className="mt-2 text-destructive flex items-center gap-1.5">
                       <Info className="h-4 w-4" />
                       Previsão de resposta: {selectedReason.responseTime}
                     </FormDescription>
