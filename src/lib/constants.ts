@@ -4,11 +4,8 @@ import type { TicketStatus } from '@/types';
 export const TICKET_REASONS = [
   { value: "Erro de APP", label: "Erro de APP", responseTime: "em média 7 dias úteis" },
   { value: "Tratativas de duplicidade de pagamento", label: "Tratativas de duplicidade de pagamento", responseTime: "10 a 15 dias úteis" },
-  { value: "Envio de boletos de adesão", label: "Envio de boletos de adesão", responseTime: "1 dia útil" },
   { value: "Devolução de valores", label: "Devolução de valores", responseTime: "10 a 15 dias úteis" },
-  { value: "Erros de transmissão", label: "Erros de transmissão", responseTime: "1 a 3 dias úteis" },
-  { value: "Encerramento de protocolo - transferências de titularidade", label: "Encerramento de protocolo - transferências de titularidade", responseTime: "7 a 10 dias úteis" },
-  { value: "Processo de Reativação de cotas", label: "Processo de Reativação de cotas", responseTime: "5 dias úteis" },
+  { value: "Processo de transferencia", label: "Processo de transferencia", responseTime: "7 a 10 dias úteis" },
   { value: "Gestão de pendências Porto", label: "Gestão de pendências Porto", responseTime: "1 dia útil" },
   { value: "Link de cartão", label: "Link de cartão", responseTime: "1 dia útil" },
   { value: "Extrato financeiro", label: "Extrato financeiro", responseTime: "1 dia útil" },
@@ -19,7 +16,7 @@ export const TICKET_REASONS = [
   { value: "Contrato assinado pela Porto", label: "Contrato assinado pela Porto", responseTime: "7 dias úteis" },
   { value: "Contrato 2° via simples", label: "Contrato 2° via simples", responseTime: "1 dia útil" },
   { value: "Parcela divergente", label: "Parcela divergente", responseTime: "prazo variável" },
-  { value: "Outros", label: "Outros", responseTime: "consultar" },
+  { value: "Troca de crédito (apenas aumento)", label: "Troca de crédito (apenas aumento)", responseTime: "1 a 3 dias úteis" },
 ];
 
 export const TICKET_STATUSES: TicketStatus[] = ["Novo", "Em Andamento", "Atrasado", "Concluído"];
