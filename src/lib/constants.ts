@@ -15,8 +15,8 @@ export const TICKET_REASONS = [
   { value: "Link de cartão", label: "Link de cartão", responseTime: "1 dia útil" },
   { value: "Parcela divergente", label: "Parcela divergente", responseTime: "prazo variável" },
   { value: "Processo de transferencia", label: "Processo de transferencia", responseTime: "7 a 10 dias úteis" },
+  { value: "Simulação de aumento de crédito", label: "Simulação de aumento de crédito", responseTime: "1 dia útil" },
   { value: "Tratativas de duplicidade de pagamento", label: "Tratativas de duplicidade de pagamento", responseTime: "10 a 15 dias úteis" },
-  { value: "Troca de crédito (apenas aumento)", label: "Troca de crédito (apenas aumento)", responseTime: "1 a 3 dias úteis" },
 ];
 
 export const TICKET_STATUSES: TicketStatus[] = ["Novo", "Em Andamento", "Atrasado", "Concluído"];
