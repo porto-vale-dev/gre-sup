@@ -103,17 +103,23 @@ export function TicketForm() {
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl text-primary flex items-center gap-2">
-          <FileText className="h-8 w-8" /> Abrir Novo Ticket
-        </CardTitle>
-        <CardDescription>Preencha o formulário abaixo para registrar seu chamado.</CardDescription>
-        <Alert variant="accent" className="mt-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle className="font-bold">Atenção!</AlertTitle>
-            <AlertDescription className="font-semibold">
-              ABRA UM TICKET POR SOLICITAÇÃO
-            </AlertDescription>
-        </Alert>
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="font-headline text-3xl text-primary flex shrink-0 items-center gap-2">
+            <FileText className="h-8 w-8" /> Abrir Novo Ticket
+          </CardTitle>
+          <div className="flex w-full items-center gap-2 rounded-lg border border-accent/50 bg-accent/10 p-2 text-accent sm:w-auto">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-bold">Atenção!</p>
+              <p className="text-xs font-semibold">
+                ABRA UM TICKET POR SOLICITAÇÃO
+              </p>
+            </div>
+          </div>
+        </div>
+        <CardDescription>
+          Preencha o formulário abaixo para registrar seu chamado.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
