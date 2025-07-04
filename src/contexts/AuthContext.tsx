@@ -51,39 +51,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // 🔹 Verificação imediata da sessão ao carregar
   useEffect(() => {
-    const processSession = async (session: Session | null) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      setIsLoading(false); // REVERTED: Set loading to false before profile fetch for faster page loads
-
-      if (currentUser) {
-        const profile = await fetchUserProfile(currentUser);
-        setCargo(profile?.cargo || null);
-        setUsername(profile?.username || null);
-      } else {
-        // Clear profile info if not logged in
-        setCargo(null);
-        setUsername(null);
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Erro ao buscar sessão:", error.message);
       }
+      setUser(session?.user ?? null);
+      setIsLoading(false); // <- evita loading infinito
     };
 
-    // Immediately check the session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      processSession(session);
-    });
+    checkSession();
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        processSession(session);
-      }
-    );
+    // 🔹 Listener de mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
 
     return () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // 🔹 Quando o user muda, busca o perfil
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile(user).then((profile) => {
+        setCargo(profile?.cargo || null);
+        setUsername(profile?.username || null);
+      });
+    } else {
+      setCargo(null);
+      setUsername(null);
+    }
+  }, [user]);
 
   const login = async (data: LoginFormData): Promise<{ success: boolean; error?: string }> => {
     const { data: email, error: rpcError } = await supabase

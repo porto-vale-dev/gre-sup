@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Ticket as TicketIcon, UserCircle, Archive, Home } from 'lucide-react';
+import { LogOut, Ticket as TicketIcon, Archive, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import React from 'react';
@@ -45,7 +45,6 @@ export function SiteHeader() {
   if (isTicketSystemArea) {
     const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
     const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
-    const isTicketFormPage = pathname === '/suporte-gre';
 
     // Header for Ticket System (Dashboard, Form)
     return (
@@ -59,8 +58,8 @@ export function SiteHeader() {
             <Image
               src={logoTicket}
               alt="TicketFlow Logo"
-              width={130}
-              height={45}
+              width={100}
+              height={35}
               priority
             />
           </Link>
@@ -100,14 +99,6 @@ export function SiteHeader() {
                   </Button>
                 </>
                )}
-              {!isAuthenticated && isTicketFormPage && (
-                <Link href="/suporte-gre/login" passHref>
-                  <Button variant="outline" size="sm" className="rounded-full">
-                    <UserCircle />
-                    Acesso Restrito
-                  </Button>
-                </Link>
-              )}
             </nav>
           )}
         </div>
