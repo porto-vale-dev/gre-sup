@@ -2,20 +2,20 @@
 import type { TicketStatus } from '@/types';
 
 export const TICKET_REASONS = [
-  { value: "Erro de APP", label: "Erro de APP", responseTime: "em média 7 dias úteis" },
-  { value: "Tratativas de duplicidade de pagamento", label: "Tratativas de duplicidade de pagamento", responseTime: "10 a 15 dias úteis" },
-  { value: "Devolução de valores", label: "Devolução de valores", responseTime: "10 a 15 dias úteis" },
-  { value: "Processo de transferencia", label: "Processo de transferencia", responseTime: "7 a 10 dias úteis" },
-  { value: "Gestão de pendências Porto", label: "Gestão de pendências Porto", responseTime: "1 dia útil" },
-  { value: "Link de cartão", label: "Link de cartão", responseTime: "1 dia útil" },
-  { value: "Extrato financeiro", label: "Extrato financeiro", responseTime: "1 dia útil" },
   { value: "Boleto de lance", label: "Boleto de lance", responseTime: "1 dia útil" },
   { value: "Boleto do mês", label: "Boleto do mês", responseTime: "até 1 dia útil antes do vencimento" },
   { value: "Código de cliente", label: "Código de cliente", responseTime: "1 dia útil" },
-  { value: "Correção de cadastro - nome e estado civil", label: "Correção de cadastro - nome e estado civil", responseTime: "3 dias úteis" },
-  { value: "Contrato assinado pela Porto", label: "Contrato assinado pela Porto", responseTime: "7 dias úteis" },
   { value: "Contrato 2° via simples", label: "Contrato 2° via simples", responseTime: "1 dia útil" },
+  { value: "Contrato assinado pela Porto", label: "Contrato assinado pela Porto", responseTime: "7 dias úteis" },
+  { value: "Correção de cadastro - nome e estado civil", label: "Correção de cadastro - nome e estado civil", responseTime: "3 dias úteis" },
+  { value: "Devolução de valores", label: "Devolução de valores", responseTime: "10 a 15 dias úteis" },
+  { value: "Erro de APP", label: "Erro de APP", responseTime: "em média 7 dias úteis" },
+  { value: "Extrato financeiro", label: "Extrato financeiro", responseTime: "1 dia útil" },
+  { value: "Gestão de pendências Porto", label: "Gestão de pendências Porto", responseTime: "1 dia útil" },
+  { value: "Link de cartão", label: "Link de cartão", responseTime: "1 dia útil" },
   { value: "Parcela divergente", label: "Parcela divergente", responseTime: "prazo variável" },
+  { value: "Processo de transferencia", label: "Processo de transferencia", responseTime: "7 a 10 dias úteis" },
+  { value: "Tratativas de duplicidade de pagamento", label: "Tratativas de duplicidade de pagamento", responseTime: "10 a 15 dias úteis" },
   { value: "Troca de crédito (apenas aumento)", label: "Troca de crédito (apenas aumento)", responseTime: "1 a 3 dias úteis" },
 ];
 
