@@ -22,7 +22,8 @@ import { TICKET_REASONS, ALLOWED_FILE_TYPES, MAX_FILE_SIZE, MAX_OBSERVATIONS_LEN
 // TicketFile type is now mainly for display, raw File object is used for submission
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Info, Send, Paperclip, UploadCloud } from 'lucide-react';
+import { FileText, Info, Send, Paperclip, UploadCloud, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // readFileAsDataURL is no longer needed as we directly upload the File object
 
@@ -106,6 +107,13 @@ export function TicketForm() {
           <FileText className="h-8 w-8" /> Abrir Novo Ticket
         </CardTitle>
         <CardDescription>Preencha o formulário abaixo para registrar seu chamado.</CardDescription>
+        <Alert variant="accent" className="mt-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle className="font-bold">Atenção!</AlertTitle>
+            <AlertDescription className="font-semibold">
+              ABRA UM TICKET POR SOLICITAÇÃO
+            </AlertDescription>
+        </Alert>
       </CardHeader>
       <CardContent>
         <Form {...form}>
