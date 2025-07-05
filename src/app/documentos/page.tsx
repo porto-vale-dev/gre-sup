@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -67,6 +68,7 @@ export default function DocumentosPage() {
   const { toast } = useToast();
 
   const handlePreview = async (doc: Document) => {
+    console.log(`[DEBUG] Tentando gerar URL para visualização. Bucket: "${BUCKET_NAME}", Caminho: "${doc.pathInBucket}"`);
     setLoadingState({ id: doc.fileName, type: 'preview' });
     try {
       const { data, error } = await supabase.storage
@@ -83,7 +85,7 @@ export default function DocumentosPage() {
       console.error("Error creating signed URL:", error);
       toast({
         title: "Erro ao Gerar Visualização",
-        description: `Não foi possível criar o link. Verifique as permissões (Policies) do bucket no Supabase. Erro: ${error.message}`,
+        description: `Não foi possível criar o link. Verifique as permissões (Policies) do bucket no Supabase e se o caminho do arquivo está correto. Erro: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -92,6 +94,7 @@ export default function DocumentosPage() {
   };
 
   const handleDownload = async (doc: Document) => {
+    console.log(`[DEBUG] Tentando baixar arquivo. Bucket: "${BUCKET_NAME}", Caminho: "${doc.pathInBucket}"`);
     setLoadingState({ id: doc.fileName, type: 'download' });
     try {
       const { data, error } = await supabase.storage.from(BUCKET_NAME).download(doc.pathInBucket);
