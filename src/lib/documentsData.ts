@@ -27,8 +27,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Reembolso de despesas',
     Icon: Receipt,
-    fileName: 'solicitcao-reembolso-despesas.pdf',
-    pathInBucket: 'financeiro/solicitcao-reembolso-despesas.pdf',
+    fileName: 'solicitacao-reembolso-despesas.pdf',
+    pathInBucket: 'financeiro/solicitacao-reembolso-despesas.pdf',
   },
   {
     title: 'Adiantamento de Despesas',
