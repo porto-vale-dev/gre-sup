@@ -12,7 +12,8 @@ export interface Document {
 }
 
 // Nota: Os caminhos (filePath) são relativos ao bucket 'documentos' no Supabase.
-// Ex: 'financeiro/solicitacao-contas-a-pagar.pdf'
+// Verifique se os nomes dos arquivos e a estrutura de pastas no seu bucket
+// correspondem exatamente aos valores de 'filePath' abaixo.
 export const documentsData: Document[] = [
   {
     title: 'Solicitação de Contas a Pagar',
@@ -20,8 +21,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Contas a pagar',
     Icon: FileText,
-    filePath: 'financeiro/solicitacao-contas-a-pagar.pdf',
-    fileName: 'solicitacao-contas-a-pagar.pdf',
+    filePath: 'financeiro/contas-a-pagar.pdf',
+    fileName: 'contas-a-pagar.pdf',
   },
   {
     title: 'Solicitação de Reembolso',
@@ -29,8 +30,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Reembolso de despesas',
     Icon: Receipt,
-    filePath: 'financeiro/solicitacao-reembolso.pdf',
-    fileName: 'solicitacao-reembolso.pdf',
+    filePath: 'financeiro/reembolso-despesas.pdf',
+    fileName: 'reembolso-despesas.pdf',
   },
   {
     title: 'Adiantamento de Despesas',
