@@ -9,11 +9,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Landmark, Folder, ArrowLeft, FileText } from 'lucide-react';
+import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabaseClient';
+import { useToast } from "@/hooks/use-toast";
 
+const DOCUMENTS_BUCKET = 'documentos';
 
-const DocumentCard = ({ document, onPreview }: { document: Document; onPreview: (url: string) => void }) => (
+const DocumentCard = ({ 
+  document, 
+  onPreview, 
+  onDownload,
+  isLoading
+}: { 
+  document: Document; 
+  onPreview: (doc: Document) => void; 
+  onDownload: (doc: Document) => void;
+  isLoading: boolean;
+}) => (
   <Card className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
     <CardHeader>
       <CardTitle className="text-lg">{document.title}</CardTitle>
@@ -22,11 +35,12 @@ const DocumentCard = ({ document, onPreview }: { document: Document; onPreview: 
       <CardDescription>{document.description}</CardDescription>
     </CardContent>
     <CardFooter className="gap-2 pt-4">
-      <Button variant="outline" className="w-full" onClick={() => onPreview(document.previewUrl)}>
+      <Button variant="outline" className="w-full" onClick={() => onPreview(document)} disabled={isLoading}>
         Visualizar
       </Button>
-      <Button asChild variant="secondary" className="w-full">
-        <Link href={document.downloadUrl} download>Download</Link>
+      <Button variant="secondary" className="w-full" onClick={() => onDownload(document)} disabled={isLoading}>
+        <Download className="mr-2 h-4 w-4" />
+        Download
       </Button>
     </CardFooter>
   </Card>
@@ -34,7 +48,9 @@ const DocumentCard = ({ document, onPreview }: { document: Document; onPreview: 
 
 export default function DocumentosPage() {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ url: string; title: string; } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const filteredDocuments = useMemo(() => {
     if (selectedSubCategory === 'Todos') {
@@ -54,21 +70,52 @@ export default function DocumentosPage() {
         index === self.findIndex((t) => t.name === item.name)
     );
   }, []);
+  
+  const handlePreview = async (doc: Document) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.storage
+        .from(DOCUMENTS_BUCKET)
+        .createSignedUrl(doc.filePath, 300); // URL válida por 5 minutos
 
-  const handlePreview = (url: string) => {
-    setPreviewUrl(url);
+      if (error) throw error;
+      setPreview({ url: data.signedUrl, title: doc.title });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao Gerar Visualização",
+        description: `Não foi possível criar o link: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownload = async (doc: Document) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.storage.from(DOCUMENTS_BUCKET).download(doc.filePath);
+      if (error) throw error;
+      
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+        toast({ title: "Erro no Download", description: `Não foi possível baixar o arquivo: ${error.message || "Erro desconhecido."}`, variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const handleClosePreview = () => {
-    setPreviewUrl(null);
+    setPreview(null);
   };
-
-  const getPreviewTitle = () => {
-    if (!previewUrl) return '';
-    const doc = documentsData.find(d => d.previewUrl === previewUrl);
-    return doc ? doc.title : 'Visualização de Documento';
-  };
-
+  
   return (
     <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
       {/* Sidebar */}
@@ -130,12 +177,23 @@ export default function DocumentosPage() {
       {/* Main Content */}
       <main className="flex-1">
             <h1 className="text-3xl font-bold font-headline mb-8 text-primary">
-              {selectedSubCategory === 'Todos' ? 'Todos os Documentos' : selectedSubCategory}
+              {isLoading ? (
+                <div className='flex items-center gap-2'>
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  Carregando...
+                </div>
+              ) : (selectedSubCategory === 'Todos' ? 'Todos os Documentos' : selectedSubCategory)}
             </h1>
             {filteredDocuments.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredDocuments.map(doc => (
-                        <DocumentCard key={doc.title} document={doc} onPreview={handlePreview} />
+                        <DocumentCard 
+                          key={doc.filePath} 
+                          document={doc} 
+                          onPreview={handlePreview}
+                          onDownload={handleDownload}
+                          isLoading={isLoading}
+                        />
                     ))}
                 </div>
             ) : (
@@ -148,25 +206,29 @@ export default function DocumentosPage() {
       </main>
 
       {/* Preview Modal */}
-      <Dialog open={!!previewUrl} onOpenChange={(isOpen) => !isOpen && handleClosePreview()}>
+      <Dialog open={!!preview} onOpenChange={(isOpen) => !isOpen && handleClosePreview()}>
         <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
           <DialogHeader className="p-6 pb-2">
-            <DialogTitle>{getPreviewTitle()}</DialogTitle>
+            <DialogTitle>{preview?.title || 'Visualização de Documento'}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 px-6 pb-6 overflow-hidden">
-            <object
-              data={previewUrl!}
-              type="application/pdf"
-              className="w-full h-full rounded-md border"
-            >
-              <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center bg-muted/50 rounded-md">
-                <p className="text-lg font-semibold text-destructive">Seu navegador não suporta a visualização de PDFs.</p>
-                <p className="text-muted-foreground">Você ainda pode baixar o arquivo.</p>
-                <Button asChild>
-                    <a href={previewUrl!} download>Baixar PDF</a>
-                </Button>
-              </div>
-            </object>
+            {preview ? (
+              <object
+                data={preview.url}
+                type="application/pdf"
+                className="w-full h-full rounded-md border"
+              >
+                <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center bg-muted/50 rounded-md">
+                  <p className="text-lg font-semibold text-destructive">Seu navegador não suporta a visualização de PDFs.</p>
+                  <p className="text-muted-foreground">Você ainda pode baixar o arquivo.</p>
+                  <Button asChild>
+                      <a href={preview.url} download>Baixar PDF</a>
+                  </Button>
+                </div>
+              </object>
+            ) : (
+                <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

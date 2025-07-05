@@ -7,12 +7,12 @@ export interface Document {
   category: 'Financeiro';
   subCategory: string;
   Icon: LucideIcon;
-  previewUrl: string;
-  downloadUrl: string;
+  filePath: string;
+  fileName: string;
 }
 
-// Nota: Os URLs apontam para os arquivos na pasta `public/documents`
-// Certifique-se de que os nomes dos arquivos na pasta correspondam EXATAMENTE aos definidos aqui.
+// Nota: Os caminhos (filePath) são relativos ao bucket 'documentos' no Supabase.
+// Ex: 'financeiro/solicitacao-contas-a-pagar.pdf'
 export const documentsData: Document[] = [
   {
     title: 'Solicitação de Contas a Pagar',
@@ -20,8 +20,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Contas a pagar',
     Icon: FileText,
-    previewUrl: '/documents/solicitacao-contas-a-pagar.pdf',
-    downloadUrl: '/documents/solicitacao-contas-a-pagar.pdf',
+    filePath: 'financeiro/solicitacao-contas-a-pagar.pdf',
+    fileName: 'solicitacao-contas-a-pagar.pdf',
   },
   {
     title: 'Solicitação de Reembolso',
@@ -29,8 +29,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Reembolso de despesas',
     Icon: Receipt,
-    previewUrl: '/documents/solicitacao-reembolso.pdf',
-    downloadUrl: '/documents/solicitacao-reembolso.pdf',
+    filePath: 'financeiro/solicitacao-reembolso.pdf',
+    fileName: 'solicitacao-reembolso.pdf',
   },
   {
     title: 'Adiantamento de Despesas',
@@ -38,8 +38,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Adiantamento de despesas',
     Icon: ArrowRightLeft,
-    previewUrl: '/documents/adiantamento-despesas.pdf',
-    downloadUrl: '/documents/adiantamento-despesas.pdf',
+    filePath: 'financeiro/adiantamento-despesas.pdf',
+    fileName: 'adiantamento-despesas.pdf',
   },
   {
     title: 'Locação de Veículos',
@@ -47,8 +47,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Locação de veículos',
     Icon: Car,
-    previewUrl: '/documents/locacao-veiculos.pdf',
-    downloadUrl: '/documents/locacao-veiculos.pdf',
+    filePath: 'financeiro/locacao-veiculos.pdf',
+    fileName: 'locacao-veiculos.pdf',
   },
   {
     title: 'Recebimento de Demonstrativo NF e Prestador de Serviço',
@@ -56,8 +56,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Recebimento de demonstrativo NF e Prestador de serviço',
     Icon: FileSpreadsheet,
-    previewUrl: '/documents/recebimento-demonstrativo-nf.pdf',
-    downloadUrl: '/documents/recebimento-demonstrativo-nf.pdf',
+    filePath: 'financeiro/recebimento-demonstrativo-nf.pdf',
+    fileName: 'recebimento-demonstrativo-nf.pdf',
   },
   {
     title: 'Pagamento de Premiação de Campanhas',
@@ -65,7 +65,7 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Pagamento de premiação de campanhas',
     Icon: Trophy,
-    previewUrl: '/documents/pagamento-premiacao-campanhas.pdf',
-    downloadUrl: '/documents/pagamento-premiacao-campanhas.pdf',
+    filePath: 'financeiro/pagamento-premiacao-campanhas.pdf',
+    fileName: 'pagamento-premiacao-campanhas.pdf',
   },
 ];
