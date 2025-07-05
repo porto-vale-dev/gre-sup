@@ -12,6 +12,7 @@ export interface Document {
 }
 
 // Nota: Os URLs apontam para os arquivos na pasta `public/documents`
+// Certifique-se de que os nomes dos arquivos na pasta correspondam EXATAMENTE aos definidos aqui.
 export const documentsData: Document[] = [
   {
     title: 'Solicitação de Contas a Pagar',
