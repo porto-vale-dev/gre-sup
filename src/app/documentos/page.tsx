@@ -1,23 +1,32 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { documentsData } from '@/lib/documentsData';
 import type { Document } from '@/lib/documentsData';
+import { supabase } from '@/lib/supabaseClient';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2 } from 'lucide-react';
+import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const BUCKET_NAME = 'documentos';
 
 const DocumentCard = ({ 
   document, 
-  onPreview
+  onPreview,
+  onDownload,
+  isLoadingPreview,
+  isLoadingDownload
 }: { 
   document: Document; 
-  onPreview: (doc: Document) => void; 
+  onPreview: (doc: Document) => void;
+  onDownload: (doc: Document) => void;
+  isLoadingPreview: boolean;
+  isLoadingDownload: boolean;
 }) => {
   return (
     <Card className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
@@ -28,14 +37,21 @@ const DocumentCard = ({
         <CardDescription>{document.description}</CardDescription>
       </CardContent>
       <CardFooter className="gap-2 pt-4">
-        <Button variant="outline" className="w-full" onClick={() => onPreview(document)}>
+        <Button variant="outline" className="w-full" onClick={() => onPreview(document)} disabled={isLoadingPreview || isLoadingDownload}>
+          {isLoadingPreview ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Eye className="mr-2 h-4 w-4" />
+          )}
           Visualizar
         </Button>
-        <Button variant="secondary" className="w-full" asChild>
-          <a href={document.publicUrl} download={document.fileName}>
+        <Button variant="secondary" className="w-full" onClick={() => onDownload(document)} disabled={isLoadingPreview || isLoadingDownload}>
+          {isLoadingDownload ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
             <Download className="mr-2 h-4 w-4" />
-            Download
-          </a>
+          )}
+          Download
         </Button>
       </CardFooter>
     </Card>
@@ -45,6 +61,66 @@ const DocumentCard = ({
 export default function DocumentosPage() {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
   const [preview, setPreview] = useState<{ url: string; title: string; } | null>(null);
+  
+  const [loadingState, setLoadingState] = useState<{ id: string | null; type: 'preview' | 'download' | null }>({ id: null, type: null });
+
+  const { toast } = useToast();
+
+  const handlePreview = async (doc: Document) => {
+    setLoadingState({ id: doc.fileName, type: 'preview' });
+    try {
+      const { data, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .createSignedUrl(doc.pathInBucket, 300); // URL válida por 5 minutos
+
+      if (error) {
+        throw error;
+      }
+      
+      setPreview({ url: data.signedUrl, title: doc.title });
+
+    } catch (error: any) {
+      console.error("Error creating signed URL:", error);
+      toast({
+        title: "Erro ao Gerar Visualização",
+        description: `Não foi possível criar o link. Verifique as permissões (Policies) do bucket no Supabase. Erro: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingState({ id: null, type: null });
+    }
+  };
+
+  const handleDownload = async (doc: Document) => {
+    setLoadingState({ id: doc.fileName, type: 'download' });
+    try {
+      const { data, error } = await supabase.storage.from(BUCKET_NAME).download(doc.pathInBucket);
+      if (error) {
+        throw error;
+      }
+      
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast({ title: "Download Iniciado", description: `Baixando ${doc.fileName}...` });
+
+    } catch (error: any) {
+        toast({ title: "Erro no Download", description: `Não foi possível baixar o arquivo. Verifique se ele existe e as permissões do bucket. Erro: ${error.message}`, variant: "destructive" });
+        console.error("Error downloading file:", error);
+    } finally {
+        setLoadingState({ id: null, type: null });
+    }
+  };
+
+
+  const handleClosePreview = () => {
+    setPreview(null);
+  };
 
   const filteredDocuments = useMemo(() => {
     if (selectedSubCategory === 'Todos') {
@@ -64,14 +140,6 @@ export default function DocumentosPage() {
         index === self.findIndex((t) => t.name === item.name)
     );
   }, []);
-  
-  const handlePreview = (doc: Document) => {
-    setPreview({ url: doc.publicUrl, title: doc.title });
-  };
-
-  const handleClosePreview = () => {
-    setPreview(null);
-  };
   
   return (
     <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
@@ -140,9 +208,12 @@ export default function DocumentosPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredDocuments.map(doc => (
                         <DocumentCard 
-                          key={doc.publicUrl} 
+                          key={doc.pathInBucket} 
                           document={doc} 
                           onPreview={handlePreview}
+                          onDownload={handleDownload}
+                          isLoadingPreview={loadingState.id === doc.fileName && loadingState.type === 'preview'}
+                          isLoadingDownload={loadingState.id === doc.fileName && loadingState.type === 'download'}
                         />
                     ))}
                 </div>
