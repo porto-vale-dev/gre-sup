@@ -138,12 +138,19 @@ export default function DocumentosPage() {
                 </Button>
             </div>
             <div className="relative rounded-lg shadow-lg border overflow-hidden h-[calc(100vh-14rem)]">
-              <iframe
-                src={previewUrl}
-                title="Visualizador de Documento"
-                className="absolute top-0 left-0 w-full h-full border-0"
-                allow="autoplay"
-              />
+              <object
+                data={previewUrl}
+                type="application/pdf"
+                className="w-full h-full"
+              >
+                <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center bg-background">
+                  <p className="text-lg font-semibold text-destructive">Seu navegador não suporta a visualização de PDFs.</p>
+                  <p className="text-muted-foreground">Você ainda pode baixar o arquivo.</p>
+                  <Button asChild>
+                      <a href={previewUrl} download>Baixar PDF</a>
+                  </Button>
+                </div>
+              </object>
             </div>
           </div>
         ) : (
