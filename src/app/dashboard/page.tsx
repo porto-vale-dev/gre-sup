@@ -4,32 +4,11 @@ import { DashboardClient } from "@/components/DashboardClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function DashboardPage() {
-  const { cargo, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-1/3" />
-        <div className="flex flex-col lg:flex-row gap-2 items-center w-full p-4 bg-card border rounded-lg shadow">
-          <Skeleton className="h-10 w-full lg:flex-grow" />
-          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto items-center shrink-0">
-            <Skeleton className="h-10 w-full sm:w-[180px]" />
-            <Skeleton className="h-10 w-full sm:w-[180px]" />
-            <Skeleton className="h-10 w-full sm:w-[180px]" />
-            <Skeleton className="h-10 w-20 hidden sm:block" />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-72 rounded-lg" />)}
-        </div>
-      </div>
-    );
-  }
+  const { cargo } = useAuth();
 
   if (cargo !== 'adm') {
     return (
