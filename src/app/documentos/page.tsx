@@ -20,36 +20,41 @@ const DocumentCard = ({
   document, 
   onPreview, 
   onDownload,
-  isLoading
+  loadingDocPath
 }: { 
   document: Document; 
   onPreview: (doc: Document) => void; 
   onDownload: (doc: Document) => void;
-  isLoading: boolean;
-}) => (
-  <Card className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
-    <CardHeader>
-      <CardTitle className="text-lg">{document.title}</CardTitle>
-    </CardHeader>
-    <CardContent className="flex-grow">
-      <CardDescription>{document.description}</CardDescription>
-    </CardContent>
-    <CardFooter className="gap-2 pt-4">
-      <Button variant="outline" className="w-full" onClick={() => onPreview(document)} disabled={isLoading}>
-        Visualizar
-      </Button>
-      <Button variant="secondary" className="w-full" onClick={() => onDownload(document)} disabled={isLoading}>
-        <Download className="mr-2 h-4 w-4" />
-        Download
-      </Button>
-    </CardFooter>
-  </Card>
-);
+  loadingDocPath: string | null;
+}) => {
+  const isLoading = loadingDocPath === document.filePath;
+  
+  return (
+    <Card className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
+      <CardHeader>
+        <CardTitle className="text-lg">{document.title}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <CardDescription>{document.description}</CardDescription>
+      </CardContent>
+      <CardFooter className="gap-2 pt-4">
+        <Button variant="outline" className="w-full" onClick={() => onPreview(document)} disabled={isLoading}>
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isLoading ? 'Aguarde...' : 'Visualizar'}
+        </Button>
+        <Button variant="secondary" className="w-full" onClick={() => onDownload(document)} disabled={isLoading}>
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+          {isLoading ? 'Aguarde...' : 'Download'}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};
 
 export default function DocumentosPage() {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
   const [preview, setPreview] = useState<{ url: string; title: string; } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingDocPath, setLoadingDocPath] = useState<string | null>(null);
   const { toast } = useToast();
 
   const filteredDocuments = useMemo(() => {
@@ -72,30 +77,36 @@ export default function DocumentosPage() {
   }, []);
   
   const handlePreview = async (doc: Document) => {
-    setIsLoading(true);
+    setLoadingDocPath(doc.filePath);
     try {
       const { data, error } = await supabase.storage
         .from(DOCUMENTS_BUCKET)
         .createSignedUrl(doc.filePath, 300); // URL válida por 5 minutos
 
-      if (error) throw error;
+      if (error) {
+          console.error("Supabase preview error:", error);
+          throw error;
+      }
       setPreview({ url: data.signedUrl, title: doc.title });
     } catch (error: any) {
       toast({
         title: "Erro ao Gerar Visualização",
-        description: `Não foi possível criar o link: ${error.message}`,
+        description: `Não foi possível criar o link. Verifique as permissões do bucket no Supabase. Erro: ${error.message}`,
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setLoadingDocPath(null);
     }
   };
 
   const handleDownload = async (doc: Document) => {
-    setIsLoading(true);
+    setLoadingDocPath(doc.filePath);
     try {
       const { data, error } = await supabase.storage.from(DOCUMENTS_BUCKET).download(doc.filePath);
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase download error:", error);
+        throw error;
+      }
       
       const url = URL.createObjectURL(data);
       const link = document.createElement('a');
@@ -106,9 +117,9 @@ export default function DocumentosPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error: any) {
-        toast({ title: "Erro no Download", description: `Não foi possível baixar o arquivo: ${error.message || "Erro desconhecido."}`, variant: "destructive" });
+        toast({ title: "Erro no Download", description: `Não foi possível baixar o arquivo. Verifique as permissões do bucket no Supabase. Erro: ${error.message}`, variant: "destructive" });
     } finally {
-        setIsLoading(false);
+        setLoadingDocPath(null);
     }
   };
 
@@ -143,7 +154,7 @@ export default function DocumentosPage() {
                           onClick={() => setSelectedSubCategory('Financeiro')}
                           className={cn(
                             "py-2 px-3 rounded-md text-base no-underline",
-                            selectedSubCategory === 'Financeiro'
+                            selectedSubCategory === 'Financeiro' || (filteredDocuments.every(d => d.category === 'Financeiro') && selectedSubCategory !== 'Todos')
                                 ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                                 : "hover:bg-accent hover:text-accent-foreground"
                           )}
@@ -177,10 +188,10 @@ export default function DocumentosPage() {
       {/* Main Content */}
       <main className="flex-1">
             <h1 className="text-3xl font-bold font-headline mb-8 text-primary">
-              {isLoading ? (
+              {(loadingDocPath) ? (
                 <div className='flex items-center gap-2'>
                   <Loader2 className="h-8 w-8 animate-spin" />
-                  Carregando...
+                  Acessando documento...
                 </div>
               ) : (selectedSubCategory === 'Todos' ? 'Todos os Documentos' : selectedSubCategory)}
             </h1>
@@ -192,7 +203,7 @@ export default function DocumentosPage() {
                           document={doc} 
                           onPreview={handlePreview}
                           onDownload={handleDownload}
-                          isLoading={isLoading}
+                          loadingDocPath={loadingDocPath}
                         />
                     ))}
                 </div>
