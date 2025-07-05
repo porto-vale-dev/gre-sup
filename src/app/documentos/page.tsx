@@ -11,24 +11,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/lib/supabaseClient';
-import { useToast } from "@/hooks/use-toast";
-
-const DOCUMENTS_BUCKET = 'documentos';
 
 const DocumentCard = ({ 
   document, 
-  onPreview, 
-  onDownload,
-  loadingDocPath
+  onPreview
 }: { 
   document: Document; 
   onPreview: (doc: Document) => void; 
-  onDownload: (doc: Document) => void;
-  loadingDocPath: string | null;
 }) => {
-  const isLoading = loadingDocPath === document.filePath;
-  
   return (
     <Card className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
       <CardHeader>
@@ -38,13 +28,14 @@ const DocumentCard = ({
         <CardDescription>{document.description}</CardDescription>
       </CardContent>
       <CardFooter className="gap-2 pt-4">
-        <Button variant="outline" className="w-full" onClick={() => onPreview(document)} disabled={isLoading}>
-          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {isLoading ? 'Aguarde...' : 'Visualizar'}
+        <Button variant="outline" className="w-full" onClick={() => onPreview(document)}>
+          Visualizar
         </Button>
-        <Button variant="secondary" className="w-full" onClick={() => onDownload(document)} disabled={isLoading}>
-          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-          {isLoading ? 'Aguarde...' : 'Download'}
+        <Button variant="secondary" className="w-full" asChild>
+          <a href={document.publicUrl} download={document.fileName}>
+            <Download className="mr-2 h-4 w-4" />
+            Download
+          </a>
         </Button>
       </CardFooter>
     </Card>
@@ -54,8 +45,6 @@ const DocumentCard = ({
 export default function DocumentosPage() {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
   const [preview, setPreview] = useState<{ url: string; title: string; } | null>(null);
-  const [loadingDocPath, setLoadingDocPath] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const filteredDocuments = useMemo(() => {
     if (selectedSubCategory === 'Todos') {
@@ -76,51 +65,8 @@ export default function DocumentosPage() {
     );
   }, []);
   
-  const handlePreview = async (doc: Document) => {
-    setLoadingDocPath(doc.filePath);
-    try {
-      const { data, error } = await supabase.storage
-        .from(DOCUMENTS_BUCKET)
-        .createSignedUrl(doc.filePath, 300); // URL válida por 5 minutos
-
-      if (error) {
-          console.error("Supabase preview error:", error);
-          throw error;
-      }
-      setPreview({ url: data.signedUrl, title: doc.title });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao Gerar Visualização",
-        description: `Não foi possível criar o link. Verifique as permissões do bucket no Supabase. Erro: ${error.message}`,
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingDocPath(null);
-    }
-  };
-
-  const handleDownload = async (doc: Document) => {
-    setLoadingDocPath(doc.filePath);
-    try {
-      const { data, error } = await supabase.storage.from(DOCUMENTS_BUCKET).download(doc.filePath);
-      if (error) {
-        console.error("Supabase download error:", error);
-        throw error;
-      }
-      
-      const url = URL.createObjectURL(data);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = doc.fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error: any) {
-        toast({ title: "Erro no Download", description: `Não foi possível baixar o arquivo. Verifique as permissões do bucket no Supabase. Erro: ${error.message}`, variant: "destructive" });
-    } finally {
-        setLoadingDocPath(null);
-    }
+  const handlePreview = (doc: Document) => {
+    setPreview({ url: doc.publicUrl, title: doc.title });
   };
 
   const handleClosePreview = () => {
@@ -188,22 +134,15 @@ export default function DocumentosPage() {
       {/* Main Content */}
       <main className="flex-1">
             <h1 className="text-3xl font-bold font-headline mb-8 text-primary">
-              {(loadingDocPath) ? (
-                <div className='flex items-center gap-2'>
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                  Acessando documento...
-                </div>
-              ) : (selectedSubCategory === 'Todos' ? 'Todos os Documentos' : selectedSubCategory)}
+              {selectedSubCategory === 'Todos' ? 'Todos os Documentos' : selectedSubCategory}
             </h1>
             {filteredDocuments.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredDocuments.map(doc => (
                         <DocumentCard 
-                          key={doc.filePath} 
+                          key={doc.publicUrl} 
                           document={doc} 
                           onPreview={handlePreview}
-                          onDownload={handleDownload}
-                          loadingDocPath={loadingDocPath}
                         />
                     ))}
                 </div>

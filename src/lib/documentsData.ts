@@ -7,13 +7,14 @@ export interface Document {
   category: 'Financeiro';
   subCategory: string;
   Icon: LucideIcon;
-  filePath: string;
   fileName: string;
+  publicUrl: string; // The direct public URL to the file in Supabase Storage
 }
 
-// Nota: Os caminhos (filePath) são relativos ao bucket 'documentos' no Supabase.
-// Verifique se os nomes dos arquivos e a estrutura de pastas no seu bucket
-// correspondem exatamente aos valores de 'filePath' abaixo.
+// NOTE: This logic assumes your 'documentos' bucket in Supabase is public.
+const SUPABASE_PROJECT_URL = 'https://dzbsqlutdjwabgjuhsin.supabase.co'; // Extracted from your link
+const BUCKET_PATH = 'storage/v1/object/public/documentos';
+
 export const documentsData: Document[] = [
   {
     title: 'Solicitação de Contas a Pagar',
@@ -21,8 +22,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Contas a pagar',
     Icon: FileText,
-    filePath: 'financeiro/contas-a-pagar.pdf',
     fileName: 'contas-a-pagar.pdf',
+    publicUrl: `${SUPABASE_PROJECT_URL}/${BUCKET_PATH}/financeiro/contas-a-pagar.pdf`,
   },
   {
     title: 'Solicitação de Reembolso',
@@ -30,8 +31,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Reembolso de despesas',
     Icon: Receipt,
-    filePath: 'financeiro/reembolso-despesas.pdf',
-    fileName: 'reembolso-despesas.pdf',
+    fileName: 'solicitcao-reembolso-despesas.pdf',
+    publicUrl: `${SUPABASE_PROJECT_URL}/${BUCKET_PATH}/financeiro/solicitcao-reembolso-despesas.pdf`,
   },
   {
     title: 'Adiantamento de Despesas',
@@ -39,8 +40,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Adiantamento de despesas',
     Icon: ArrowRightLeft,
-    filePath: 'financeiro/adiantamento-despesas.pdf',
-    fileName: 'adiantamento-despesas.pdf',
+    fileName: 'solicitacao-de-adiantamento.pdf',
+    publicUrl: `${SUPABASE_PROJECT_URL}/${BUCKET_PATH}/financeiro/solicitacao-de-adiantamento.pdf`,
   },
   {
     title: 'Locação de Veículos',
@@ -48,8 +49,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Locação de veículos',
     Icon: Car,
-    filePath: 'financeiro/locacao-veiculos.pdf',
-    fileName: 'locacao-veiculos.pdf',
+    fileName: 'solicitacao-locacao-veiculos.pdf',
+    publicUrl: `${SUPABASE_PROJECT_URL}/${BUCKET_PATH}/financeiro/solicitacao-locacao-veiculos.pdf`,
   },
   {
     title: 'Recebimento de Demonstrativo NF e Prestador de Serviço',
@@ -57,8 +58,8 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Recebimento de demonstrativo NF e Prestador de serviço',
     Icon: FileSpreadsheet,
-    filePath: 'financeiro/recebimento-demonstrativo-nf.pdf',
-    fileName: 'recebimento-demonstrativo-nf.pdf',
+    fileName: 'recebimento-de-demonstrativo.pdf',
+    publicUrl: `${SUPABASE_PROJECT_URL}/${BUCKET_PATH}/financeiro/recebimento-de-demonstrativo.pdf`,
   },
   {
     title: 'Pagamento de Premiação de Campanhas',
@@ -66,7 +67,7 @@ export const documentsData: Document[] = [
     category: 'Financeiro',
     subCategory: 'Pagamento de premiação de campanhas',
     Icon: Trophy,
-    filePath: 'financeiro/pagamento-premiacao-campanhas.pdf',
-    fileName: 'pagamento-premiacao-campanhas.pdf',
+    fileName: 'solicitacao-pagamento-premiacao.pdf',
+    publicUrl: `${SUPABASE_PROJECT_URL}/${BUCKET_PATH}/financeiro/solicitacao-pagamento-premiacao.pdf`,
   },
 ];
