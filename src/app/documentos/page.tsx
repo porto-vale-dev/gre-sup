@@ -8,7 +8,8 @@ import type { Document } from '@/lib/documentsData';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Landmark, Folder, ArrowLeft, FileText, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Landmark, Folder, ArrowLeft, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 
@@ -63,9 +64,10 @@ export default function DocumentosPage() {
   };
 
   const getPreviewTitle = () => {
+    if (!previewUrl) return '';
     const doc = documentsData.find(d => d.previewUrl === previewUrl);
     return doc ? doc.title : 'Visualização de Documento';
-  }
+  };
 
   return (
     <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
@@ -84,17 +86,17 @@ export default function DocumentosPage() {
                     <Button
                     variant={selectedSubCategory === 'Todos' ? 'secondary' : 'ghost'}
                     className="justify-start"
-                    onClick={() => { setSelectedSubCategory('Todos'); handleClosePreview(); }}
+                    onClick={() => setSelectedSubCategory('Todos')}
                     >
                     <Folder className="mr-2 h-4 w-4" /> Todos
                     </Button>
                     <Accordion type="single" collapsible defaultValue="financeiro" className="w-full">
                     <AccordionItem value="financeiro" className="border-b-0">
                         <AccordionTrigger
-                          onClick={() => { setSelectedSubCategory('Financeiro'); handleClosePreview(); }}
+                          onClick={() => setSelectedSubCategory('Financeiro')}
                           className={cn(
                             "py-2 px-3 rounded-md text-base no-underline",
-                            selectedSubCategory === 'Financeiro' && !previewUrl
+                            selectedSubCategory === 'Financeiro'
                                 ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                                 : "hover:bg-accent hover:text-accent-foreground"
                           )}
@@ -110,7 +112,7 @@ export default function DocumentosPage() {
                                 key={name}
                                 variant={selectedSubCategory === name ? 'secondary' : 'ghost'}
                                 className="justify-start h-auto py-1.5 px-2 text-left text-sm font-normal"
-                                onClick={() => { setSelectedSubCategory(name); handleClosePreview(); }}
+                                onClick={() => setSelectedSubCategory(name)}
                             >
                                 <Icon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
                                 <span className="leading-tight">{name}</span>
@@ -127,34 +129,6 @@ export default function DocumentosPage() {
 
       {/* Main Content */}
       <main className="flex-1">
-        {previewUrl ? (
-          <div className="space-y-4">
-            <div className='flex justify-between items-center gap-4'>
-                 <h1 className="text-2xl font-bold font-headline text-primary truncate" title={getPreviewTitle()}>
-                    {getPreviewTitle()}
-                </h1>
-                <Button variant="outline" size="sm" onClick={handleClosePreview} className="shrink-0">
-                    <X className="mr-2 h-4 w-4" /> Fechar Visualização
-                </Button>
-            </div>
-            <div className="relative rounded-lg shadow-lg border overflow-hidden h-[calc(100vh-14rem)]">
-              <object
-                data={previewUrl}
-                type="application/pdf"
-                className="w-full h-full"
-              >
-                <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center bg-background">
-                  <p className="text-lg font-semibold text-destructive">Seu navegador não suporta a visualização de PDFs.</p>
-                  <p className="text-muted-foreground">Você ainda pode baixar o arquivo.</p>
-                  <Button asChild>
-                      <a href={previewUrl} download>Baixar PDF</a>
-                  </Button>
-                </div>
-              </object>
-            </div>
-          </div>
-        ) : (
-          <>
             <h1 className="text-3xl font-bold font-headline mb-8 text-primary">
               {selectedSubCategory === 'Todos' ? 'Todos os Documentos' : selectedSubCategory}
             </h1>
@@ -171,9 +145,31 @@ export default function DocumentosPage() {
                     <p className="text-muted-foreground mt-1">Não há documentos para exibir nesta categoria.</p>
                 </div>
             )}
-          </>
-        )}
       </main>
+
+      {/* Preview Modal */}
+      <Dialog open={!!previewUrl} onOpenChange={(isOpen) => !isOpen && handleClosePreview()}>
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle>{getPreviewTitle()}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 px-6 pb-6 overflow-hidden">
+            <object
+              data={previewUrl!}
+              type="application/pdf"
+              className="w-full h-full rounded-md border"
+            >
+              <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center bg-muted/50 rounded-md">
+                <p className="text-lg font-semibold text-destructive">Seu navegador não suporta a visualização de PDFs.</p>
+                <p className="text-muted-foreground">Você ainda pode baixar o arquivo.</p>
+                <Button asChild>
+                    <a href={previewUrl!} download>Baixar PDF</a>
+                </Button>
+              </div>
+            </object>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
