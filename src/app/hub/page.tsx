@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trophy, ArrowRight, Ticket, Megaphone } from 'lucide-react';
+import { Trophy, ArrowRight, Ticket, Megaphone, FolderKanban } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Service {
@@ -19,6 +19,7 @@ interface Service {
 const allServices: Service[] = [
     { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
     { title: "Mural de Avisos", href: "/mural-de-avisos", Icon: Megaphone, description: "Veja os últimos avisos e comunicados.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
+    { title: "Documentos", href: "/documentos", Icon: FolderKanban, description: "Acesse os documentos da empresa.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
     { title: "Sistema Suporte GRE", href: "/suporte-gre/painel", Icon: Ticket, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm"] },
 ];
 
@@ -51,7 +52,7 @@ export default function HubPage() {
     }, [cargo]);
 
     const generalTools = useMemo(() => {
-      return accessibleServices.filter(s => s.title === "Rankings" || s.title === "Mural de Avisos");
+      return accessibleServices.filter(s => s.title === "Rankings" || s.title === "Mural de Avisos" || s.title === "Documentos");
     }, [accessibleServices]);
 
     const adminTools = useMemo(() => {
