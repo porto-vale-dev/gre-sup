@@ -52,11 +52,11 @@ export default function HubPage() {
     }, [cargo]);
 
     const generalTools = useMemo(() => {
-      return accessibleServices.filter(s => s.title === "Rankings" || s.title === "Mural de Avisos" || s.title === "Documentos");
+      return accessibleServices.filter(s => s.title === "Rankings" || s.title === "Mural de Avisos");
     }, [accessibleServices]);
 
     const adminTools = useMemo(() => {
-      return accessibleServices.filter(s => s.title === "Sistema Suporte GRE");
+      return accessibleServices.filter(s => s.title === "Sistema Suporte GRE" || s.title === "Documentos");
     }, [accessibleServices]);
     
     return (
