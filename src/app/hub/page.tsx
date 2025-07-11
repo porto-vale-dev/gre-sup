@@ -19,7 +19,7 @@ interface Service {
 const allServices: Service[] = [
     { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
     { title: "Mural de Avisos - GRE", href: "/mural-de-avisos", Icon: Megaphone, description: "Veja os últimos avisos e comunicados.", allowedRoles: ["adm", "diretor", "gerente", "colaborador"] },
-    { title: "Documentos", href: "/documentos", Icon: FolderKanban, description: "Acesse os documentos da empresa.", allowedRoles: ["adm", "diretor", "gerente"] },
+    { title: "Documentos", href: "/documentos", Icon: FolderKanban, description: "Acesse os documentos da empresa.", allowedRoles: ["adm"] },
     { title: "Painel de Suporte - GRE", href: "/suporte-gre/painel", Icon: Ticket, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm"] },
 ];
 
