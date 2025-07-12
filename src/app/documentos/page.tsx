@@ -129,6 +129,7 @@ export default function DocumentosPage() {
   };
 
   const handleAccordionTriggerClick = () => {
+    setAccordionValue(current => (current === 'financeiro' ? undefined : 'financeiro'));
     setSelectedSubCategory('Financeiro');
   };
 
@@ -164,6 +165,8 @@ export default function DocumentosPage() {
                 <AccordionItem value="financeiro" className="border-b-0">
                   <AccordionTrigger
                     asChild
+                    className="hover:no-underline"
+                    onClick={handleAccordionTriggerClick}
                   >
                      <div
                         className={cn(
@@ -172,12 +175,11 @@ export default function DocumentosPage() {
                             ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                             : "hover:bg-accent hover:text-accent-foreground"
                         )}
-                        onClick={handleAccordionTriggerClick}
                      >
                       <div className="flex items-center gap-2 font-medium">
                         <Landmark className="h-4 w-4" /> Financeiro
                       </div>
-                      <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform duration-200", accordionValue === 'financeiro' && "rotate-90")} />
+                      <ChevronRight data-no-animation className={cn("h-4 w-4 shrink-0 transition-transform duration-200", accordionValue === 'financeiro' && "rotate-90")} />
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pl-4 pt-1">

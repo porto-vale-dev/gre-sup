@@ -25,14 +25,13 @@ const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> & { asChild?: boolean }
 >(({ className, children, asChild = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "button";
   return (
     <AccordionPrimitive.Header className="flex">
       <AccordionPrimitive.Trigger
         ref={ref}
         asChild={asChild}
         className={cn(
-          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
+          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg:not([data-no-animation])]:rotate-180",
           !asChild && "bg-transparent", // Ensure button-like appearance if not asChild
           className
         )}
