@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -58,6 +59,7 @@ export default function DocumentosPage() {
 
   const handlePreview = async (doc: Document) => {
     setLoadingState({ id: doc.pathInBucket, type: 'preview' });
+    console.log(`[DEBUG] Attempting to create preview URL for path: ${doc.pathInBucket}`);
     try {
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
@@ -72,7 +74,7 @@ export default function DocumentosPage() {
       console.error("Erro ao criar URL:", error);
       toast({
         title: "Erro ao Gerar Visualização",
-        description: `Verifique as permissões do bucket. Erro: ${error.message}`,
+        description: `Não foi possível criar o link. Verifique as permissões do bucket no Supabase. Erro: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -82,6 +84,7 @@ export default function DocumentosPage() {
 
   const handleDownload = async (doc: Document) => {
     setLoadingState({ id: doc.pathInBucket, type: 'download' });
+    console.log(`[DEBUG] Attempting to download file from path: ${doc.pathInBucket}`);
     try {
       const { data, error } = await supabase.storage.from(BUCKET_NAME).download(doc.pathInBucket);
       if (error) throw error;
@@ -155,7 +158,7 @@ export default function DocumentosPage() {
               <Accordion
                 type="single"
                 collapsible
-                value={selectedSubCategory === 'Financeiro' ? 'financeiro' : undefined}
+                value={selectedSubCategory === 'Financeiro' || financialSubcategories.some(sub => sub.name === selectedSubCategory) ? 'financeiro' : undefined}
                 onValueChange={(value) => {
                   if (value === 'financeiro') setSelectedSubCategory('Financeiro');
                 }}
@@ -232,7 +235,11 @@ export default function DocumentosPage() {
           </DialogHeader>
           <div className="flex-1 px-6 pb-6 overflow-hidden">
             {preview ? (
-              <object data={preview.url} type="application/pdf" className="w-full h-full rounded-md border">
+              <iframe
+                src={preview.url}
+                className="w-full h-full rounded-md border"
+                title={preview.title}
+              >
                 <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center bg-muted/50 rounded-md">
                   <p className="text-lg font-semibold text-destructive">Seu navegador não suporta visualização de PDFs.</p>
                   <p className="text-muted-foreground">Você ainda pode baixar o arquivo.</p>
@@ -240,7 +247,7 @@ export default function DocumentosPage() {
                     <a href={preview.url} download>Baixar PDF</a>
                   </Button>
                 </div>
-              </object>
+              </iframe>
             ) : (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin" />
