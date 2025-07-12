@@ -3,7 +3,6 @@
 import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import { ChevronDown } from "lucide-react"
-import { Slot } from "@radix-ui/react-slot"
 
 import { cn } from "@/lib/utils"
 
@@ -23,26 +22,25 @@ AccordionItem.displayName = "AccordionItem"
 
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> & { asChild?: boolean }
->(({ className, children, asChild = false, ...props }, ref) => {
-  return (
-    <AccordionPrimitive.Header className="flex">
-      <AccordionPrimitive.Trigger
-        ref={ref}
-        asChild={asChild}
-        className={cn(
-          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg:not([data-no-animation])]:rotate-180",
-          !asChild && "bg-transparent", // Ensure button-like appearance if not asChild
-          className
-        )}
-        {...props}
-      >
-        {children}
-        {!asChild && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
-      </AccordionPrimitive.Trigger>
-    </AccordionPrimitive.Header>
-  )
-})
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
+  <AccordionPrimitive.Header className="flex">
+    <AccordionPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg:not([data-no-animation])]:rotate-180",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      {/* We check if the children is not a valid React element, which is the case when asChild is not used */}
+      {!React.isValidElement(children) && (
+         <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+      )}
+    </AccordionPrimitive.Trigger>
+  </AccordionPrimitive.Header>
+))
 AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName
 
 const AccordionContent = React.forwardRef<
