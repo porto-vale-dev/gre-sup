@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,7 +52,6 @@ const DocumentCard = ({
 
 export default function DocumentosPage() {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
-  const [preview, setPreview] = useState<{ url: string; title: string } | null>(null);
   const [loadingState, setLoadingState] = useState<{ id: string | null; type: 'preview' | 'download' | null }>({ id: null, type: null });
   const { toast } = useToast();
 
@@ -63,15 +61,16 @@ export default function DocumentosPage() {
     try {
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
-        .createSignedUrl(doc.pathInBucket, 300);
+        .createSignedUrl(doc.pathInBucket, 300); // 5 minute link
 
       if (error || !data?.signedUrl) {
         throw error ?? new Error('URL inválida ou não gerada.');
       }
+      
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
 
-      setPreview({ url: data.signedUrl, title: doc.title });
     } catch (error: any) {
-      console.error("Erro ao criar URL:", error);
+      console.error("Erro ao criar URL de visualização:", error);
       toast({
         title: "Erro ao Gerar Visualização",
         description: `Não foi possível criar o link. Verifique as permissões do bucket no Supabase. Erro: ${error.message}`,
@@ -109,8 +108,6 @@ export default function DocumentosPage() {
       setLoadingState({ id: null, type: null });
     }
   };
-
-  const handleClosePreview = () => setPreview(null);
 
   const filteredDocuments = useMemo(() => {
     if (selectedSubCategory === 'Todos') return documentsData;
@@ -227,35 +224,6 @@ export default function DocumentosPage() {
         )}
       </main>
 
-      {/* Preview Dialog */}
-      <Dialog open={!!preview} onOpenChange={(isOpen) => !isOpen && handleClosePreview()}>
-        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle>{preview?.title || 'Visualização de Documento'}</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 px-6 pb-6 overflow-hidden">
-            {preview ? (
-              <iframe
-                src={preview.url}
-                className="w-full h-full rounded-md border"
-                title={preview.title}
-              >
-                <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center bg-muted/50 rounded-md">
-                  <p className="text-lg font-semibold text-destructive">Seu navegador não suporta visualização de PDFs.</p>
-                  <p className="text-muted-foreground">Você ainda pode baixar o arquivo.</p>
-                  <Button asChild>
-                    <a href={preview.url} download>Baixar PDF</a>
-                  </Button>
-                </div>
-              </iframe>
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
