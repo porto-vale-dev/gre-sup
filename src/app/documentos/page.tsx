@@ -163,24 +163,19 @@ export default function DocumentosPage() {
                 className="w-full"
               >
                 <AccordionItem value="financeiro" className="border-b-0">
-                  <AccordionTrigger
-                    asChild
-                    className="hover:no-underline"
-                    onClick={handleAccordionTriggerClick}
-                  >
-                     <div
+                    <AccordionTrigger
+                        onClick={() => setSelectedSubCategory('Financeiro')}
                         className={cn(
-                          "flex flex-1 items-center justify-between py-2 px-3 rounded-md text-base no-underline cursor-pointer",
-                          selectedSubCategory === 'Financeiro' || financialSubcategories.some(sub => sub.name === selectedSubCategory)
-                            ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                            : "hover:bg-accent hover:text-accent-foreground"
+                            "py-2 px-3 rounded-md text-base font-medium no-underline hover:no-underline",
+                            selectedSubCategory === 'Financeiro' || financialSubcategories.some(sub => sub.name === selectedSubCategory)
+                                ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                : "hover:bg-accent hover:text-accent-foreground"
                         )}
-                     >
-                      <div className="flex items-center gap-2 font-medium">
+                    >
+                      <div className="flex items-center gap-2">
                         <Landmark className="h-4 w-4" /> Financeiro
                       </div>
                       <ChevronRight data-no-animation className={cn("h-4 w-4 shrink-0 transition-transform duration-200", accordionValue === 'financeiro' && "rotate-90")} />
-                    </div>
                   </AccordionTrigger>
                   <AccordionContent className="pl-4 pt-1">
                     <div className="flex flex-col gap-1">

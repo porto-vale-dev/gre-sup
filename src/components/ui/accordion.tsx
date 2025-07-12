@@ -34,10 +34,6 @@ const AccordionTrigger = React.forwardRef<
       {...props}
     >
       {children}
-      {/* We check if the children is not a valid React element, which is the case when asChild is not used */}
-      {!React.isValidElement(children) && (
-         <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
-      )}
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ))
