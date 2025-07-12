@@ -90,10 +90,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     const submissionDate = new Date().toISOString();
 
     try {
-      // --- Início da lógica de atribuição automática ---
       let assignedResponsible: string | null = null;
 
-      // 1. Obter a lista de atendentes (cargo 'gre')
       const { data: agents, error: agentsError } = await supabase
         .from('profiles')
         .select('username')
@@ -105,19 +103,17 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       }
 
       if (agents && agents.length > 0) {
-        const agentNames = agents.map(a => a.username);
+        const agentNames = agents.map(a => a.username as string);
 
-        // 2. Encontrar o último ticket atribuído para determinar o próximo na fila
         const { data: lastTicket, error: lastTicketError } = await supabase
           .from('tickets')
           .select('responsible')
-          .not('responsible', 'is', null) // Apenas tickets que já têm um responsável
+          .not('responsible', 'is', null) 
           .order('submission_date', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
-        if (lastTicketError && lastTicketError.code !== 'PGRST116') {
-           // 'PGRST116' significa 'No rows found', o que é normal se nenhum ticket foi atribuído ainda.
+        if (lastTicketError) {
           console.warn(`Aviso ao buscar último ticket: ${lastTicketError.message}`);
         }
 
@@ -127,7 +123,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         if (lastResponsible) {
           const lastAgentIndex = agentNames.indexOf(lastResponsible);
           if (lastAgentIndex !== -1) {
-            // Pega o próximo da lista, voltando ao início se chegar ao fim (round-robin)
             nextAgentIndex = (lastAgentIndex + 1) % agentNames.length;
           }
         }
@@ -136,9 +131,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       } else {
         console.warn("Nenhum atendente (cargo 'gre') encontrado para atribuição automática.");
       }
-      
-      // --- Fim da lógica de atribuição automática ---
-
 
       if (ticketData.files && ticketData.files.length > 0) {
         const folderPath = `public/${crypto.randomUUID()}`;
@@ -172,7 +164,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         file_name: fileName,
         solution: null,
         solution_files: null,
-        responsible: assignedResponsible, // Atribui o responsável aqui
+        responsible: assignedResponsible, 
       };
 
       const newTicketPayload = { 
@@ -361,7 +353,3 @@ export function useTickets() {
   }
   return context;
 }
-
-    
-
-    

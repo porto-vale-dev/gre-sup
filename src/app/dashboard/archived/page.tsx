@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ArchivedTicketsClient } from "@/components/ArchivedTicketsClient";
@@ -10,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 export default function ArchivedTicketsPage() {
     const { cargo } = useAuth();
 
+    // Unified check for admin roles
     if (cargo !== 'adm') {
         return (
           <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
