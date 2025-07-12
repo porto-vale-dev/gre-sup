@@ -36,6 +36,7 @@ export default function PortalLoginPage() {
       toast({
         title: "Login bem-sucedido!",
         description: "Redirecionando para o portal...",
+        duration: 2000,
       });
       // The AuthGuard will handle the redirect
     } else {

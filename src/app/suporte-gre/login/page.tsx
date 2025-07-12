@@ -36,6 +36,7 @@ export default function TicketManagerLoginPage() {
       toast({
         title: "Login bem-sucedido!",
         description: "Redirecionando para o painel de tickets...",
+        duration: 2000,
       });
       // The AuthGuard will handle redirecting away from login pages,
       // but we can push to the specific panel page first.
