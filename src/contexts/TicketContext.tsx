@@ -90,7 +90,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     const submissionDate = new Date().toISOString();
 
     try {
-       // --- Início da lógica de atribuição automática ---
+      // --- Início da lógica de atribuição automática ---
+      let assignedResponsible: string | null = null;
 
       // 1. Obter a lista de atendentes (cargo 'gre')
       const { data: agents, error: agentsError } = await supabase
@@ -102,14 +103,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       if (agentsError) {
         throw new Error(`Não foi possível buscar os atendentes: ${agentsError.message}`);
       }
-
-      if (!agents || agents.length === 0) {
-        // Se não houver atendentes, o ticket será criado sem responsável.
-        // Pode-se optar por lançar um erro aqui, se for uma regra de negócio.
-        console.warn("Nenhum atendente (cargo 'gre') encontrado para atribuição automática.");
-      }
-
-      let assignedResponsible: string | null = null;
 
       if (agents && agents.length > 0) {
         const agentNames = agents.map(a => a.username);
@@ -140,6 +133,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         }
         
         assignedResponsible = agentNames[nextAgentIndex];
+      } else {
+        console.warn("Nenhum atendente (cargo 'gre') encontrado para atribuição automática.");
       }
       
       // --- Fim da lógica de atribuição automática ---
@@ -366,5 +361,7 @@ export function useTickets() {
   }
   return context;
 }
+
+    
 
     
