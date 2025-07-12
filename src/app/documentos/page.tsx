@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye } from 'lucide-react';
+import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const BUCKET_NAME = 'documentos';
@@ -52,12 +52,12 @@ const DocumentCard = ({
 
 export default function DocumentosPage() {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
+  const [accordionValue, setAccordionValue] = useState<string | undefined>();
   const [loadingState, setLoadingState] = useState<{ id: string | null; type: 'preview' | 'download' | null }>({ id: null, type: null });
   const { toast } = useToast();
 
   const handlePreview = async (doc: Document) => {
     setLoadingState({ id: doc.pathInBucket, type: 'preview' });
-    console.log(`[DEBUG] Attempting to create preview URL for path: ${doc.pathInBucket}`);
     try {
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
@@ -70,10 +70,9 @@ export default function DocumentosPage() {
       window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
 
     } catch (error: any) {
-      console.error("Erro ao criar URL de visualização:", error);
       toast({
         title: "Erro ao Gerar Visualização",
-        description: `Não foi possível criar o link. Verifique as permissões do bucket no Supabase. Erro: ${error.message}`,
+        description: `Não foi possível criar o link. Verifique se o caminho do arquivo está correto e as permissões do bucket no Supabase. Erro: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -83,7 +82,6 @@ export default function DocumentosPage() {
 
   const handleDownload = async (doc: Document) => {
     setLoadingState({ id: doc.pathInBucket, type: 'download' });
-    console.log(`[DEBUG] Attempting to download file from path: ${doc.pathInBucket}`);
     try {
       const { data, error } = await supabase.storage.from(BUCKET_NAME).download(doc.pathInBucket);
       if (error) throw error;
@@ -101,14 +99,14 @@ export default function DocumentosPage() {
     } catch (error: any) {
       toast({
         title: "Erro no Download",
-        description: `Erro: ${error.message}`,
+        description: `Não foi possível baixar o arquivo. Verifique se o caminho está correto e as permissões do bucket. Erro: ${error.message}`,
         variant: "destructive",
       });
     } finally {
       setLoadingState({ id: null, type: null });
     }
   };
-
+  
   const filteredDocuments = useMemo(() => {
     if (selectedSubCategory === 'Todos') return documentsData;
     if (selectedSubCategory === 'Financeiro') return documentsData.filter(doc => doc.category === 'Financeiro');
@@ -128,6 +126,10 @@ export default function DocumentosPage() {
     if (sub === 'Todos') return 'Todos os Documentos';
     if (sub === 'Financeiro') return 'Documentos Financeiros';
     return `Documentos - ${sub}`;
+  };
+
+  const handleAccordionTriggerClick = () => {
+    setSelectedSubCategory('Financeiro');
   };
 
   return (
@@ -155,23 +157,27 @@ export default function DocumentosPage() {
               <Accordion
                 type="single"
                 collapsible
-                value={selectedSubCategory === 'Financeiro' || financialSubcategories.some(sub => sub.name === selectedSubCategory) ? 'financeiro' : undefined}
-                onValueChange={(value) => {
-                  if (value === 'financeiro') setSelectedSubCategory('Financeiro');
-                }}
+                value={accordionValue}
+                onValueChange={setAccordionValue}
                 className="w-full"
               >
                 <AccordionItem value="financeiro" className="border-b-0">
                   <AccordionTrigger
-                    className={cn(
-                      "py-2 px-3 rounded-md text-base no-underline",
-                      selectedSubCategory === 'Financeiro'
-                        ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                        : "hover:bg-accent hover:text-accent-foreground"
-                    )}
+                    asChild
                   >
-                    <div className="flex items-center gap-2 font-medium">
-                      <Landmark className="h-4 w-4" /> Financeiro
+                     <div
+                        className={cn(
+                          "flex flex-1 items-center justify-between py-2 px-3 rounded-md text-base no-underline cursor-pointer",
+                          selectedSubCategory === 'Financeiro' || financialSubcategories.some(sub => sub.name === selectedSubCategory)
+                            ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                            : "hover:bg-accent hover:text-accent-foreground"
+                        )}
+                        onClick={handleAccordionTriggerClick}
+                     >
+                      <div className="flex items-center gap-2 font-medium">
+                        <Landmark className="h-4 w-4" /> Financeiro
+                      </div>
+                      <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform duration-200", accordionValue === 'financeiro' && "rotate-90")} />
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pl-4 pt-1">
