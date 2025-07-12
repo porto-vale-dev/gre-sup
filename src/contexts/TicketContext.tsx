@@ -90,6 +90,61 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     const submissionDate = new Date().toISOString();
 
     try {
+       // --- Início da lógica de atribuição automática ---
+
+      // 1. Obter a lista de atendentes (cargo 'gre')
+      const { data: agents, error: agentsError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('cargo', 'gre')
+        .order('username', { ascending: true });
+
+      if (agentsError) {
+        throw new Error(`Não foi possível buscar os atendentes: ${agentsError.message}`);
+      }
+
+      if (!agents || agents.length === 0) {
+        // Se não houver atendentes, o ticket será criado sem responsável.
+        // Pode-se optar por lançar um erro aqui, se for uma regra de negócio.
+        console.warn("Nenhum atendente (cargo 'gre') encontrado para atribuição automática.");
+      }
+
+      let assignedResponsible: string | null = null;
+
+      if (agents && agents.length > 0) {
+        const agentNames = agents.map(a => a.username);
+
+        // 2. Encontrar o último ticket atribuído para determinar o próximo na fila
+        const { data: lastTicket, error: lastTicketError } = await supabase
+          .from('tickets')
+          .select('responsible')
+          .not('responsible', 'is', null) // Apenas tickets que já têm um responsável
+          .order('submission_date', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (lastTicketError && lastTicketError.code !== 'PGRST116') {
+           // 'PGRST116' significa 'No rows found', o que é normal se nenhum ticket foi atribuído ainda.
+          console.warn(`Aviso ao buscar último ticket: ${lastTicketError.message}`);
+        }
+
+        const lastResponsible = lastTicket?.responsible;
+        let nextAgentIndex = 0;
+
+        if (lastResponsible) {
+          const lastAgentIndex = agentNames.indexOf(lastResponsible);
+          if (lastAgentIndex !== -1) {
+            // Pega o próximo da lista, voltando ao início se chegar ao fim (round-robin)
+            nextAgentIndex = (lastAgentIndex + 1) % agentNames.length;
+          }
+        }
+        
+        assignedResponsible = agentNames[nextAgentIndex];
+      }
+      
+      // --- Fim da lógica de atribuição automática ---
+
+
       if (ticketData.files && ticketData.files.length > 0) {
         const folderPath = `public/${crypto.randomUUID()}`;
         const uploadedFileNames: string[] = [];
@@ -122,6 +177,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         file_name: fileName,
         solution: null,
         solution_files: null,
+        responsible: assignedResponsible, // Atribui o responsável aqui
       };
 
       const newTicketPayload = { 
@@ -139,13 +195,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
       const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
       const webhookPayload = {
-        name: ticketData.name,
-        phone: ticketData.phone,
-        reason: ticketData.reason,
-        estimated_response_time: ticketData.estimated_response_time,
-        observations: ticketData.observations,
-        submission_date: submissionDate,
-        status: "Novo",
+        ...newTicketDataBase,
       };
 
       fetch(webhookUrl, {
@@ -316,3 +366,5 @@ export function useTickets() {
   }
   return context;
 }
+
+    
