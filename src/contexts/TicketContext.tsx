@@ -39,7 +39,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
+  const { user, isAuthenticated, authIsLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
     setIsLoadingTickets(true);
@@ -186,7 +186,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         console.error("Webhook failed to send:", webhookError);
       });
 
-      toast({ title: `Ticket #${insertedTicket.protocol} Criado`, description: "Seu ticket foi registrado com sucesso." });
+      toast({ title: `Ticket #${String(insertedTicket.protocol).padStart(4, '0')} Criado`, description: "Seu ticket foi registrado com sucesso." });
       if(isAuthenticated) await fetchTickets(); 
       return true;
 
@@ -236,8 +236,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
                 body: JSON.stringify(webhookPayload),
             }).catch(webhookError => {
                 console.error("Falha ao enviar webhook de conclusão:", webhookError);
-                // Optionally show a toast notification for webhook failure
-                // toast({ title: "Aviso", description: "Não foi possível notificar o sistema externo sobre a conclusão do ticket.", variant: "default" });
             });
         }
     }
