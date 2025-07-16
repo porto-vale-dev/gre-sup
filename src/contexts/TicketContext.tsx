@@ -18,6 +18,7 @@ interface TicketContextType {
   addTicket: (ticketData: {
     name: string;
     phone: string;
+    grupoCota: string;
     reason: string;
     estimated_response_time: string;
     observations?: string;
@@ -79,6 +80,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const addTicket = async (ticketData: {
     name: string;
     phone: string;
+    grupoCota: string;
     reason: string;
     estimated_response_time: string;
     observations?: string;
@@ -154,6 +156,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       const newTicketPayload = {
         name: ticketData.name,
         phone: ticketData.phone,
+        grupoCota: ticketData.grupoCota,
         reason: ticketData.reason,
         estimated_response_time: ticketData.estimated_response_time,
         observations: ticketData.observations,
@@ -186,6 +189,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
             nome: insertedTicket.name,
             motivo: insertedTicket.reason,
             responsavel: insertedTicket.responsible,
+            grupo_cota: insertedTicket.grupoCota,
         }),
       }).catch(webhookError => {
         console.error("Webhook failed to send:", webhookError);
@@ -219,7 +223,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     if (status === "Concluído") {
         const { data: ticket, error: ticketError } = await supabase
             .from('tickets')
-            .select('protocol, name, reason, responsible')
+            .select('protocol, name, reason, responsible, grupoCota')
             .eq('id', ticketId)
             .single();
 
@@ -232,6 +236,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
                 nome: ticket.name,
                 motivo: ticket.reason,
                 responsavel: ticket.responsible,
+                grupo_cota: ticket.grupoCota,
                 etapa: "finalizacao",
             };
 
@@ -383,3 +388,5 @@ export function useTickets() {
   }
   return context;
 }
+
+    

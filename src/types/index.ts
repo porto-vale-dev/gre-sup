@@ -8,9 +8,10 @@ export interface SolutionFile {
 
 export interface Ticket {
   id: string; 
-  protocol: number; // New sequential protocol number
+  protocol: number; 
   name: string;
   phone: string;
+  grupoCota: string;
   reason: string;
   estimated_response_time: string;
   observations?: string | null;
@@ -27,3 +28,5 @@ export interface Ticket {
   solution?: string | null;
   solution_files?: SolutionFile[] | null;
 }
+
+    
