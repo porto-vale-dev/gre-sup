@@ -39,7 +39,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user, isAuthenticated, authIsLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
     setIsLoadingTickets(true);
@@ -181,7 +181,12 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(insertedTicket),
+        body: JSON.stringify({
+            protocolo: insertedTicket.protocol,
+            nome: insertedTicket.name,
+            motivo: insertedTicket.reason,
+            responsavel: insertedTicket.responsible,
+        }),
       }).catch(webhookError => {
         console.error("Webhook failed to send:", webhookError);
       });
@@ -223,10 +228,10 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         } else if (ticket) {
             const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
             const webhookPayload = {
+                protocolo: ticket.protocol,
                 nome: ticket.name,
                 motivo: ticket.reason,
                 responsavel: ticket.responsible,
-                protocolo: ticket.protocol,
                 etapa: "finalizacao",
             };
 
