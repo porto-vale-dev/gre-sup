@@ -177,7 +177,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
       }
       
-      const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
+      const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/34817f2f-1b3f-4432-a139-e159248dd070";
       fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -219,14 +219,14 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     if (status === "Concluído") {
         const { data: ticket, error: ticketError } = await supabase
             .from('tickets')
-            .select('name, reason, responsible, protocol')
+            .select('protocol, name, reason, responsible')
             .eq('id', ticketId)
             .single();
 
         if (ticketError) {
             console.error("Erro ao buscar dados do ticket para o webhook:", ticketError.message);
         } else if (ticket) {
-            const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
+            const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/34817f2f-1b3f-4432-a139-e159248dd070";
             const webhookPayload = {
                 protocolo: ticket.protocol,
                 nome: ticket.name,
