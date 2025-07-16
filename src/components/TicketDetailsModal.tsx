@@ -24,6 +24,24 @@ import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
 
+const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+    </svg>
+);
+
+
 interface TicketDetailsModalProps {
   ticket: Ticket | null;
   isOpen: boolean;
@@ -167,6 +185,12 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
       setIsSaving(false);
     }
   };
+  
+  const getWhatsAppLink = () => {
+      const sanitizedPhone = ticket.phone.replace(/\D/g, '');
+      const text = `Referente ao ticket: ${String(ticket.protocol).padStart(4, '0')}`;
+      return `https://wa.me/55${sanitizedPhone}?text=${encodeURIComponent(text)}`;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -309,7 +333,14 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
           </div>
         </div>
         
-        <DialogFooter className="px-6 pb-6 pt-4 border-t gap-2 shrink-0">
+        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-row justify-end items-center gap-2 shrink-0">
+          <Button asChild variant="secondary">
+            <a href={getWhatsAppLink()} target="_blank" rel="noopener noreferrer">
+              <WhatsAppIcon className="mr-2 h-4 w-4"/>
+              WhatsApp
+            </a>
+          </Button>
+          <div className="flex-grow" />
           <Button variant="outline" onClick={onClose}>Fechar</Button>
           <Button onClick={handleSaveSolution} disabled={isSaving}>
             <Save className="mr-2 h-4 w-4" />
@@ -320,5 +351,3 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
     </Dialog>
   );
 }
-
-    
