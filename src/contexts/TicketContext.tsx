@@ -172,9 +172,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         user_id: user ? user.id : null 
       };
 
-      console.log("Responsável calculado:", assignedResponsible);
-console.log("Payload enviado:", newTicketPayload);
-
       const { error: insertError } = await supabase
         .from('tickets')
         .insert([newTicketPayload]);
@@ -215,10 +212,42 @@ console.log("Payload enviado:", newTicketPayload);
 
     if (error) {
       toast({ title: "Erro ao Atualizar", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Status Atualizado", description: `Status do ticket alterado para ${status}.` });
-      await fetchTickets();
+      return;
     }
+
+    toast({ title: "Status Atualizado", description: `Status do ticket alterado para ${status}.` });
+    
+    // Trigger webhook if status is 'Concluído'
+    if (status === "Concluído") {
+        const { data: ticket, error: ticketError } = await supabase
+            .from('tickets')
+            .select('name, reason, responsible')
+            .eq('id', ticketId)
+            .single();
+
+        if (ticketError) {
+            console.error("Erro ao buscar dados do ticket para o webhook:", ticketError.message);
+        } else if (ticket) {
+            const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/3ca49bfc-f180-4223-aee4-84e38ae81c01";
+            const webhookPayload = {
+                nome: ticket.name,
+                motivo: ticket.reason,
+                responsavel: ticket.responsible,
+            };
+
+            fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(webhookPayload),
+            }).catch(webhookError => {
+                console.error("Falha ao enviar webhook de conclusão:", webhookError);
+                // Optionally show a toast notification for webhook failure
+                // toast({ title: "Aviso", description: "Não foi possível notificar o sistema externo sobre a conclusão do ticket.", variant: "default" });
+            });
+        }
+    }
+    
+    await fetchTickets();
   };
 
   const updateTicketResponsible = async (ticketId: string, responsible: string) => {
