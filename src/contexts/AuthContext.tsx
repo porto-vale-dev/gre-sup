@@ -39,11 +39,6 @@ async function fetchUserProfile(user: User | null): Promise<UserProfile | null> 
       return null;
     }
     
-    // Unify admin roles for simplicity
-    if (data && (data.cargo === 'greadmin' || data.cargo === 'adm')) {
-      data.cargo = 'adm';
-    }
-
     return data ? { cargo: data.cargo, username: data.username } : null;
   } catch (err) {
     console.error('Unexpected error fetching profile:', err);

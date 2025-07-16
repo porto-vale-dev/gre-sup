@@ -3,6 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { useTickets } from '@/contexts/TicketContext';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Ticket } from '@/types';
 import { TicketCard } from '@/components/TicketCard';
 import { TicketDetailsModal } from '@/components/TicketDetailsModal';
@@ -16,6 +17,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export function DashboardClient() {
   const { tickets, isLoadingTickets, error, fetchTickets } = useTickets();
+  const { cargo, username } = useAuth();
   
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,8 +28,16 @@ export function DashboardClient() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const activeTickets = useMemo(() => {
-    return tickets.filter(ticket => ticket.status !== "Concluído");
-  }, [tickets]);
+    const baseTickets = tickets.filter(ticket => ticket.status !== "Concluído");
+
+    // If user has role 'gre', filter tickets assigned to them
+    if (cargo === 'gre' && username) {
+      return baseTickets.filter(ticket => ticket.responsible === username);
+    }
+    
+    // Admins and greadmins see all active tickets
+    return baseTickets;
+  }, [tickets, cargo, username]);
 
   const filteredAndSortedTickets = useMemo(() => {
     return activeTickets
@@ -36,7 +46,10 @@ export function DashboardClient() {
                             ticket.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (ticket.responsible && ticket.responsible.toLowerCase().includes(searchTerm.toLowerCase()));
         const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
-        const responsibleMatch = responsibleFilter === "Todos" || ticket.responsible === responsibleFilter;
+        // Responsible filter is only applied if the user is an admin
+        const responsibleMatch = (cargo === 'adm' || cargo === 'greadmin') 
+            ? (responsibleFilter === "Todos" || ticket.responsible === responsibleFilter)
+            : true;
         return searchMatch && statusMatch && responsibleMatch;
       })
       .sort((a, b) => {
@@ -44,7 +57,7 @@ export function DashboardClient() {
         const dateB = new Date(b.submission_date).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
-  }, [activeTickets, searchTerm, statusFilter, responsibleFilter, sortOrder]);
+  }, [activeTickets, searchTerm, statusFilter, responsibleFilter, sortOrder, cargo]);
 
   const handleOpenDetails = (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -57,7 +70,6 @@ export function DashboardClient() {
   };
 
   const ticketStatusesForFilter = useMemo(() => {
-    // Exclude "Concluído" from active tickets filter
     return ["Todos", ...new Set(activeTickets.map(t => t.status).filter(s => s !== "Concluído"))];
   }, [activeTickets]);
 
@@ -127,17 +139,19 @@ export function DashboardClient() {
                     </SelectContent>
                 </Select>
 
-                <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
-                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por responsável">
-                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <SelectValue placeholder="Filtrar por responsável" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {responsibleNamesForFilter.map(name => (
-                            <SelectItem key={name} value={name}>{name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                {(cargo === 'adm' || cargo === 'greadmin') && (
+                  <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
+                      <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por responsável">
+                          <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <SelectValue placeholder="Filtrar por responsável" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {responsibleNamesForFilter.map(name => (
+                              <SelectItem key={name} value={name}>{name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+                )}
 
                 <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
                     <SelectTrigger className="w-full sm:w-[180px]" aria-label="Ordenar por data">
@@ -165,7 +179,10 @@ export function DashboardClient() {
           <Info className="h-5 w-5 text-primary" />
           <AlertTitle className="text-primary">Nenhum Ticket Ativo Encontrado</AlertTitle>
           <AlertDescription>
-            Não há tickets ativos que correspondam aos seus filtros atuais ou nenhum ticket foi aberto ainda (que não esteja concluído).
+            {cargo === 'gre' 
+              ? "Não há tickets ativos atribuídos a você no momento."
+              : "Não há tickets ativos que correspondam aos seus filtros atuais ou nenhum ticket foi aberto ainda."
+            }
           </AlertDescription>
         </Alert>
       ) : (

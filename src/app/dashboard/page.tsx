@@ -10,9 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function DashboardPage() {
   const { cargo } = useAuth();
+  const allowedRoles = ['adm', 'greadmin', 'gre'];
 
-  // Unified check for admin roles
-  if (cargo !== 'adm') {
+  if (!cargo || !allowedRoles.includes(cargo)) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
         <Card className="w-full max-w-md text-center shadow-xl">

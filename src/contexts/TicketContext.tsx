@@ -172,6 +172,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         user_id: user ? user.id : null 
       };
 
+      console.log("Responsável calculado:", assignedResponsible);
+console.log("Payload enviado:", newTicketPayload);
+
       const { error: insertError } = await supabase
         .from('tickets')
         .insert([newTicketPayload]);
