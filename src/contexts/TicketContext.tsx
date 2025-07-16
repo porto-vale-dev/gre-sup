@@ -95,15 +95,14 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       const { data: agents, error: agentsError } = await supabase
         .from('profiles')
         .select('username')
-        .eq('cargo', 'gre')
-        .order('username', { ascending: true });
+        .in('cargo', ['gre'])
 
       if (agentsError) {
         throw new Error(`Não foi possível buscar os atendentes: ${agentsError.message}`);
       }
 
       if (agents && agents.length > 0) {
-        const agentNames = agents.map(a => a.username as string);
+        const agentNames = agents.map(a => a.username as string).sort();
 
         const { data: lastTicket, error: lastTicketError } = await supabase
           .from('tickets')
@@ -152,7 +151,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         fileName = JSON.stringify(uploadedFileNames);
       }
 
-      const newTicketDataBase = {
+      const newTicketPayload = {
         name: ticketData.name,
         phone: ticketData.phone,
         reason: ticketData.reason,
@@ -165,35 +164,29 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         solution: null,
         solution_files: null,
         responsible: assignedResponsible, 
-      };
-
-      const newTicketPayload = { 
-        ...newTicketDataBase, 
         user_id: user ? user.id : null 
       };
 
-      const { error: insertError } = await supabase
+      const { data: insertedTicket, error: insertError } = await supabase
         .from('tickets')
-        .insert([newTicketPayload]);
+        .insert(newTicketPayload)
+        .select()
+        .single();
 
       if (insertError) {
         throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
       }
-
+      
       const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
-      const webhookPayload = {
-        ...newTicketDataBase,
-      };
-
       fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(webhookPayload),
+        body: JSON.stringify(insertedTicket),
       }).catch(webhookError => {
         console.error("Webhook failed to send:", webhookError);
       });
 
-      toast({ title: "Ticket Criado", description: "Seu ticket foi registrado com sucesso." });
+      toast({ title: `Ticket #${insertedTicket.protocol} Criado`, description: "Seu ticket foi registrado com sucesso." });
       if(isAuthenticated) await fetchTickets(); 
       return true;
 
@@ -221,7 +214,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     if (status === "Concluído") {
         const { data: ticket, error: ticketError } = await supabase
             .from('tickets')
-            .select('name, reason, responsible')
+            .select('name, reason, responsible, protocol')
             .eq('id', ticketId)
             .single();
 
@@ -233,6 +226,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
                 nome: ticket.name,
                 motivo: ticket.reason,
                 responsavel: ticket.responsible,
+                protocolo: ticket.protocol,
                 etapa: "finalizacao",
             };
 

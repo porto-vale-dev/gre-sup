@@ -8,6 +8,7 @@ export interface SolutionFile {
 
 export interface Ticket {
   id: string; 
+  protocol: number; // New sequential protocol number
   name: string;
   phone: string;
   reason: string;

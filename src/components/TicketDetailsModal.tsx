@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon } from 'lucide-react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
@@ -173,7 +173,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
       <DialogContent className="sm:max-w-lg md:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
         <DialogHeader className="shrink-0 px-6 pt-6 pb-4">
           <DialogTitle className="font-headline text-2xl text-primary flex items-center">
-            <Info className="mr-2 h-6 w-6" />Detalhes do Ticket #{ticket.id.substring(0, 8)}
+            <TicketIcon className="mr-2 h-6 w-6" />Protocolo #{String(ticket.protocol).padStart(4, '0')}
           </DialogTitle>
           <DialogDescription>
             Visualização completa e gestão do ticket.

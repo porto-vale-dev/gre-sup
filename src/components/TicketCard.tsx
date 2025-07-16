@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TICKET_STATUSES } from '@/lib/constants';
 import { useTickets } from '@/contexts/TicketContext';
-import { CalendarDays, Clock, FileText, User, Tag, Edit3, Check, AlertTriangle, Hourglass, CheckCircle2, ExternalLink, X } from 'lucide-react';
+import { CalendarDays, Clock, FileText, User, Tag, Edit3, Check, AlertTriangle, Hourglass, CheckCircle2, ExternalLink, X, Ticket as TicketIcon } from 'lucide-react';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -67,8 +67,9 @@ export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
             {ticket.status}
           </Badge>
         </div>
-        <CardDescription className="text-xs text-muted-foreground flex items-center gap-1 pt-1">
-          <CalendarDays className="h-3.5 w-3.5" /> Recebido em: {format(parseISO(ticket.submission_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+        <CardDescription className="text-xs text-muted-foreground flex items-center gap-4 pt-1">
+          <span className="flex items-center gap-1.5"><TicketIcon className="h-3.5 w-3.5" /> Protocolo #{String(ticket.protocol).padStart(4, '0')}</span>
+          <span className="flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" /> {format(parseISO(ticket.submission_date), "dd/MM/yyyy", { locale: ptBR })}</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 text-sm flex-grow">
