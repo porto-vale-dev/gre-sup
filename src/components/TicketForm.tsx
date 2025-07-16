@@ -128,19 +128,6 @@ export function TicketForm() {
                 </FormItem>
               )}
             />
-             <FormField
-              control={form.control}
-              name="grupoCota"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Grupo/Cota</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: 1234/567" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="phone"
@@ -180,6 +167,19 @@ export function TicketForm() {
                       Previsão de resposta: {selectedReason.responseTime}
                     </FormDescription>
                   )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="grupoCota"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Grupo/Cota</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: 1234/567" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -272,5 +272,3 @@ export function TicketForm() {
     </Card>
   );
 }
-
-    
