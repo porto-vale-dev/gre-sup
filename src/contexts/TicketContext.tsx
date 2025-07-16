@@ -233,6 +233,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
                 nome: ticket.name,
                 motivo: ticket.reason,
                 responsavel: ticket.responsible,
+                etapa: "finalizacao",
             };
 
             fetch(webhookUrl, {
