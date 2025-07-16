@@ -228,7 +228,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         if (ticketError) {
             console.error("Erro ao buscar dados do ticket para o webhook:", ticketError.message);
         } else if (ticket) {
-            const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/3ca49bfc-f180-4223-aee4-84e38ae81c01";
+            const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
             const webhookPayload = {
                 nome: ticket.name,
                 motivo: ticket.reason,
