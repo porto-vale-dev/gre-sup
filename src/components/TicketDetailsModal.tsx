@@ -185,11 +185,26 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
       setIsSaving(false);
     }
   };
-  
-  const getWhatsAppLink = () => {
-      const sanitizedPhone = ticket.phone.replace(/\D/g, '');
-      const text = `Referente ao ticket: ${String(ticket.protocol).padStart(4, '0')}`;
-      return `https://wa.me/55${sanitizedPhone}?text=${encodeURIComponent(text)}`;
+
+  const handleWhatsAppClick = () => {
+    if (!ticket) return;
+
+    const sanitizedPhone = ticket.phone.replace(/\D/g, '');
+    const text = `Referente ao ticket: ${String(ticket.protocol).padStart(4, '0')}`;
+    const encodedText = encodeURIComponent(text);
+
+    const appUrl = `whatsapp://send?phone=55${sanitizedPhone}&text=${encodedText}`;
+    const webUrl = `https://wa.me/55${sanitizedPhone}?text=${encodedText}`;
+
+    // Attempt to open the app link
+    window.location.href = appUrl;
+
+    // After 500ms, fallback to the web link.
+    // This often works because if the app opens, the browser tab loses focus
+    // and the timeout might not fire. If it doesn't open, the user is redirected.
+    setTimeout(() => {
+        window.open(webUrl, '_blank', 'noopener,noreferrer');
+    }, 500);
   };
 
   return (
@@ -334,11 +349,9 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
         </div>
         
         <DialogFooter className="px-6 pb-6 pt-4 border-t flex-row justify-end items-center gap-2 shrink-0">
-          <Button asChild variant="secondary">
-            <a href={getWhatsAppLink()} target="_blank" rel="noopener noreferrer">
-              <WhatsAppIcon className="mr-2 h-4 w-4"/>
-              Continuar no WhatsApp
-            </a>
+          <Button variant="secondary" onClick={handleWhatsAppClick}>
+            <WhatsAppIcon className="mr-2 h-4 w-4"/>
+            Continuar no WhatsApp
           </Button>
           <div className="flex-grow" />
           <Button variant="outline" onClick={onClose}>Fechar</Button>
