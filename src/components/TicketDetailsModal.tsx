@@ -337,7 +337,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
           <Button asChild variant="secondary">
             <a href={getWhatsAppLink()} target="_blank" rel="noopener noreferrer">
               <WhatsAppIcon className="mr-2 h-4 w-4"/>
-              WhatsApp
+              Continuar no WhatsApp
             </a>
           </Button>
           <div className="flex-grow" />
