@@ -225,37 +225,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
     toast({ title: "Status Atualizado", description: `Status do ticket alterado para ${status}.` });
     
-    // Trigger webhook if status is 'Concluído'
-    if (status === "Concluído") {
-        const { data: ticket, error: ticketError } = await supabase
-            .from('tickets')
-            .select('protocol, name, reason, responsible, grupo, cota')
-            .eq('id', ticketId)
-            .single();
-
-        if (ticketError) {
-            console.error("Erro ao buscar dados do ticket para o webhook:", ticketError.message);
-        } else if (ticket) {
-            const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/34817f2f-1b3f-4432-a139-e159248dd070";
-            const webhookPayload = {
-                protocolo: ticket.protocol,
-                nome: ticket.name,
-                motivo: ticket.reason,
-                responsavel: ticket.responsible,
-                grupo_cota: `${ticket.grupo}/${ticket.cota}`,
-                etapa: "finalizacao",
-            };
-
-            fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(webhookPayload),
-            }).catch(webhookError => {
-                console.error("Falha ao enviar webhook de conclusão:", webhookError);
-            });
-        }
-    }
-    
     await fetchTickets();
   };
 
