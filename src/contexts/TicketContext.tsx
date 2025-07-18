@@ -199,7 +199,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
             cliente: insertedTicket.client_name,
             motivo: insertedTicket.reason,
             responsavel: insertedTicket.responsible,
-            grupo_cota: `${insertedTicket.grupo}/${insertedTicket.cota}`,
+            telefone: insertedTicket.phone,
         }),
       }).catch(webhookError => {
         console.error("Webhook failed to send:", webhookError);
