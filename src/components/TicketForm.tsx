@@ -124,7 +124,7 @@ export function TicketForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome Completo</FormLabel>
+                  <FormLabel>Nome Completo do Solicitante</FormLabel>
                   <FormControl>
                     <Input placeholder="Seu nome completo" {...field} />
                   </FormControl>
@@ -145,12 +145,21 @@ export function TicketForm() {
                 </FormItem>
               )}
             />
+
+            <FormItem>
+              <FormLabel>Nome do cliente</FormLabel>
+              <FormControl>
+                <Input placeholder="Nome completo do cliente" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+
             <FormField
               control={form.control}
               name="cpf"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>CPF</FormLabel>
+                  <FormLabel>CPF do cliente</FormLabel>
                   <FormControl>
                     <Input placeholder="000.000.000-00" {...field} />
                   </FormControl>
@@ -158,6 +167,36 @@ export function TicketForm() {
                 </FormItem>
               )}
             />
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+                <FormField
+                control={form.control}
+                name="grupo"
+                render={({ field }) => (
+                    <FormItem className="flex-1">
+                    <FormLabel>Grupo</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Ex: 1234" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="cota"
+                render={({ field }) => (
+                    <FormItem className="flex-1">
+                    <FormLabel>Cota</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Ex: 567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+
             <FormField
               control={form.control}
               name="reason"
@@ -188,35 +227,6 @@ export function TicketForm() {
                 </FormItem>
               )}
             />
-
-            <div className="flex flex-col sm:flex-row gap-4">
-                <FormField
-                control={form.control}
-                name="grupo"
-                render={({ field }) => (
-                    <FormItem className="flex-1">
-                    <FormLabel>Grupo</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Ex: 1234" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="cota"
-                render={({ field }) => (
-                    <FormItem className="flex-1">
-                    <FormLabel>Cota</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Ex: 567" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
 
             <FormField
               control={form.control}
@@ -306,3 +316,5 @@ export function TicketForm() {
     </Card>
   );
 }
+
+    
