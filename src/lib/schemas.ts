@@ -3,9 +3,10 @@ import { z } from 'zod';
 import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_COUNT } from './constants';
 
 export const ticketSchema = z.object({
-  name: z.string().min(1, { message: "Nome é obrigatório." }),
+  name: z.string().min(1, { message: "Nome do solicitante é obrigatório." }),
   phone: z.string().min(1, { message: "Telefone é obrigatório." }),
-  cpf: z.string().min(1, { message: "CPF é obrigatório." }),
+  client_name: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
+  cpf: z.string().min(1, { message: "CPF do cliente é obrigatório." }),
   grupo: z.string().min(1, { message: "Grupo é obrigatório." }),
   cota: z.string().min(1, { message: "Cota é obrigatória." }),
   reason: z.string().min(1, { message: "Motivo do ticket é obrigatório." }),

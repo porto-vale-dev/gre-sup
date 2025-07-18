@@ -18,6 +18,7 @@ interface TicketContextType {
   addTicket: (ticketData: {
     name: string;
     phone: string;
+    client_name: string;
     cpf: string;
     grupo: string;
     cota: string;
@@ -82,6 +83,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const addTicket = async (ticketData: {
     name: string;
     phone: string;
+    client_name: string;
     cpf: string;
     grupo: string;
     cota: string;
@@ -160,6 +162,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       const newTicketPayload = {
         name: ticketData.name,
         phone: ticketData.phone,
+        client_name: ticketData.client_name,
         cpf: ticketData.cpf,
         grupo: ticketData.grupo,
         cota: ticketData.cota,
@@ -192,7 +195,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             protocolo: insertedTicket.protocol,
-            nome: insertedTicket.name,
+            solicitante: insertedTicket.name,
+            cliente: insertedTicket.client_name,
             motivo: insertedTicket.reason,
             responsavel: insertedTicket.responsible,
             grupo_cota: `${insertedTicket.grupo}/${insertedTicket.cota}`,

@@ -33,6 +33,7 @@ export function TicketForm() {
     defaultValues: {
       name: "",
       phone: "",
+      client_name: "",
       cpf: "",
       grupo: "",
       cota: "",
@@ -76,6 +77,7 @@ export function TicketForm() {
     const ticketPayload = {
       name: data.name,
       phone: data.phone,
+      client_name: data.client_name,
       cpf: data.cpf,
       grupo: data.grupo,
       cota: data.cota,
@@ -146,13 +148,19 @@ export function TicketForm() {
               )}
             />
 
-            <FormItem>
-              <FormLabel>Nome do cliente</FormLabel>
-              <FormControl>
-                <Input placeholder="Nome completo do cliente" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+            <FormField
+              control={form.control}
+              name="client_name"
+              render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Nome do cliente</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Nome completo do cliente" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -316,5 +324,3 @@ export function TicketForm() {
     </Card>
   );
 }
-
-    

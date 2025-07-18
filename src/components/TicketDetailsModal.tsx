@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare } from 'lucide-react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
@@ -217,7 +217,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><User className="h-4 w-4" />Nome:</strong>
+                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><User className="h-4 w-4" />Solicitante:</strong>
                   <p>{ticket.name}</p>
                 </div>
                 <div>
@@ -225,7 +225,11 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
                   <p>{ticket.phone}</p>
                 </div>
                 <div>
-                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Fingerprint className="h-4 w-4" />CPF:</strong>
+                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><UserSquare className="h-4 w-4" />Nome do Cliente:</strong>
+                  <p>{ticket.client_name}</p>
+                </div>
+                <div>
+                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Fingerprint className="h-4 w-4" />CPF do Cliente:</strong>
                   <p>{ticket.cpf}</p>
                 </div>
                  <div>

@@ -11,6 +11,7 @@ export interface Ticket {
   protocol: number; 
   name: string;
   phone: string;
+  client_name: string;
   cpf: string;
   grupo: string;
   cota: string;
