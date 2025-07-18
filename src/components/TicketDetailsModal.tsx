@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint } from 'lucide-react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
@@ -232,9 +232,13 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Phone className="h-4 w-4" />Telefone:</strong>
                   <p>{ticket.phone}</p>
                 </div>
+                <div>
+                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Fingerprint className="h-4 w-4" />CPF:</strong>
+                  <p>{ticket.cpf}</p>
+                </div>
                  <div>
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Users className="h-4 w-4" />Grupo/Cota:</strong>
-                  <p>{ticket.grupoCota}</p>
+                  <p>{ticket.grupo} / {ticket.cota}</p>
                 </div>
                 <div>
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />Data de Abertura:</strong>

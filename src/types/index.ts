@@ -11,7 +11,9 @@ export interface Ticket {
   protocol: number; 
   name: string;
   phone: string;
-  grupoCota: string;
+  cpf: string;
+  grupo: string;
+  cota: string;
   reason: string;
   estimated_response_time: string;
   observations?: string | null;
@@ -28,5 +30,3 @@ export interface Ticket {
   solution?: string | null;
   solution_files?: SolutionFile[] | null;
 }
-
-    

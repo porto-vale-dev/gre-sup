@@ -18,7 +18,9 @@ interface TicketContextType {
   addTicket: (ticketData: {
     name: string;
     phone: string;
-    grupoCota: string;
+    cpf: string;
+    grupo: string;
+    cota: string;
     reason: string;
     estimated_response_time: string;
     observations?: string;
@@ -80,7 +82,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const addTicket = async (ticketData: {
     name: string;
     phone: string;
-    grupoCota: string;
+    cpf: string;
+    grupo: string;
+    cota: string;
     reason: string;
     estimated_response_time: string;
     observations?: string;
@@ -156,7 +160,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       const newTicketPayload = {
         name: ticketData.name,
         phone: ticketData.phone,
-        grupoCota: ticketData.grupoCota,
+        cpf: ticketData.cpf,
+        grupo: ticketData.grupo,
+        cota: ticketData.cota,
         reason: ticketData.reason,
         estimated_response_time: ticketData.estimated_response_time,
         observations: ticketData.observations,
@@ -189,7 +195,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
             nome: insertedTicket.name,
             motivo: insertedTicket.reason,
             responsavel: insertedTicket.responsible,
-            grupo_cota: insertedTicket.grupoCota,
+            grupo_cota: `${insertedTicket.grupo}/${insertedTicket.cota}`,
         }),
       }).catch(webhookError => {
         console.error("Webhook failed to send:", webhookError);
@@ -223,7 +229,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     if (status === "Concluído") {
         const { data: ticket, error: ticketError } = await supabase
             .from('tickets')
-            .select('protocol, name, reason, responsible, grupoCota')
+            .select('protocol, name, reason, responsible, grupo, cota')
             .eq('id', ticketId)
             .single();
 
@@ -236,7 +242,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
                 nome: ticket.name,
                 motivo: ticket.reason,
                 responsavel: ticket.responsible,
-                grupo_cota: ticket.grupoCota,
+                grupo_cota: `${ticket.grupo}/${ticket.cota}`,
                 etapa: "finalizacao",
             };
 
@@ -388,5 +394,3 @@ export function useTickets() {
   }
   return context;
 }
-
-    

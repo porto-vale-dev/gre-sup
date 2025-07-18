@@ -5,7 +5,9 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_C
 export const ticketSchema = z.object({
   name: z.string().min(1, { message: "Nome é obrigatório." }),
   phone: z.string().min(1, { message: "Telefone é obrigatório." }),
-  grupoCota: z.string().min(1, { message: "Grupo/Cota é obrigatório." }),
+  cpf: z.string().min(1, { message: "CPF é obrigatório." }),
+  grupo: z.string().min(1, { message: "Grupo é obrigatório." }),
+  cota: z.string().min(1, { message: "Cota é obrigatória." }),
   reason: z.string().min(1, { message: "Motivo do ticket é obrigatório." }),
   observations: z.string().min(1, { message: "Observações são obrigatórias." }).max(MAX_OBSERVATIONS_LENGTH, { message: `Observações não podem exceder ${MAX_OBSERVATIONS_LENGTH} caracteres.` }),
   file: z
@@ -37,5 +39,3 @@ export const loginSchema = z.object({
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
-
-    

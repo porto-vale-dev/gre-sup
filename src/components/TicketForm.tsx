@@ -33,7 +33,9 @@ export function TicketForm() {
     defaultValues: {
       name: "",
       phone: "",
-      grupoCota: "",
+      cpf: "",
+      grupo: "",
+      cota: "",
       reason: "",
       observations: "",
       file: undefined,
@@ -74,7 +76,9 @@ export function TicketForm() {
     const ticketPayload = {
       name: data.name,
       phone: data.phone,
-      grupoCota: data.grupoCota,
+      cpf: data.cpf,
+      grupo: data.grupo,
+      cota: data.cota,
       reason: data.reason,
       estimated_response_time: selectedReason?.responseTime || "N/A",
       observations: data.observations,
@@ -143,6 +147,19 @@ export function TicketForm() {
             />
             <FormField
               control={form.control}
+              name="cpf"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CPF</FormLabel>
+                  <FormControl>
+                    <Input placeholder="000.000.000-00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="reason"
               render={({ field }) => (
                 <FormItem>
@@ -171,19 +188,36 @@ export function TicketForm() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="grupoCota"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Grupo/Cota</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: 1234/567" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+            <div className="flex flex-col sm:flex-row gap-4">
+                <FormField
+                control={form.control}
+                name="grupo"
+                render={({ field }) => (
+                    <FormItem className="flex-1">
+                    <FormLabel>Grupo</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Ex: 1234" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="cota"
+                render={({ field }) => (
+                    <FormItem className="flex-1">
+                    <FormLabel>Cota</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Ex: 567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+
             <FormField
               control={form.control}
               name="observations"
