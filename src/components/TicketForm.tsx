@@ -126,9 +126,9 @@ export function TicketForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome Completo do Solicitante</FormLabel>
+                  <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Seu nome completo" {...field} />
+                    <Input placeholder="Seu nome" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
