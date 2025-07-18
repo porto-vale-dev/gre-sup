@@ -186,7 +186,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
       }
       
-      const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/34817f2f-1b3f-4432-a139-e159248dd070";
+      const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
       fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
