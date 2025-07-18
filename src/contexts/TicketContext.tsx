@@ -200,6 +200,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
             motivo: insertedTicket.reason,
             responsavel: insertedTicket.responsible,
             telefone: insertedTicket.phone,
+            previsao_resposta: insertedTicket.estimated_response_time
         }),
       }).catch(webhookError => {
         console.error("Webhook failed to send:", webhookError);
