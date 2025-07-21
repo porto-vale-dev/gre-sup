@@ -229,7 +229,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
                   <p>{ticket.client_name}</p>
                 </div>
                 <div>
-                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Fingerprint className="h-4 w-4" />CPF do Cliente:</strong>
+                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Fingerprint className="h-4 w-4" />CPF ou CNPJ do Cliente:</strong>
                   <p>{ticket.cpf}</p>
                 </div>
                  <div>

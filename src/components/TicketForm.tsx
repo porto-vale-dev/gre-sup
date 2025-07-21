@@ -167,9 +167,9 @@ export function TicketForm() {
               name="cpf"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>CPF do cliente</FormLabel>
+                  <FormLabel>CPF ou CNPJ do cliente</FormLabel>
                   <FormControl>
-                    <Input placeholder="000.000.000-00" {...field} />
+                    <Input placeholder="000.000.000-00 ou 00.000.000/0000-00" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
