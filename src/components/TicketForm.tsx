@@ -218,7 +218,7 @@ export function TicketForm() {
                   <FormLabel>CPF ou CNPJ do cliente</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                      placeholder="000.000.000-00"
                       {...field}
                       onChange={(e) => {
                         field.onChange(formatCpfCnpj(e.target.value));
