@@ -89,6 +89,27 @@ export function TicketForm() {
         .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
     }
   };
+  
+  const formatPhone = (value: string) => {
+    const cleanedValue = value.replace(/\D/g, '');
+    const length = cleanedValue.length;
+
+    if (length <= 2) {
+      return `(${cleanedValue}`;
+    } 
+    
+    let formatted = `(${cleanedValue.substring(0, 2)}) `;
+
+    if (length <= 6) {
+        return formatted + cleanedValue.substring(2);
+    }
+    
+    if (length <= 10) {
+        return formatted + `${cleanedValue.substring(2, 6)}-${cleanedValue.substring(6)}`;
+    }
+
+    return formatted + `${cleanedValue.substring(2, 7)}-${cleanedValue.substring(7, 11)}`;
+  };
 
 
   async function onSubmit(data: TicketFormData) {
@@ -161,7 +182,14 @@ export function TicketForm() {
                 <FormItem>
                   <FormLabel>Telefone para Contato</FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder="(XX) XXXXX-XXXX" {...field} />
+                    <Input 
+                        type="tel" 
+                        placeholder="(XX) XXXXX-XXXX" 
+                        {...field}
+                        onChange={(e) => {
+                            field.onChange(formatPhone(e.target.value));
+                        }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
