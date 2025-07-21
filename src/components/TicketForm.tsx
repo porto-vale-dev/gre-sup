@@ -184,7 +184,7 @@ export function TicketForm() {
                   <FormControl>
                     <Input 
                         type="tel" 
-                        placeholder="(XX) XXXXX-XXXX" 
+                        placeholder="(00) 00000-0000" 
                         {...field}
                         onChange={(e) => {
                             field.onChange(formatPhone(e.target.value));
