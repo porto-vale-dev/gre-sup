@@ -70,6 +70,26 @@ export function TicketForm() {
     form.setValue("file", dataTransfer.files, { shouldValidate: true });
   };
 
+  const formatCpfCnpj = (value: string) => {
+    const cleanedValue = value.replace(/\D/g, ''); // Remove non-digit characters
+  
+    if (cleanedValue.length <= 11) {
+      // CPF format
+      return cleanedValue
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    } else {
+      // CNPJ format
+      return cleanedValue
+        .substring(0, 14) // Limit to 14 digits for CNPJ
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2')
+        .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+    }
+  };
+
 
   async function onSubmit(data: TicketFormData) {
     const filesToUpload = data.file ? Array.from(data.file) : undefined;
@@ -147,7 +167,7 @@ export function TicketForm() {
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
               name="client_name"
@@ -161,7 +181,7 @@ export function TicketForm() {
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
               name="cpf"
@@ -169,7 +189,13 @@ export function TicketForm() {
                 <FormItem>
                   <FormLabel>CPF ou CNPJ do cliente</FormLabel>
                   <FormControl>
-                    <Input placeholder="000.000.000-00 ou 00.000.000/0000-00" {...field} />
+                    <Input 
+                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(formatCpfCnpj(e.target.value));
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

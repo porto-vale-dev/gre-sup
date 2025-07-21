@@ -6,9 +6,7 @@ export const ticketSchema = z.object({
   name: z.string().min(1, { message: "Nome do solicitante é obrigatório." }),
   phone: z.string().min(1, { message: "Telefone é obrigatório." }),
   client_name: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
-  cpf: z.string()
-    .min(11, { message: "CPF ou CNPJ deve ter no mínimo 11 caracteres." })
-    .max(15, { message: "CPF ou CNPJ deve ter no máximo 15 caracteres." }),
+  cpf: z.string().min(1, { message: "CPF ou CNPJ do cliente é obrigatório." }),
   grupo: z.string().min(1, { message: "Grupo é obrigatório." }),
   cota: z.string().min(1, { message: "Cota é obrigatória." }),
   reason: z.string().min(1, { message: "Motivo do ticket é obrigatório." }),
