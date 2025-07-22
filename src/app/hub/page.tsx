@@ -17,7 +17,7 @@ interface Service {
 }
 
 const allServices: Service[] = [
-    { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
+    { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "gre"] },
     { title: "Mural de Avisos - GRE", href: "/mural-de-avisos", Icon: Megaphone, description: "Veja os últimos avisos e comunicados.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
     { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo ticket de suporte para o GRE.", allowedRoles: ["colaborador"] },
     { title: "Documentos", href: "/documentos", Icon: FolderKanban, description: "Acesse os documentos da empresa.", allowedRoles: ["adm", "greadmin", "gre"] },
