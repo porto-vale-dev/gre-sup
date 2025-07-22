@@ -28,13 +28,23 @@ export function ArchivedTicketsClient() {
     return tickets.filter(ticket => ticket.status === "Concluído");
   }, [tickets]);
 
+  const responsibleNamesForFilter = useMemo(() => {
+    return ["Todos", "mayara", "luana", "marcelo", "não atribuído"];
+  }, []);
+
   const filteredAndSortedTickets = useMemo(() => {
     return archivedTickets
       .filter(ticket => {
         const searchMatch = ticket.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             ticket.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (ticket.responsible && ticket.responsible.toLowerCase().includes(searchTerm.toLowerCase()));
-        const responsibleMatch = responsibleFilter === "Todos" || ticket.responsible === responsibleFilter;
+        
+        const responsibleMatch = (() => {
+          if (responsibleFilter === "Todos") return true;
+          if (responsibleFilter === "não atribuído") return !ticket.responsible;
+          return ticket.responsible?.toLowerCase() === responsibleFilter.toLowerCase();
+        })();
+
         return searchMatch && responsibleMatch;
       })
       .sort((a, b) => {
@@ -53,10 +63,6 @@ export function ArchivedTicketsClient() {
     setIsModalOpen(false);
     setSelectedTicket(null);
   };
-
-  const responsibleNamesForFilter = useMemo(() => {
-    return ["Todos", ...new Set(archivedTickets.map(t => t.responsible).filter(Boolean) as string[])];
-  }, [archivedTickets]);
 
   if (isLoadingTickets) {
      return (
@@ -114,7 +120,7 @@ export function ArchivedTicketsClient() {
               </SelectTrigger>
               <SelectContent>
                 {responsibleNamesForFilter.map(name => (
-                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                  <SelectItem key={name} value={name} className="capitalize">{name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
