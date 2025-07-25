@@ -21,6 +21,7 @@ const allServices: Service[] = [
     { title: "Mural de Avisos - GRE", href: "/mural-de-avisos", Icon: Megaphone, description: "Veja os últimos avisos e comunicados.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
     { title: "Documentos", href: "/documentos", Icon: FolderKanban, description: "Acesse os documentos da empresa.", allowedRoles: ["adm", "greadmin", "gre"] },
     { title: "Painel de Suporte - GRE", href: "/suporte-gre/painel", Icon: FolderKanban, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm", "greadmin", "gre"] },
+    { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo chamado para o suporte.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
 ];
 
 const ServiceCard = ({ service }: { service: Service }) => (
@@ -52,7 +53,7 @@ export default function HubPage() {
     }, [cargo]);
 
     const generalTools = useMemo(() => {
-      return accessibleServices.filter(s => s.title === "Rankings" || s.title === "Mural de Avisos - GRE");
+      return accessibleServices.filter(s => s.title === "Rankings" || s.title === "Mural de Avisos - GRE" || s.title === "Novo ticket - GRE");
     }, [accessibleServices]);
 
     const adminTools = useMemo(() => {
