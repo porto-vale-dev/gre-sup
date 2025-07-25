@@ -187,16 +187,35 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
   };
 
   const handleWhatsAppClick = () => {
-    if (!ticket) return;
+    if (!ticket || !ticket.phone) {
+      toast({
+        title: "Telefone não encontrado",
+        description: "Este ticket não possui um número de telefone associado.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    // Remove todos os caracteres que não são dígitos
     const sanitizedPhone = ticket.phone.replace(/\D/g, '');
-    const text = `Referente ao ticket: ${String(ticket.protocol).padStart(4, '0')}`;
+
+    // Verifica se o número tem pelo menos 10 dígitos (DDD + 8 de número)
+    if (sanitizedPhone.length < 10) {
+        toast({
+            title: "Número de telefone inválido",
+            description: "O número de telefone parece estar incompleto.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    const text = `Olá, tudo bem? Falo sobre o ticket de protocolo #${String(ticket.protocol).padStart(4, '0')}.`;
     const encodedText = encodeURIComponent(text);
 
-    const appUrl = `whatsapp://send?phone=55${sanitizedPhone}&text=${encodedText}`;
+    // Usa a URL universal da API do WhatsApp, que funciona em mobile e web
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=55${sanitizedPhone}&text=${encodedText}`;
 
-    // Attempt to open the app link
-    window.location.href = appUrl;
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
