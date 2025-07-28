@@ -103,12 +103,13 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     let fileName: string | null = null;
     const submissionDate = new Date().toISOString();
 
-    // Choose the correct Supabase client instance
+    // Choose the correct Supabase client instance based on authentication state
     const dbClient = isAuthenticated ? supabase : supabaseAnon;
 
     try {
       let assignedResponsible: string | null = null;
 
+      // 1. Fetch available agents with 'gre' role
       const { data: agents, error: agentsError } = await dbClient
         .from('profiles')
         .select('username')
@@ -118,9 +119,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         throw new Error(`Não foi possível buscar os atendentes: ${agentsError.message}`);
       }
 
+      // 2. Implement Round-Robin assignment logic
       if (agents && agents.length > 0) {
         const agentNames = agents.map(a => a.username as string).sort();
 
+        // Get the last ticket to find the last responsible agent
         const { data: lastTicket, error: lastTicketError } = await dbClient
           .from('tickets')
           .select('responsible')
@@ -130,6 +133,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
 
         if (lastTicketError) {
+          // Log a warning but don't block the process
           console.warn(`Aviso ao buscar último ticket: ${lastTicketError.message}`);
         }
 
@@ -139,6 +143,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         if (lastResponsible) {
           const lastAgentIndex = agentNames.indexOf(lastResponsible);
           if (lastAgentIndex !== -1) {
+            // If the last agent is found, assign to the next one in the list (circularly)
             nextAgentIndex = (lastAgentIndex + 1) % agentNames.length;
           }
         }
@@ -183,7 +188,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         file_path: filePath,
         file_name: fileName,
         solution: null,
-        responsible: assignedResponsible,
+        responsible: assignedResponsible, // Set the assigned responsible
       };
 
       if (isAuthenticated && user) {
@@ -200,6 +205,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
       }
       
+      // Send webhook notification
       const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
       fetch(webhookUrl, {
         method: 'POST',
@@ -214,6 +220,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
             previsao_resposta: insertedTicket.estimated_response_time
         }),
       }).catch(webhookError => {
+        // Log webhook errors but don't fail the ticket creation
         console.error("Webhook failed to send:", webhookError);
       });
 
