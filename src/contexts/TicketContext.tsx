@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { Ticket, TicketStatus, SolutionFile } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
+import { supabaseAnon } from '@/lib/supabaseAnonClient'; // Import the new anon client
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
 import { MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
@@ -46,6 +47,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
+    // Only authenticated users can fetch all tickets
+    if (!isAuthenticated) {
+        setIsLoadingTickets(false);
+        return;
+    }
     setIsLoadingTickets(true);
     setError(null);
     try {
@@ -66,7 +72,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoadingTickets(false);
     }
-  }, [toast]);
+  }, [toast, isAuthenticated]);
 
   useEffect(() => {
     // Only fetch tickets if auth has loaded and user is authenticated.
@@ -97,10 +103,13 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     let fileName: string | null = null;
     const submissionDate = new Date().toISOString();
 
+    // Choose the correct Supabase client instance
+    const dbClient = isAuthenticated ? supabase : supabaseAnon;
+
     try {
       let assignedResponsible: string | null = null;
 
-      const { data: agents, error: agentsError } = await supabase
+      const { data: agents, error: agentsError } = await dbClient
         .from('profiles')
         .select('username')
         .in('cargo', ['gre'])
@@ -112,7 +121,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       if (agents && agents.length > 0) {
         const agentNames = agents.map(a => a.username as string).sort();
 
-        const { data: lastTicket, error: lastTicketError } = await supabase
+        const { data: lastTicket, error: lastTicketError } = await dbClient
           .from('tickets')
           .select('responsible')
           .not('responsible', 'is', null) 
@@ -145,7 +154,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         
         for (const file of ticketData.files) {
           const pathInBucket = `${folderPath}/${file.name}`;
-          const { error: uploadError } = await supabase.storage
+          const { error: uploadError } = await dbClient.storage
             .from(TICKET_FILES_BUCKET)
             .upload(pathInBucket, file);
           
@@ -158,8 +167,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         filePath = folderPath;
         fileName = JSON.stringify(uploadedFileNames);
       }
-
-      const newTicketBasePayload: Omit<Ticket, 'id' | 'protocol' | 'solution_files'> & {user_id?: string} = {
+      
+      const newTicketBasePayload: Omit<Ticket, 'id' | 'protocol' | 'solution_files' | 'user_id'> & { user_id?: string } = {
         name: ticketData.name,
         phone: ticketData.phone,
         client_name: ticketData.client_name,
@@ -177,11 +186,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         responsible: assignedResponsible,
       };
 
-      if (user) {
+      if (isAuthenticated && user) {
         newTicketBasePayload.user_id = user.id;
       }
       
-      const { data: insertedTicket, error: insertError } = await supabase
+      const { data: insertedTicket, error: insertError } = await dbClient
         .from('tickets')
         .insert(newTicketBasePayload)
         .select()
