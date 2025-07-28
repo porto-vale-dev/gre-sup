@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { Ticket, TicketStatus, SolutionFile } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
+import { supabaseAnon } from '@/lib/supabaseAnonClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
 import { MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
@@ -43,7 +44,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
+  const { user, isAuthenticated, authIsLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
     if (!isAuthenticated) {
@@ -98,6 +99,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       let filePath: string | null = null;
       let fileName: string | null = null;
       const submissionDate = new Date().toISOString();
+      const dbClient = isAuthenticated ? supabase : supabaseAnon;
 
       if (ticketData.files && ticketData.files.length > 0) {
         const folderPath = `public/${crypto.randomUUID()}`;
@@ -132,18 +134,15 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         p_file_path: filePath,
         p_file_name: fileName,
         p_submission_date: submissionDate,
-        p_user_id: user?.id, // Será nulo se o usuário não estiver logado
+        p_user_id: user?.id ?? null,
       };
 
-      const { data: rpcData, error: rpcError } = await supabase
+      const { data: newTicket, error: rpcError } = await dbClient
         .rpc('create_ticket_public', ticketPayload);
         
       if (rpcError) {
-        // O erro da função RPC será mais informativo
         throw new Error(`Erro ao salvar ticket: ${rpcError.message}`);
       }
-
-      const newTicket = rpcData;
       
       const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
       fetch(webhookUrl, {
