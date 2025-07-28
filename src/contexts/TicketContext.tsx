@@ -5,7 +5,6 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { Ticket, TicketStatus, SolutionFile } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
-import { supabaseAnon } from '@/lib/supabaseAnonClient'; // Import the new anon client
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
 import { MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
@@ -27,7 +26,7 @@ interface TicketContextType {
     estimated_response_time: string;
     observations?: string;
     files?: File[];
-  }) => Promise<boolean>; // Return boolean for success
+  }) => Promise<boolean>;
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
   updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
   updateTicketSolution: (ticketId: string, solution: string, newFiles: File[]) => Promise<void>;
@@ -47,7 +46,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
-    // Only authenticated users can fetch all tickets
     if (!isAuthenticated) {
         setIsLoadingTickets(false);
         return;
@@ -75,11 +73,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   }, [toast, isAuthenticated]);
 
   useEffect(() => {
-    // Only fetch tickets if auth has loaded and user is authenticated.
     if (!authIsLoading && isAuthenticated) {
       fetchTickets();
     } else if (!authIsLoading && !isAuthenticated) {
-      // If not authenticated and auth has loaded, clear tickets and stop loading.
       setTickets([]);
       setIsLoadingTickets(false);
     }
@@ -98,64 +94,18 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     observations?: string;
     files?: File[];
   }): Promise<boolean> => {
-    
-    const dbClient = isAuthenticated ? supabase : supabaseAnon;
-
     try {
-      let assignedResponsible: string | null = null;
       let filePath: string | null = null;
       let fileName: string | null = null;
       const submissionDate = new Date().toISOString();
 
-      // Only run assignment logic for authenticated users to avoid RLS issues on select
-      if (isAuthenticated) {
-          const { data: agents, error: agentsError } = await dbClient
-            .from('profiles')
-            .select('username')
-            .in('cargo', ['gre']);
-
-          if (agentsError) {
-            throw new Error(`Não foi possível buscar os atendentes: ${agentsError.message}`);
-          }
-          
-          if (agents && agents.length > 0) {
-            const agentNames = agents.map(a => a.username as string).sort();
-
-            const { data: lastTicket, error: lastTicketError } = await dbClient
-              .from('tickets')
-              .select('responsible')
-              .not('responsible', 'is', null) 
-              .order('submission_date', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-
-            if (lastTicketError) {
-              console.warn(`Aviso ao buscar último ticket: ${lastTicketError.message}`);
-            }
-
-            const lastResponsible = lastTicket?.responsible;
-            let nextAgentIndex = 0;
-
-            if (lastResponsible) {
-              const lastAgentIndex = agentNames.indexOf(lastResponsible);
-              if (lastAgentIndex !== -1) {
-                nextAgentIndex = (lastAgentIndex + 1) % agentNames.length;
-              }
-            }
-            assignedResponsible = agentNames[nextAgentIndex];
-          } else {
-            console.warn("Nenhum atendente (cargo 'gre') encontrado para atribuição automática.");
-          }
-      }
-
-      // Handle file uploads
       if (ticketData.files && ticketData.files.length > 0) {
         const folderPath = `public/${crypto.randomUUID()}`;
         const uploadedFileNames: string[] = [];
         
         for (const file of ticketData.files) {
           const pathInBucket = `${folderPath}/${file.name}`;
-          const { error: uploadError } = await dbClient.storage
+          const { error: uploadError } = await supabase.storage
             .from(TICKET_FILES_BUCKET)
             .upload(pathInBucket, file);
           
@@ -168,58 +118,52 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         filePath = folderPath;
         fileName = JSON.stringify(uploadedFileNames);
       }
-      
-      const ticketPayload: Omit<Ticket, 'id' | 'protocol' | 'solution_files' | 'user_id'> & { user_id?: string | null } = {
-        name: ticketData.name,
-        phone: ticketData.phone,
-        client_name: ticketData.client_name,
-        cpf: ticketData.cpf,
-        grupo: ticketData.grupo,
-        cota: ticketData.cota,
-        reason: ticketData.reason,
-        estimated_response_time: ticketData.estimated_response_time,
-        observations: ticketData.observations,
-        submission_date: submissionDate,
-        status: "Novo" as TicketStatus,
-        file_path: filePath,
-        file_name: fileName,
-        solution: null,
-        responsible: assignedResponsible,
+
+      const ticketPayload = {
+        p_name: ticketData.name,
+        p_phone: ticketData.phone,
+        p_client_name: ticketData.client_name,
+        p_cpf: ticketData.cpf,
+        p_grupo: ticketData.grupo,
+        p_cota: ticketData.cota,
+        p_reason: ticketData.reason,
+        p_estimated_response_time: ticketData.estimated_response_time,
+        p_observations: ticketData.observations,
+        p_file_path: filePath,
+        p_file_name: fileName,
+        p_submission_date: submissionDate,
+        p_user_id: user?.id, // Será nulo se o usuário não estiver logado
       };
 
-      if (isAuthenticated && user) {
-        ticketPayload.user_id = user.id;
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('create_ticket_public', ticketPayload);
+        
+      if (rpcError) {
+        // O erro da função RPC será mais informativo
+        throw new Error(`Erro ao salvar ticket: ${rpcError.message}`);
       }
-      
-      const { data: insertedTicket, error: insertError } = await dbClient
-        .from('tickets')
-        .insert(ticketPayload)
-        .select()
-        .single();
 
-      if (insertError) {
-        throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
-      }
+      const newTicket = rpcData;
       
       const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
       fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            protocolo: insertedTicket.protocol,
-            solicitante: insertedTicket.name,
-            cliente: insertedTicket.client_name,
-            motivo: insertedTicket.reason,
-            responsavel: insertedTicket.responsible || 'Não atribuído',
-            telefone: insertedTicket.phone,
-            previsao_resposta: insertedTicket.estimated_response_time
+            protocolo: newTicket.protocol,
+            solicitante: newTicket.name,
+            cliente: newTicket.client_name,
+            motivo: newTicket.reason,
+            responsavel: newTicket.responsible || 'Não atribuído',
+            telefone: newTicket.phone,
+            previsao_resposta: newTicket.estimated_response_time
         }),
       }).catch(webhookError => {
         console.error("Webhook failed to send:", webhookError);
       });
 
-      toast({ title: `Ticket #${String(insertedTicket.protocol).padStart(4, '0')} Criado`, description: "Seu ticket foi registrado com sucesso." });
-      if(isAuthenticated) await fetchTickets(); 
+      toast({ title: `Ticket #${String(newTicket.protocol).padStart(4, '0')} Criado`, description: "Seu ticket foi registrado com sucesso." });
+      if(isAuthenticated) await fetchTickets();
       return true;
 
     } catch (error: any) {
@@ -307,7 +251,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       throw error;
     }
   };
-
 
   const getTicketById = (ticketId: string): Ticket | undefined => {
     return tickets.find(ticket => ticket.id === ticketId);
