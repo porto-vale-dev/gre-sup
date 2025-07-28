@@ -217,12 +217,12 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
 
     // Define um temporizador para o fallback
     setTimeout(() => {
-        // Se a página ainda estiver visível após 2 segundos, significa que o app não abriu.
+        // Se a página ainda estiver visível após 6 segundos, significa que o app não abriu.
         // A verificação document.visibilityState ajuda a evitar o redirecionamento se o usuário já mudou de aba.
         if (document.visibilityState === 'visible') {
             window.open(whatsappWebUrl, '_blank', 'noopener,noreferrer');
         }
-    }, 2000);
+    }, 6000);
   };
 
   return (
