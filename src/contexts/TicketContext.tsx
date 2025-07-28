@@ -159,7 +159,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         fileName = JSON.stringify(uploadedFileNames);
       }
 
-      const newTicketPayload = {
+      const newTicketBasePayload = {
         name: ticketData.name,
         phone: ticketData.phone,
         client_name: ticketData.client_name,
@@ -175,9 +175,12 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         file_name: fileName,
         solution: null,
         solution_files: null,
-        responsible: assignedResponsible, 
-        user_id: user ? user.id : null 
+        responsible: assignedResponsible,
       };
+
+      const newTicketPayload = user
+        ? { ...newTicketBasePayload, user_id: user.id }
+        : newTicketBasePayload;
 
       const { data: insertedTicket, error: insertError } = await supabase
         .from('tickets')
