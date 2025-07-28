@@ -99,7 +99,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     files?: File[];
   }): Promise<boolean> => {
     
-    // Choose the correct Supabase client instance based on authentication state
     const dbClient = isAuthenticated ? supabase : supabaseAnon;
 
     try {
@@ -108,48 +107,48 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       let fileName: string | null = null;
       const submissionDate = new Date().toISOString();
 
-      // 1. Fetch available agents with 'gre' role using the appropriate client
-      const { data: agents, error: agentsError } = await dbClient
-        .from('profiles')
-        .select('username')
-        .in('cargo', ['gre']);
+      // Only run assignment logic for authenticated users to avoid RLS issues on select
+      if (isAuthenticated) {
+          const { data: agents, error: agentsError } = await dbClient
+            .from('profiles')
+            .select('username')
+            .in('cargo', ['gre']);
 
-      if (agentsError) {
-        throw new Error(`Não foi possível buscar os atendentes: ${agentsError.message}`);
-      }
-      
-      // 2. Implement Round-Robin assignment logic
-      if (agents && agents.length > 0) {
-        const agentNames = agents.map(a => a.username as string).sort();
-
-        const { data: lastTicket, error: lastTicketError } = await dbClient
-          .from('tickets')
-          .select('responsible')
-          .not('responsible', 'is', null) 
-          .order('submission_date', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (lastTicketError) {
-          console.warn(`Aviso ao buscar último ticket: ${lastTicketError.message}`);
-        }
-
-        const lastResponsible = lastTicket?.responsible;
-        let nextAgentIndex = 0;
-
-        if (lastResponsible) {
-          const lastAgentIndex = agentNames.indexOf(lastResponsible);
-          if (lastAgentIndex !== -1) {
-            nextAgentIndex = (lastAgentIndex + 1) % agentNames.length;
+          if (agentsError) {
+            throw new Error(`Não foi possível buscar os atendentes: ${agentsError.message}`);
           }
-        }
-        
-        assignedResponsible = agentNames[nextAgentIndex];
-      } else {
-        console.warn("Nenhum atendente (cargo 'gre') encontrado para atribuição automática.");
+          
+          if (agents && agents.length > 0) {
+            const agentNames = agents.map(a => a.username as string).sort();
+
+            const { data: lastTicket, error: lastTicketError } = await dbClient
+              .from('tickets')
+              .select('responsible')
+              .not('responsible', 'is', null) 
+              .order('submission_date', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (lastTicketError) {
+              console.warn(`Aviso ao buscar último ticket: ${lastTicketError.message}`);
+            }
+
+            const lastResponsible = lastTicket?.responsible;
+            let nextAgentIndex = 0;
+
+            if (lastResponsible) {
+              const lastAgentIndex = agentNames.indexOf(lastResponsible);
+              if (lastAgentIndex !== -1) {
+                nextAgentIndex = (lastAgentIndex + 1) % agentNames.length;
+              }
+            }
+            assignedResponsible = agentNames[nextAgentIndex];
+          } else {
+            console.warn("Nenhum atendente (cargo 'gre') encontrado para atribuição automática.");
+          }
       }
 
-      // 3. Handle file uploads
+      // Handle file uploads
       if (ticketData.files && ticketData.files.length > 0) {
         const folderPath = `public/${crypto.randomUUID()}`;
         const uploadedFileNames: string[] = [];
@@ -170,7 +169,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         fileName = JSON.stringify(uploadedFileNames);
       }
       
-      // 4. Construct payload, carefully handling user_id
       const ticketPayload: Omit<Ticket, 'id' | 'protocol' | 'solution_files' | 'user_id'> & { user_id?: string | null } = {
         name: ticketData.name,
         phone: ticketData.phone,
@@ -193,7 +191,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         ticketPayload.user_id = user.id;
       }
       
-      // 5. Insert the ticket
       const { data: insertedTicket, error: insertError } = await dbClient
         .from('tickets')
         .insert(ticketPayload)
@@ -204,7 +201,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
       }
       
-      // 6. Send webhook notification
       const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
       fetch(webhookUrl, {
         method: 'POST',
@@ -214,7 +210,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
             solicitante: insertedTicket.name,
             cliente: insertedTicket.client_name,
             motivo: insertedTicket.reason,
-            responsavel: insertedTicket.responsible,
+            responsavel: insertedTicket.responsible || 'Não atribuído',
             telefone: insertedTicket.phone,
             previsao_resposta: insertedTicket.estimated_response_time
         }),
