@@ -4,6 +4,7 @@ import type { TicketStatus } from '@/types';
 export const TICKET_REASONS = [
   { value: "Boleto de lance", label: "Boleto de lance", responseTime: "1 dia útil" },
   { value: "Boleto do mês", label: "Boleto do mês", responseTime: "até 1 dia útil antes do vencimento" },
+  { value: "Bloqueio temporário COL (erro de acesso)", label: "Bloqueio temporário COL (erro de acesso)", responseTime: "1 dia útil" },
   { value: "Código de cliente", label: "Código de cliente", responseTime: "1 dia útil" },
   { value: "Contrato 2° via simples", label: "Contrato 2° via simples", responseTime: "1 dia útil" },
   { value: "Contrato assinado pela Porto", label: "Contrato assinado pela Porto", responseTime: "7 dias úteis" },
