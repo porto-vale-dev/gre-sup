@@ -44,7 +44,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user, isAuthenticated, authIsLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
     if (!isAuthenticated) {
@@ -74,13 +74,13 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   }, [toast, isAuthenticated]);
 
   useEffect(() => {
-    if (!authIsLoading && isAuthenticated) {
+    if (!isLoading && isAuthenticated) {
       fetchTickets();
-    } else if (!authIsLoading && !isAuthenticated) {
+    } else if (!isLoading && !isAuthenticated) {
       setTickets([]);
       setIsLoadingTickets(false);
     }
-  }, [isAuthenticated, authIsLoading, fetchTickets]);
+  }, [isAuthenticated, isLoading, fetchTickets]);
 
 
   const addTicket = async (ticketData: {
@@ -107,7 +107,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         
         for (const file of ticketData.files) {
           const pathInBucket = `${folderPath}/${file.name}`;
-          const { error: uploadError } = await supabase.storage
+          const { error: uploadError } = await dbClient.storage
             .from(TICKET_FILES_BUCKET)
             .upload(pathInBucket, file);
           
@@ -120,7 +120,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         filePath = folderPath;
         fileName = JSON.stringify(uploadedFileNames);
       }
-
+      
       const ticketPayload = {
         p_name: ticketData.name,
         p_phone: ticketData.phone,
