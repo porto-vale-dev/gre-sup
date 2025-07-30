@@ -209,20 +209,9 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
     const text = `Olá, tudo bem? Falo sobre o ticket de protocolo #${String(ticket.protocol).padStart(4, '0')}.`;
     const encodedText = encodeURIComponent(text);
 
-    const whatsappAppUrl = `whatsapp://send?phone=55${sanitizedPhone}&text=${encodedText}`;
     const whatsappWebUrl = `https://web.whatsapp.com/send/?phone=55${sanitizedPhone}&text=${encodedText}`;
 
-    // Tenta abrir o aplicativo
-    window.location.href = whatsappAppUrl;
-
-    // Define um temporizador para o fallback
-    setTimeout(() => {
-        // Se a página ainda estiver visível após 6 segundos, significa que o app não abriu.
-        // A verificação document.visibilityState ajuda a evitar o redirecionamento se o usuário já mudou de aba.
-        if (document.visibilityState === 'visible') {
-            window.open(whatsappWebUrl, '_blank', 'noopener,noreferrer');
-        }
-    }, 6000);
+    window.open(whatsappWebUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
