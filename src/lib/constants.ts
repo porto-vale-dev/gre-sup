@@ -11,6 +11,7 @@ export const TICKET_REASONS = [
   { value: "Contrato assinado pela Porto", label: "Contrato assinado pela Porto", responseTime: "7 dias úteis" },
   { value: "Correção de cadastro - nome e estado civil", label: "Correção de cadastro - nome e estado civil", responseTime: "3 dias úteis" },
   { value: "Devolução de valores", label: "Devolução de valores", responseTime: "10 a 15 dias úteis" },
+  { value: "Dúvidas", label: "Dúvidas", responseTime: "1 dia útil" },
   { value: "Extrato financeiro", label: "Extrato financeiro", responseTime: "1 dia útil" },
   { value: "Gestão de pendências Porto", label: "Gestão de pendências Porto", responseTime: "1 dia útil" },
   { value: "Inscrições ABAC", label: "Inscrições ABAC", responseTime: "1 dia útil" },
