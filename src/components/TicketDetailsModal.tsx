@@ -212,8 +212,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
     // Abre diretamente o WhatsApp Web
     const whatsappWebUrl = `https://web.whatsapp.com/send/?phone=55${sanitizedPhone}&text=${encodedText}`;
     
-    // Tenta reutilizar a mesma aba dando um nome a ela.
-    window.open(whatsappWebUrl, 'WhatsApp', 'noopener,noreferrer');
+    window.open(whatsappWebUrl, '_blank', 'noopener,noreferrer');
   };
 
 
