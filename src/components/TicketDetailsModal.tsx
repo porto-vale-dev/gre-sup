@@ -209,10 +209,11 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
     const text = `Olá, tudo bem? Falo sobre o ticket de protocolo #${String(ticket.protocol).padStart(4, '0')}.`;
     const encodedText = encodeURIComponent(text);
 
+    // Abre diretamente o WhatsApp Web
     const whatsappWebUrl = `https://web.whatsapp.com/send/?phone=55${sanitizedPhone}&text=${encodedText}`;
-
     window.open(whatsappWebUrl, '_blank', 'noopener,noreferrer');
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
