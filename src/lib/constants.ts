@@ -2,7 +2,7 @@
 import type { TicketStatus } from '@/types';
 
 export const TICKET_REASONS = [
-  { value: "Boleto de lance", label: "Boleto de lance", responseTime: "1 dia útil" },
+  { value: "Boleto do mês", label: "Boleto do mês", responseTime: "1 dia útil" },
   { value: "Boleto de quitação", label: "Boleto de quitação", responseTime: "até 1 dia útil antes do vencimento" },
   { value: "Bloqueio temporário COL (erro de acesso)", label: "Bloqueio temporário COL (erro de acesso)", responseTime: "1 dia útil" },
   { value: "Cancelamento", label: "Cancelamento", responseTime: "1 dia útil" },
