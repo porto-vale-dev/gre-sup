@@ -1,5 +1,5 @@
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Augment the window type to avoid TypeScript errors
 declare global {
@@ -7,6 +7,7 @@ declare global {
     NEXT_PUBLIC_SUPABASE_URL: string;
     NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
   }
+  var supabase: SupabaseClient | undefined;
 }
 
 // In a standard Next.js setup (like local dev), `process.env` is populated on the client.
@@ -30,4 +31,13 @@ if (!supabaseAnonKey) {
   throw new Error('Supabase Anon Key is missing. Check your .env.local file or server environment variables for NEXT_PUBLIC_SUPABASE_ANON_KEY.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Singleton pattern to ensure only one instance of the client is created.
+const createSupabaseClient = () => {
+    if (globalThis.supabase) {
+        return globalThis.supabase;
+    }
+    globalThis.supabase = createClient(supabaseUrl, supabaseAnonKey);
+    return globalThis.supabase;
+}
+
+export const supabase = createSupabaseClient();
