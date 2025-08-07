@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trophy, ArrowRight, Ticket, Megaphone, FolderKanban } from 'lucide-react';
+import { Trophy, ArrowRight, Ticket, Megaphone, FolderKanban, LayoutDashboard } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Service {
@@ -21,6 +21,7 @@ const allServices: Service[] = [
     { title: "Mural de Avisos - GRE", href: "/mural-de-aviso", Icon: Megaphone, description: "Veja os últimos avisos e comunicados.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
     { title: "Documentos", href: "/documentos", Icon: FolderKanban, description: "Acesse os documentos da empresa.", allowedRoles: ["adm", "greadmin", "gre"] },
     { title: "Painel de Suporte - GRE", href: "/suporte-gre/painel", Icon: FolderKanban, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm", "greadmin", "gre"] },
+    { title: "Gestão de Suporte - GRE", href: "/suporte-gre/gestao", Icon: LayoutDashboard, description: "Visualize os dashboards de gestão.", allowedRoles: ["adm", "greadmin"] },
     { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo chamado para o suporte.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
 ];
 
@@ -57,7 +58,7 @@ export default function HubPage() {
     }, [accessibleServices]);
 
     const adminTools = useMemo(() => {
-      return accessibleServices.filter(s => s.title === "Painel de Suporte - GRE" || s.title === "Documentos");
+      return accessibleServices.filter(s => s.title === "Painel de Suporte - GRE" || s.title === "Documentos" || s.title === "Gestão de Suporte - GRE");
     }, [accessibleServices]);
     
     return (
