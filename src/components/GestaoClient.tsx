@@ -44,7 +44,7 @@ const PIE_CHART_COLORS = ["#64B5F6", "#4DB6AC", "#FFD54F", "#FF8A65", "#A1887F",
 export function GestaoClient() {
   const { tickets, isLoadingTickets, error } = useTickets();
   const [date, setDate] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 29),
+    from: subDays(new Date(), 6),
     to: new Date(),
   });
 
