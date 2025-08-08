@@ -7,9 +7,9 @@ import type { TicketStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown } from 'lucide-react';
+import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown, PieChart as PieChartIcon } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -38,6 +38,8 @@ const StatCard = ({ title, value, Icon, description, className }: StatCardProps)
     </CardContent>
   </Card>
 );
+
+const PIE_CHART_COLORS = ["#64B5F6", "#4DB6AC", "#FFD54F", "#FF8A65", "#A1887F", "#90A4AE"];
 
 export function GestaoClient() {
   const { tickets, isLoadingTickets, error } = useTickets();
@@ -121,6 +123,7 @@ export function GestaoClient() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 };
 
 
@@ -149,8 +152,8 @@ export function GestaoClient() {
     }, {} as Record<string, number>);
 
     const byResponsible = Object.entries(responsibleCounts)
-      .map(([name, count]) => ({ name, total: count }))
-      .sort((a, b) => b.total - a.total);
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
       
     const uniqueResponsibles = new Set(filteredTickets.map(t => t.responsible).filter(Boolean)).size;
 
@@ -206,6 +209,19 @@ export function GestaoClient() {
       </Alert>
     );
   }
+
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -278,38 +294,38 @@ export function GestaoClient() {
         <Card className="col-span-12 lg:col-span-8">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <BarChart2 className="h-5 w-5" />
+                    <PieChartIcon className="h-5 w-5" />
                     Tickets por Responsável
                 </CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
                  <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={stats.byResponsible}>
-                        <XAxis
-                        dataKey="name"
-                        stroke="#888888"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        />
-                        <YAxis
-                        stroke="#888888"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(value) => `${value}`}
-                        allowDecimals={false}
-                        />
-                         <Tooltip
-                            cursor={{ fill: "hsl(var(--accent))", radius: 4 }}
-                            contentStyle={{ 
-                                backgroundColor: "hsl(var(--background))",
-                                border: "1px solid hsl(var(--border))",
-                                borderRadius: "var(--radius)"
-                            }}
-                        />
-                        <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Total de Tickets"/>
-                    </BarChart>
+                    <PieChart>
+                      <Pie
+                        data={stats.byResponsible}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={120}
+                        fill="hsl(var(--primary))"
+                        labelLine={false}
+                        label={renderCustomizedLabel}
+                      >
+                        {stats.byResponsible.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                          contentStyle={{ 
+                              backgroundColor: "hsl(var(--background))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: "var(--radius)"
+                          }}
+                          formatter={(value) => [`${value} tickets`, undefined]}
+                      />
+                      <Legend iconSize={12} />
+                    </PieChart>
                 </ResponsiveContainer>
             </CardContent>
         </Card>
@@ -321,3 +337,5 @@ export function GestaoClient() {
     </div>
   );
 }
+
+    
