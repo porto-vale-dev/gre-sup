@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function DiretorPage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'diretor'];
+  const allowedRoles = ['adm', 'diretor', 'greadmin'];
 
   if (!cargo || !allowedRoles.includes(cargo)) {
     return (
