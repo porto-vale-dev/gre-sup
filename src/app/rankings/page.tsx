@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Crown, Users, Target, Award, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Crown, Users, Target, Award, ArrowRight, ArrowLeft, Shield } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -22,6 +22,7 @@ const allRankingServices: Service[] = [
   { title: "Ranking Diretor", href: "/rankings/diretor", Icon: Crown, description: "Visualize o ranking de diretores.", allowedRoles: ["adm", "diretor", "greadmin"] },
   { title: "Ranking Gerente", href: "/rankings/gerente", Icon: Users, description: "Acompanhe o desempenho dos gerentes.", allowedRoles: ["adm", "diretor", "gerente", "greadmin"] },
   { title: "Ranking Campanha", href: "/rankings/campanha", Icon: Target, description: "Confira os resultados da campanha atual.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
+  { title: "Ranking Campanha - Seguros", href: "/rankings/campanha-seguros", Icon: Shield, description: "Resultados da campanha de seguros.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
   { title: "Ranking Trimestral", href: "/rankings/trimestral", Icon: Award, description: "Veja o balanço do trimestre.", allowedRoles: ["adm", "diretor", "greadmin"] },
 ];
 
