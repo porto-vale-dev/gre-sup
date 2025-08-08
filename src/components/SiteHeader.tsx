@@ -45,6 +45,7 @@ export function SiteHeader() {
   if (isTicketSystemArea) {
     const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
     const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
+    const isGestaoPage = pathname === '/suporte-gre/gestao';
 
     // Header for Ticket System (Dashboard, Form)
     return (
@@ -68,34 +69,38 @@ export function SiteHeader() {
             <nav className="flex items-center gap-1 sm:gap-2">
                {isAuthenticated && (
                   <>
-                  {isTicketDashboardArea && (
+                  {(isTicketDashboardArea || isGestaoPage) && (
                       <>
                       <Link href="/hub" passHref>
                           <Button variant="outline" size="sm" aria-label="Portal Principal">
-                          <Home />
-                          Portal
+                          <Home className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Portal</span>
                           </Button>
                       </Link>
-                      {isArchivedPage ? (
-                      <Link href="/suporte-gre/painel" passHref>
-                          <Button variant="ghost" size="sm" aria-label="Painel Principal">
-                          <TicketIcon />
-                          Painel
-                          </Button>
-                      </Link>
-                      ) : (
-                      <Link href="/suporte-gre/painel/archived" passHref>
-                          <Button variant="ghost" size="sm" aria-label="Tickets Arquivados">
-                          <Archive />
-                          Arquivados
-                          </Button>
-                      </Link>
-                      )}
+                      </>
+                  )}
+                  {isTicketDashboardArea && (
+                      <>
+                        {isArchivedPage ? (
+                        <Link href="/suporte-gre/painel" passHref>
+                            <Button variant="ghost" size="sm" aria-label="Painel Principal">
+                            <TicketIcon className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Painel</span>
+                            </Button>
+                        </Link>
+                        ) : (
+                        <Link href="/suporte-gre/painel/archived" passHref>
+                            <Button variant="ghost" size="sm" aria-label="Tickets Arquivados">
+                            <Archive className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Arquivados</span>
+                            </Button>
+                        </Link>
+                        )}
                       </>
                   )}
                   <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Sair da conta">
-                    <LogOut />
-                    Sair
+                    <LogOut className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Sair</span>
                   </Button>
                 </>
                )}
@@ -126,8 +131,8 @@ export function SiteHeader() {
                   <p className="text-sm font-medium text-foreground">Bem-vindo, {username || user?.email?.split('@')[0]}</p>
               </div>
               <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Sair da conta">
-                <LogOut />
-                Sair
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sair</span>
               </Button>
           </div>
         )}
