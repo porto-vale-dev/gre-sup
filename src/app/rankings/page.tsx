@@ -21,7 +21,7 @@ interface Service {
 const allRankingServices: Service[] = [
   { title: "Ranking Diretor", href: "/rankings/diretor", Icon: Crown, description: "Visualize o ranking de diretores.", allowedRoles: ["adm", "diretor", "greadmin"] },
   { title: "Ranking Gerente", href: "/rankings/gerente", Icon: Users, description: "Acompanhe o desempenho dos gerentes.", allowedRoles: ["adm", "diretor", "gerente", "greadmin"] },
-  { title: "Ranking Campanha", href: "/rankings/campanha", Icon: Target, description: "Confira os resultados da campanha atual.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin"] },
+  { title: "Ranking Campanha", href: "/rankings/campanha", Icon: Target, description: "Confira os resultados da campanha atual.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
   { title: "Ranking Trimestral", href: "/rankings/trimestral", Icon: Award, description: "Veja o balanço do trimestre.", allowedRoles: ["adm", "diretor", "greadmin"] },
 ];
 
