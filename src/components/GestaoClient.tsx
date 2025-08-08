@@ -7,7 +7,7 @@ import type { TicketStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown, PieChart as PieChartIcon } from 'lucide-react';
+import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown, PieChart as PieChartIcon, Loader2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -17,6 +17,8 @@ import { format, subDays } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
+import * as XLSX from 'xlsx';
+import { useToast } from '@/hooks/use-toast';
 
 interface StatCardProps {
   title: string;
@@ -43,6 +45,8 @@ const PIE_CHART_COLORS = ["#64B5F6", "#4DB6AC", "#FFD54F", "#FF8A65", "#A1887F",
 
 export function GestaoClient() {
   const { tickets, isLoadingTickets, error } = useTickets();
+  const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>({
     from: subDays(new Date(), 6),
     to: new Date(),
@@ -50,7 +54,7 @@ export function GestaoClient() {
 
   const filteredTickets = useMemo(() => {
     if (!tickets) return [];
-    if (!date?.from) return tickets; // Return all if no start date
+    if (!date?.from) return tickets; 
 
     const fromDate = date.from;
     const toDate = date.to ? new Date(date.to.setHours(23, 59, 59, 999)) : new Date(fromDate.setHours(23, 59, 59, 999));
@@ -61,70 +65,64 @@ export function GestaoClient() {
     });
   }, [tickets, date]);
 
-  const handleExportCSV = () => {
+  const handleExportXLSX = () => {
     if (filteredTickets.length === 0) {
-      alert("Não há dados para exportar no período selecionado.");
+      toast({
+        variant: 'destructive',
+        title: "Nenhum Dado",
+        description: "Não há dados para exportar no período selecionado.",
+      });
       return;
     }
 
-    const headers = [
-      "Protocolo",
-      "Data de Abertura",
-      "Solicitante",
-      "Telefone",
-      "Nome do Cliente",
-      "CPF/CNPJ",
-      "Grupo",
-      "Cota",
-      "Motivo",
-      "Observações",
-      "Status",
-      "Responsável",
-      "Previsão de Resposta",
-    ];
+    setIsExporting(true);
+    
+    try {
+        const dataToExport = filteredTickets.map(ticket => ({
+            "Protocolo": String(ticket.protocol).padStart(4, '0'),
+            "Data de Abertura": format(new Date(ticket.submission_date), 'dd/MM/yyyy HH:mm:ss'),
+            "Solicitante": ticket.name,
+            "Telefone": ticket.phone,
+            "Nome do Cliente": ticket.client_name,
+            "CPF/CNPJ": ticket.cpf,
+            "Grupo": ticket.grupo,
+            "Cota": ticket.cota,
+            "Motivo": ticket.reason,
+            "Observações": ticket.observations,
+            "Status": ticket.status,
+            "Responsável": ticket.responsible,
+            "Previsão de Resposta": ticket.estimated_response_time,
+        }));
 
-    const csvRows = [headers.join(',')];
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Tickets");
 
-    const escapeCSV = (str: string | null | undefined) => {
-        if (str === null || str === undefined) return '""';
-        const value = String(str);
-        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-            return `"${value.replace(/"/g, '""')}"`;
-        }
-        return `"${value}"`;
-    };
+        // Auto-ajuste de colunas (opcional, mas recomendado)
+        const colWidths = Object.keys(dataToExport[0]).map(key => ({
+            wch: Math.max(...dataToExport.map(row => row[key as keyof typeof row]?.toString().length || 0), key.length) + 2
+        }));
+        worksheet['!cols'] = colWidths;
+        
+        const fileName = `relatorio_tickets_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
 
-    filteredTickets.forEach(ticket => {
-        const row = [
-            escapeCSV(String(ticket.protocol).padStart(4, '0')),
-            escapeCSV(format(new Date(ticket.submission_date), 'dd/MM/yyyy HH:mm:ss')),
-            escapeCSV(ticket.name),
-            escapeCSV(ticket.phone),
-            escapeCSV(ticket.client_name),
-            escapeCSV(ticket.cpf),
-            escapeCSV(ticket.grupo),
-            escapeCSV(ticket.cota),
-            escapeCSV(ticket.reason),
-            escapeCSV(ticket.observations),
-            escapeCSV(ticket.status),
-            escapeCSV(ticket.responsible),
-            escapeCSV(ticket.estimated_response_time),
-        ];
-        csvRows.push(row.join(','));
-    });
+        toast({
+            title: "Exportação Concluída",
+            description: `O arquivo ${fileName} foi baixado.`,
+        });
 
-    const csvString = csvRows.join('\n');
-    const blob = new Blob([`\uFEFF${csvString}`], { type: 'text/csv;charset=utf-8;' }); // BOM for Excel compatibility
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    const fileName = `relatorio_tickets_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    link.setAttribute('download', fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-};
+    } catch (e) {
+        toast({
+            variant: 'destructive',
+            title: "Erro na Exportação",
+            description: "Não foi possível gerar a planilha.",
+        });
+        console.error("Failed to export XLSX:", e);
+    } finally {
+        setIsExporting(false);
+    }
+  };
 
 
   const stats = useMemo(() => {
@@ -275,9 +273,9 @@ export function GestaoClient() {
                 Limpar Filtro
             </Button>
             <div className="w-full sm:w-auto sm:ml-auto">
-              <Button onClick={handleExportCSV} className="w-full">
-                <FileDown className="mr-2 h-4 w-4" />
-                Exportar CSV
+              <Button onClick={handleExportXLSX} className="w-full" disabled={isExporting}>
+                {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                {isExporting ? 'Exportando...' : 'Exportar Planilha'}
               </Button>
             </div>
          </div>
@@ -310,7 +308,7 @@ export function GestaoClient() {
                         outerRadius={120}
                         fill="hsl(var(--primary))"
                         labelLine={false}
-                        label={renderCustomizedLabel}
+                        label={stats.byResponsible.length > 0 ? renderCustomizedLabel : undefined}
                       >
                         {stats.byResponsible.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
@@ -337,5 +335,3 @@ export function GestaoClient() {
     </div>
   );
 }
-
-    
