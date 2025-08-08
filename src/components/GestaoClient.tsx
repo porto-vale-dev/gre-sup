@@ -20,6 +20,8 @@ import { cn } from "@/lib/utils";
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 interface StatCardProps {
   title: string;
@@ -54,6 +56,8 @@ const PIE_CHART_COLORS = ["#64B5F6", "#4DB6AC", "#FFD54F", "#FF8A65", "#A1887F",
 export function GestaoClient() {
   const { tickets, isLoadingTickets, error } = useTickets();
   const { toast } = useToast();
+  const { cargo, username } = useAuth();
+
   const [isExporting, setIsExporting] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>({
     from: subDays(new Date(), 6),
@@ -63,17 +67,23 @@ export function GestaoClient() {
   const [isHistoryVisible, setIsHistoryVisible] = useState(true);
 
   const filteredTickets = useMemo(() => {
-    if (!tickets) return [];
-    if (!date?.from) return tickets; 
+    let baseTickets = tickets;
+
+    if (cargo === 'gre' && username) {
+        baseTickets = tickets.filter(ticket => ticket.responsible === username);
+    }
+    
+    if (!baseTickets) return [];
+    if (!date?.from) return baseTickets; 
 
     const fromDate = date.from;
     const toDate = date.to ? new Date(date.to.setHours(23, 59, 59, 999)) : new Date(fromDate.setHours(23, 59, 59, 999));
 
-    return tickets.filter(ticket => {
+    return baseTickets.filter(ticket => {
       const submissionDate = new Date(ticket.submission_date);
       return submissionDate >= fromDate && submissionDate <= toDate;
     });
-  }, [tickets, date]);
+  }, [tickets, date, cargo, username]);
 
   const handleExportXLSX = () => {
     if (filteredTickets.length === 0) {

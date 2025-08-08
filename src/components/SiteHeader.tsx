@@ -47,7 +47,7 @@ export function SiteHeader() {
     const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
     const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
     const isGestaoPage = pathname === '/suporte-gre/gestao';
-    const allowedManagementRoles = ['adm', 'greadmin'];
+    const allowedManagementRoles = ['adm', 'greadmin', 'gre'];
     const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
 
 
