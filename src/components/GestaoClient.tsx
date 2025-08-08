@@ -7,7 +7,7 @@ import type { TicketStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X } from 'lucide-react';
+import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -58,6 +58,70 @@ export function GestaoClient() {
       return submissionDate >= fromDate && submissionDate <= toDate;
     });
   }, [tickets, date]);
+
+  const handleExportCSV = () => {
+    if (filteredTickets.length === 0) {
+      alert("Não há dados para exportar no período selecionado.");
+      return;
+    }
+
+    const headers = [
+      "Protocolo",
+      "Data de Abertura",
+      "Solicitante",
+      "Telefone",
+      "Nome do Cliente",
+      "CPF/CNPJ",
+      "Grupo",
+      "Cota",
+      "Motivo",
+      "Observações",
+      "Status",
+      "Responsável",
+      "Previsão de Resposta",
+    ];
+
+    const csvRows = [headers.join(',')];
+
+    const escapeCSV = (str: string | null | undefined) => {
+        if (str === null || str === undefined) return '""';
+        const value = String(str);
+        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+            return `"${value.replace(/"/g, '""')}"`;
+        }
+        return `"${value}"`;
+    };
+
+    filteredTickets.forEach(ticket => {
+        const row = [
+            escapeCSV(String(ticket.protocol).padStart(4, '0')),
+            escapeCSV(format(new Date(ticket.submission_date), 'dd/MM/yyyy HH:mm:ss')),
+            escapeCSV(ticket.name),
+            escapeCSV(ticket.phone),
+            escapeCSV(ticket.client_name),
+            escapeCSV(ticket.cpf),
+            escapeCSV(ticket.grupo),
+            escapeCSV(ticket.cota),
+            escapeCSV(ticket.reason),
+            escapeCSV(ticket.observations),
+            escapeCSV(ticket.status),
+            escapeCSV(ticket.responsible),
+            escapeCSV(ticket.estimated_response_time),
+        ];
+        csvRows.push(row.join(','));
+    });
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([`\uFEFF${csvString}`], { type: 'text/csv;charset=utf-8;' }); // BOM for Excel compatibility
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    const fileName = `relatorio_tickets_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
 
 
   const stats = useMemo(() => {
@@ -146,14 +210,14 @@ export function GestaoClient() {
   return (
     <div className="space-y-6">
        <Card className="p-4 shadow-sm">
-         <div className="flex items-center gap-4">
+         <div className="flex flex-col sm:flex-row items-center gap-4">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   id="date"
                   variant={"outline"}
                   className={cn(
-                    "w-[300px] justify-start text-left font-normal",
+                    "w-full sm:w-[300px] justify-start text-left font-normal",
                     !date && "text-muted-foreground"
                   )}
                 >
@@ -189,11 +253,17 @@ export function GestaoClient() {
                 size="sm"
                 onClick={() => setDate(undefined)}
                 disabled={!date}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground w-full sm:w-auto"
             >
                 <X className="mr-2 h-4 w-4" />
-                Limpar
+                Limpar Filtro
             </Button>
+            <div className="w-full sm:w-auto sm:ml-auto">
+              <Button onClick={handleExportCSV} className="w-full">
+                <FileDown className="mr-2 h-4 w-4" />
+                Exportar CSV
+              </Button>
+            </div>
          </div>
       </Card>
 
