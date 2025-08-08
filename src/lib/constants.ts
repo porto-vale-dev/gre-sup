@@ -22,7 +22,7 @@ export const TICKET_REASONS = [
   { value: "Tratativas de duplicidade de pagamento", label: "Tratativas de duplicidade de pagamento", responseTime: "10 a 15 dias úteis" },
 ];
 
-export const TICKET_STATUSES: TicketStatus[] = ["Novo", "Em Andamento", "Atrasado", "Concluído"];
+export const TICKET_STATUSES: TicketStatus[] = ["Novo", "Em Andamento", "Ativo", "Atrasado", "Concluído"];
 
 export const ALLOWED_FILE_TYPES = [
   ".pdf",

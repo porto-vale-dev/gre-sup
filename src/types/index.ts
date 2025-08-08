@@ -1,5 +1,5 @@
 
-export type TicketStatus = "Novo" | "Em Andamento" | "Atrasado" | "Concluído";
+export type TicketStatus = "Novo" | "Em Andamento" | "Ativo" | "Atrasado" | "Concluído";
 
 export interface SolutionFile {
   file_path: string;
