@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTickets } from '@/contexts/TicketContext';
 import type { TicketStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown, PieChart as PieChartIcon, Loader2 } from 'lucide-react';
+import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown, PieChart as PieChartIcon, Loader2, History, ChevronDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -19,6 +19,7 @@ import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface StatCardProps {
   title: string;
@@ -27,6 +28,13 @@ interface StatCardProps {
   description?: string;
   className?: string;
 }
+
+interface ExportHistoryItem {
+    fileName: string;
+    timestamp: number;
+    fileContent: string; // Base64 encoded file content
+}
+
 
 const StatCard = ({ title, value, Icon, description, className }: StatCardProps) => (
   <Card className={className}>
@@ -51,6 +59,8 @@ export function GestaoClient() {
     from: subDays(new Date(), 6),
     to: new Date(),
   });
+  const [exportHistory, setExportHistory] = useLocalStorage<ExportHistoryItem[]>("exportHistory", []);
+  const [isHistoryVisible, setIsHistoryVisible] = useState(true);
 
   const filteredTickets = useMemo(() => {
     if (!tickets) return [];
@@ -98,14 +108,35 @@ export function GestaoClient() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Tickets");
 
-        // Auto-ajuste de colunas (opcional, mas recomendado)
         const colWidths = Object.keys(dataToExport[0]).map(key => ({
             wch: Math.max(...dataToExport.map(row => row[key as keyof typeof row]?.toString().length || 0), key.length) + 2
         }));
         worksheet['!cols'] = colWidths;
         
-        const fileName = `relatorio_tickets_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
-        XLSX.writeFile(workbook, fileName);
+        const fileBase64 = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' });
+        const fileName = `relatorio_tickets_${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}.xlsx`;
+        
+        const newHistoryItem: ExportHistoryItem = {
+            fileName,
+            timestamp: Date.now(),
+            fileContent: fileBase64,
+        };
+
+        setExportHistory(prevHistory => [newHistoryItem, ...prevHistory].slice(0, 5));
+        
+        const blob = new Blob(
+            [Buffer.from(fileBase64, 'base64')],
+            { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+        );
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
 
         toast({
             title: "Exportação Concluída",
@@ -121,6 +152,29 @@ export function GestaoClient() {
         console.error("Failed to export XLSX:", e);
     } finally {
         setIsExporting(false);
+    }
+  };
+  
+  const downloadFromHistory = (item: ExportHistoryItem) => {
+    try {
+        const blob = new Blob(
+            [Buffer.from(item.fileContent, 'base64')],
+            { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+        );
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = item.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: "Erro no Download",
+            description: "Não foi possível baixar o arquivo do histórico.",
+        });
     }
   };
 
@@ -280,6 +334,36 @@ export function GestaoClient() {
             </div>
          </div>
       </Card>
+      
+      {exportHistory.length > 0 && (
+         <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between p-4 cursor-pointer" onClick={() => setIsHistoryVisible(!isHistoryVisible)}>
+                <div className="flex items-center gap-3">
+                    <History className="h-5 w-5 text-primary"/>
+                    <CardTitle className="text-lg">Histórico de Exportações</CardTitle>
+                </div>
+                <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform", isHistoryVisible && "rotate-180")} />
+            </CardHeader>
+            {isHistoryVisible && (
+                <CardContent className="p-4 pt-0">
+                    <div className="space-y-2">
+                        {exportHistory.map((item) => (
+                            <div key={item.timestamp} className="flex items-center justify-between p-2 rounded-md bg-muted/50 text-sm">
+                                <div className="flex flex-col">
+                                    <span className="font-medium">{item.fileName}</span>
+                                    <span className="text-xs text-muted-foreground">{format(item.timestamp, "dd/MM/yyyy 'às' HH:mm")}</span>
+                                </div>
+                                <Button size="sm" variant="ghost" onClick={() => downloadFromHistory(item)}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Baixar
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            )}
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Tickets no Período" value={stats.total} Icon={FileText} description="Total de tickets no período." />
