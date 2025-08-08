@@ -110,10 +110,7 @@ export function SiteHeader() {
                         )}
                       </>
                   )}
-                  <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Sair da conta">
-                    <LogOut className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Sair</span>
-                  </Button>
+                  {/* Logout Button Removed from this header view as requested */}
                 </>
                )}
             </nav>
