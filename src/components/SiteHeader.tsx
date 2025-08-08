@@ -83,6 +83,14 @@ export function SiteHeader() {
                       </Link>
                       </>
                   )}
+                  {isGestaoPage && (
+                    <Link href="/suporte-gre/painel" passHref>
+                      <Button variant="ghost" size="sm" aria-label="Painel Principal">
+                        <TicketIcon className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Painel</span>
+                      </Button>
+                    </Link>
+                  )}
                   {isTicketDashboardArea && canViewManagement && (
                     <Link href="/suporte-gre/gestao" passHref>
                       <Button variant="ghost" size="sm" aria-label="Gestão de Suporte">
@@ -110,7 +118,6 @@ export function SiteHeader() {
                         )}
                       </>
                   )}
-                  {/* Logout Button Removed from this header view as requested */}
                 </>
                )}
             </nav>
