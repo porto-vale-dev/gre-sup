@@ -1,8 +1,9 @@
+
 "use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Ticket as TicketIcon, Archive, Home } from 'lucide-react';
+import { LogOut, Ticket as TicketIcon, Archive, Home, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import React from 'react';
@@ -14,7 +15,7 @@ import logoPortal from './logo_portal_pv.webp';
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const { isAuthenticated, logout, isLoading, user, username } = useAuth();
+  const { isAuthenticated, logout, isLoading, user, username, cargo } = useAuth();
   
   const handleLogout = () => {
     logout();
@@ -46,6 +47,9 @@ export function SiteHeader() {
     const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
     const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
     const isGestaoPage = pathname === '/suporte-gre/gestao';
+    const allowedManagementRoles = ['adm', 'greadmin'];
+    const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
+
 
     // Header for Ticket System (Dashboard, Form)
     return (
@@ -78,6 +82,14 @@ export function SiteHeader() {
                           </Button>
                       </Link>
                       </>
+                  )}
+                  {isTicketDashboardArea && canViewManagement && (
+                    <Link href="/suporte-gre/gestao" passHref>
+                      <Button variant="ghost" size="sm" aria-label="Gestão de Suporte">
+                        <LayoutDashboard className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Gestão</span>
+                      </Button>
+                    </Link>
                   )}
                   {isTicketDashboardArea && (
                       <>
