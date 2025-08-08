@@ -7,7 +7,7 @@ import type { TicketStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown, PieChart as PieChartIcon, Loader2, History, ChevronDown } from 'lucide-react';
+import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown, PieChart as PieChartIcon, Loader2, History, ChevronDown, Download } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
