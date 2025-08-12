@@ -51,7 +51,7 @@ export default function GerentePage() {
       <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden">
         <iframe
           title="Ranking Gerentes"
-          src="https://app.powerbi.com/view?r=eyJrIjoiM2RjZTg5MmQtYTFkNC00OWQ1LWEwZjYtNzRmNWZkNTE4NjllIiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
+          src="https://app.powerbi.com/view?r=eyJrIjoiMzdlMzJhMTgtODMxMy00ZWQ4LTg3YmYtMjRlZmY1ODI4ZmNiIiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
           allowFullScreen
           className="absolute top-0 left-0 w-full h-full border-0"
         ></iframe>
