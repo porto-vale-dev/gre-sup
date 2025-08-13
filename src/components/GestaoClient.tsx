@@ -13,7 +13,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recha
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { format, subDays } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
@@ -60,7 +60,7 @@ export function GestaoClient() {
 
   const [isExporting, setIsExporting] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 6),
+    from: startOfMonth(new Date()),
     to: new Date(),
   });
   const [exportHistory, setExportHistory] = useLocalStorage<ExportHistoryItem[]>("exportHistory", []);
