@@ -123,7 +123,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         fileName = JSON.stringify(uploadedFileNames);
       }
       
-      const copyEmail = ticketData.copy_email_prefix ? `${ticketData.copy_email_prefix}@portovaleconsorcio.com.br` : null;
+      const copyEmail = ticketData.copy_email_prefix ? `${ticketData.copy_email_prefix}@portovaleconsorcios.com.br` : null;
 
       const ticketPayload = {
         p_name: ticketData.name,
@@ -327,3 +327,5 @@ export function useTickets() {
   }
   return context;
 }
+
+    

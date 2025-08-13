@@ -209,7 +209,7 @@ export function TicketForm() {
                       <Input placeholder="usuario" {...field} className="rounded-r-none focus:z-10"/>
                     </FormControl>
                     <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-l-0 border-input rounded-r-md h-10">
-                      @portovaleconsorcio.com.br
+                      @portovaleconsorcios.com.br
                     </span>
                   </div>
                   <FormMessage />
@@ -399,3 +399,5 @@ export function TicketForm() {
     </Card>
   );
 }
+
+    
