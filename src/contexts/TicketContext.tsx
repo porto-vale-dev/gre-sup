@@ -26,6 +26,7 @@ interface TicketContextType {
     reason: string;
     estimated_response_time: string;
     observations?: string;
+    copy_email_prefix?: string;
     files?: File[];
   }) => Promise<boolean>;
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
@@ -93,6 +94,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     reason: string;
     estimated_response_time: string;
     observations?: string;
+    copy_email_prefix?: string;
     files?: File[];
   }): Promise<boolean> => {
     try {
@@ -121,9 +123,12 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         fileName = JSON.stringify(uploadedFileNames);
       }
       
+      const copyEmail = ticketData.copy_email_prefix ? `${ticketData.copy_email_prefix}@portovaleconsorcio.com.br` : null;
+
       const ticketPayload = {
         p_name: ticketData.name,
         p_phone: ticketData.phone,
+        p_copy_email: copyEmail,
         p_client_name: ticketData.client_name,
         p_cpf: ticketData.cpf,
         p_grupo: ticketData.grupo,

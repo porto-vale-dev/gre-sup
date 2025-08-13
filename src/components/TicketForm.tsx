@@ -40,6 +40,7 @@ export function TicketForm() {
       reason: "",
       observations: "",
       file: undefined,
+      copy_email_prefix: "",
     },
   });
 
@@ -125,6 +126,7 @@ export function TicketForm() {
       reason: data.reason,
       estimated_response_time: selectedReason?.responseTime || "N/A",
       observations: data.observations,
+      copy_email_prefix: data.copy_email_prefix,
       files: filesToUpload,
     };
 
@@ -167,7 +169,7 @@ export function TicketForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome</FormLabel>
+                  <FormLabel>Nome do vendedor</FormLabel>
                   <FormControl>
                     <Input placeholder="Seu nome" {...field} />
                   </FormControl>
@@ -191,6 +193,28 @@ export function TicketForm() {
                         }}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="copy_email_prefix"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>E-mail para cópia (opcional)</FormLabel>
+                  <div className="flex items-center">
+                    <FormControl>
+                      <Input placeholder="usuario" {...field} className="rounded-r-none focus:z-10"/>
+                    </FormControl>
+                    <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-l-0 border-input rounded-r-md h-10">
+                      @portovaleconsorcio.com.br
+                    </span>
+                  </div>
+                  <FormDescription>
+                    O e-mail preenchido aqui receberá uma cópia da abertura do ticket.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

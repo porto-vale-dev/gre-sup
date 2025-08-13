@@ -5,6 +5,7 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_C
 export const ticketSchema = z.object({
   name: z.string().min(1, { message: "Nome do solicitante é obrigatório." }),
   phone: z.string().min(14, { message: "Telefone inválido. Preencha o DDD e o número." }),
+  copy_email_prefix: z.string().optional(),
   client_name: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
   cpf: z.string().min(1, { message: "CPF ou CNPJ do cliente é obrigatório." }),
   grupo: z.string().min(1, { message: "Grupo é obrigatório." }),
