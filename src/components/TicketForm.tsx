@@ -203,7 +203,7 @@ export function TicketForm() {
               name="copy_email_prefix"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>E-mail para cópia (opcional)</FormLabel>
+                  <FormLabel>E-mail para cópia</FormLabel>
                   <div className="flex items-center">
                     <FormControl>
                       <Input placeholder="usuario" {...field} className="rounded-r-none focus:z-10"/>
@@ -212,9 +212,6 @@ export function TicketForm() {
                       @portovaleconsorcio.com.br
                     </span>
                   </div>
-                  <FormDescription>
-                    O e-mail preenchido aqui receberá uma cópia da abertura do ticket.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
