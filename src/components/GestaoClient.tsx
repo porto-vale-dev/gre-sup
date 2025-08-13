@@ -7,7 +7,7 @@ import type { TicketStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown, PieChart as PieChartIcon, Loader2, History, ChevronDown, Download } from 'lucide-react';
+import { FileText, Hourglass, AlertTriangle, CheckCircle2, User, Users, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown, PieChart as PieChartIcon, Loader2, History, ChevronDown, Download, Filter } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,6 +21,7 @@ import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useAuth } from '@/contexts/AuthContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 interface StatCardProps {
@@ -64,8 +65,14 @@ export function GestaoClient() {
     from: startOfMonth(new Date()),
     to: new Date(),
   });
+  const [responsibleFilter, setResponsibleFilter] = useState<string>("Todos");
   const [exportHistory, setExportHistory] = useLocalStorage<ExportHistoryItem[]>("exportHistory", []);
   const [isHistoryVisible, setIsHistoryVisible] = useState(true);
+
+  const responsibleList = useMemo(() => {
+    const responsibles = new Set(tickets.map(t => t.responsible).filter(Boolean));
+    return ["Todos", ...Array.from(responsibles)];
+  }, [tickets]);
 
   const filteredTickets = useMemo(() => {
     let baseTickets = tickets;
@@ -75,16 +82,23 @@ export function GestaoClient() {
     }
     
     if (!baseTickets) return [];
-    if (!date?.from) return baseTickets; 
 
-    const fromDate = date.from;
-    const toDate = date.to ? new Date(date.to.setHours(23, 59, 59, 999)) : new Date(fromDate.setHours(23, 59, 59, 999));
+    let dateFilteredTickets = baseTickets;
+    if (date?.from) {
+        const fromDate = date.from;
+        const toDate = date.to ? new Date(date.to.setHours(23, 59, 59, 999)) : new Date(fromDate.setHours(23, 59, 59, 999));
+        dateFilteredTickets = baseTickets.filter(ticket => {
+            const submissionDate = new Date(ticket.submission_date);
+            return submissionDate >= fromDate && submissionDate <= toDate;
+        });
+    }
 
-    return baseTickets.filter(ticket => {
-      const submissionDate = new Date(ticket.submission_date);
-      return submissionDate >= fromDate && submissionDate <= toDate;
-    });
-  }, [tickets, date, cargo, username]);
+    if (responsibleFilter !== "Todos") {
+        return dateFilteredTickets.filter(ticket => ticket.responsible === responsibleFilter);
+    }
+
+    return dateFilteredTickets;
+  }, [tickets, date, cargo, username, responsibleFilter]);
 
   const handleExportXLSX = () => {
     if (filteredTickets.length === 0) {
@@ -240,7 +254,7 @@ export function GestaoClient() {
   if (isLoadingTickets) {
     return (
         <div className="space-y-6">
-            <Card className="p-4"><Skeleton className="h-10 w-64" /></Card>
+            <Card className="p-4"><Skeleton className="h-10 w-full" /></Card>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Skeleton className="h-[126px]" />
                 <Skeleton className="h-[126px]" />
@@ -335,15 +349,33 @@ export function GestaoClient() {
                 />
               </PopoverContent>
             </Popover>
+            
+            {canViewDashboards && (
+              <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Filtrar por responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  {responsibleList.map(name => (
+                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setDate(undefined)}
-                disabled={!date}
+                onClick={() => {
+                    setDate(undefined);
+                    setResponsibleFilter("Todos");
+                }}
+                disabled={!date && responsibleFilter === "Todos"}
                 className="text-muted-foreground hover:text-foreground w-full sm:w-auto"
             >
                 <X className="mr-2 h-4 w-4" />
-                Limpar Filtro
+                Limpar Filtros
             </Button>
             <div className="w-full sm:w-auto sm:ml-auto">
               <Button onClick={handleExportXLSX} className="w-full" disabled={isExporting}>
