@@ -284,6 +284,8 @@ export function GestaoClient() {
       </text>
     );
   };
+  
+  const canViewDashboards = cargo === 'adm' || cargo === 'greadmin';
 
   return (
     <div className="space-y-6">
@@ -375,57 +377,63 @@ export function GestaoClient() {
         </Card>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Tickets no Período" value={stats.total} Icon={FileText} description="Total de tickets no período." />
-        <StatCard title="Em Andamento" value={stats.emAndamento} Icon={Hourglass} className="border-yellow-500/50" />
-        <StatCard title="Atrasados" value={stats.atrasado} Icon={AlertTriangle} className="border-red-500/50 text-red-600" />
-        <StatCard title="Concluídos" value={stats.concluido} Icon={CheckCircle2} className="border-green-500/50" />
-      </div>
+      {canViewDashboards && (
+        <>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard title="Tickets no Período" value={stats.total} Icon={FileText} description="Total de tickets no período." />
+                <StatCard title="Em Andamento" value={stats.emAndamento} Icon={Hourglass} className="border-yellow-500/50" />
+                <StatCard title="Atrasados" value={stats.atrasado} Icon={AlertTriangle} className="border-red-500/50 text-red-600" />
+                <StatCard title="Concluídos" value={stats.concluido} Icon={CheckCircle2} className="border-green-500/50" />
+            </div>
 
-      <div className="grid grid-cols-12 gap-4">
-        <Card className="col-span-12 lg:col-span-8">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <PieChartIcon className="h-5 w-5" />
-                    Tickets por Responsável
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="pl-2">
-                 <ResponsiveContainer width="100%" height={350}>
-                    <PieChart>
-                      <Pie
-                        data={stats.byResponsible}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={120}
-                        fill="hsl(var(--primary))"
-                        labelLine={false}
-                        label={stats.byResponsible.length > 0 ? renderCustomizedLabel : undefined}
-                      >
-                        {stats.byResponsible.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                          contentStyle={{ 
-                              backgroundColor: "hsl(var(--background))",
-                              border: "1px solid hsl(var(--border))",
-                              borderRadius: "var(--radius)"
-                          }}
-                          formatter={(value) => [`${value} tickets`, undefined]}
-                      />
-                      <Legend iconSize={12} />
-                    </PieChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </Card>
-        <div className="col-span-12 lg:col-span-4 space-y-4">
-            <StatCard title="Tickets Novos" value={stats.novo} Icon={FileText} className="border-blue-500/50" />
-            <StatCard title="Responsáveis Ativos" value={stats.uniqueResponsibles} Icon={Users} description="Usuários com tickets no período." />
-        </div>
-      </div>
+            <div className="grid grid-cols-12 gap-4">
+                <Card className="col-span-12 lg:col-span-8">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <PieChartIcon className="h-5 w-5" />
+                            Tickets por Responsável
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pl-2">
+                        <ResponsiveContainer width="100%" height={350}>
+                            <PieChart>
+                            <Pie
+                                data={stats.byResponsible}
+                                dataKey="value"
+                                nameKey="name"
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={120}
+                                fill="hsl(var(--primary))"
+                                labelLine={false}
+                                label={stats.byResponsible.length > 0 ? renderCustomizedLabel : undefined}
+                            >
+                                {stats.byResponsible.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip
+                                contentStyle={{ 
+                                    backgroundColor: "hsl(var(--background))",
+                                    border: "1px solid hsl(var(--border))",
+                                    borderRadius: "var(--radius)"
+                                }}
+                                formatter={(value) => [`${value} tickets`, undefined]}
+                            />
+                            <Legend iconSize={12} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+                <div className="col-span-12 lg:col-span-4 space-y-4">
+                    <StatCard title="Tickets Novos" value={stats.novo} Icon={FileText} className="border-blue-500/50" />
+                    <StatCard title="Responsáveis Ativos" value={stats.uniqueResponsibles} Icon={Users} description="Usuários com tickets no período." />
+                </div>
+            </div>
+        </>
+      )}
     </div>
   );
 }
+
+    
