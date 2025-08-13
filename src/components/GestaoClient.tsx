@@ -35,6 +35,7 @@ interface ExportHistoryItem {
     fileName: string;
     timestamp: number;
     fileContent: string; // Base64 encoded file content
+    username: string | null;
 }
 
 
@@ -130,9 +131,10 @@ export function GestaoClient() {
             fileName,
             timestamp: Date.now(),
             fileContent: fileBase64,
+            username: username
         };
 
-        setExportHistory(prevHistory => [newHistoryItem, ...prevHistory].slice(0, 5));
+        setExportHistory(prevHistory => [newHistoryItem, ...prevHistory].slice(0, 10)); // Increased limit slightly to handle multiple users
         
         const blob = new Blob(
             [Buffer.from(fileBase64, 'base64')],
@@ -187,6 +189,11 @@ export function GestaoClient() {
         });
     }
   };
+
+  const userExportHistory = useMemo(() => {
+    if (!username) return [];
+    return exportHistory.filter(item => item.username === username).slice(0, 5);
+  }, [exportHistory, username]);
 
 
   const stats = useMemo(() => {
@@ -347,7 +354,7 @@ export function GestaoClient() {
          </div>
       </Card>
       
-      {exportHistory.length > 0 && (
+      {userExportHistory.length > 0 && (
          <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between p-4 cursor-pointer" onClick={() => setIsHistoryVisible(!isHistoryVisible)}>
                 <div className="flex items-center gap-3">
@@ -359,7 +366,7 @@ export function GestaoClient() {
             {isHistoryVisible && (
                 <CardContent className="p-4 pt-0">
                     <div className="space-y-2">
-                        {exportHistory.map((item) => (
+                        {userExportHistory.map((item) => (
                             <div key={item.timestamp} className="flex items-center justify-between p-2 rounded-md bg-muted/50 text-sm">
                                 <div className="flex flex-col">
                                     <span className="font-medium">{item.fileName}</span>
