@@ -70,9 +70,8 @@ export function GestaoClient() {
   const [isHistoryVisible, setIsHistoryVisible] = useState(true);
 
   const responsibleList = useMemo(() => {
-    const responsibles = new Set(tickets.map(t => t.responsible).filter(Boolean));
-    return ["Todos", ...Array.from(responsibles)];
-  }, [tickets]);
+    return ["Todos", "mayara", "luana"];
+  }, []);
 
   const filteredTickets = useMemo(() => {
     let baseTickets = tickets;
@@ -358,7 +357,7 @@ export function GestaoClient() {
                 </SelectTrigger>
                 <SelectContent>
                   {responsibleList.map(name => (
-                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                    <SelectItem key={name} value={name} className="capitalize">{name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -474,5 +473,3 @@ export function GestaoClient() {
     </div>
   );
 }
-
-    
