@@ -321,32 +321,34 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   };
 
   const updateReasonAssignment = async (reason: string, username: string | null): Promise<boolean> => {
-    if (username) {
-        // Upsert (Insert or Update) the assignment
-        const { error } = await supabase
-            .from('reason_assignments')
-            .upsert({ reason, username }, { onConflict: 'reason' });
+      // First, delete any existing assignment for this reason to avoid conflicts.
+      // This simplifies the logic and works well with RLS.
+      const { error: deleteError } = await supabase
+          .from('reason_assignments')
+          .delete()
+          .eq('reason', reason);
 
-        if (error) {
-            console.error('Error updating reason assignment:', error);
-            toast({ title: 'Erro ao salvar atribuição', description: error.message, variant: 'destructive' });
-            return false;
-        }
-    } else {
-        // Delete the assignment if username is null
-        const { error } = await supabase
-            .from('reason_assignments')
-            .delete()
-            .eq('reason', reason);
-        
-        if (error) {
-            console.error('Error deleting reason assignment:', error);
-            toast({ title: 'Erro ao remover atribuição', description: error.message, variant: 'destructive' });
-            return false;
-        }
-    }
-    toast({ title: 'Atribuição atualizada com sucesso!' });
-    return true;
+      if (deleteError) {
+          console.error('Error deleting previous assignment:', deleteError);
+          toast({ title: 'Erro ao atualizar atribuição', description: `Não foi possível remover a regra antiga. Erro: ${deleteError.message}`, variant: 'destructive' });
+          return false;
+      }
+
+      // If a new username is provided, insert the new assignment.
+      if (username) {
+          const { error: insertError } = await supabase
+              .from('reason_assignments')
+              .insert({ reason, username });
+
+          if (insertError) {
+              console.error('Error inserting new assignment:', insertError);
+              toast({ title: 'Erro ao salvar atribuição', description: `Não foi possível criar a nova regra. Erro: ${insertError.message}`, variant: 'destructive' });
+              return false;
+          }
+      }
+
+      toast({ title: 'Atribuição atualizada com sucesso!' });
+      return true;
   };
 
 
