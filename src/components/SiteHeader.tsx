@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Ticket as TicketIcon, Archive, Home, LayoutDashboard } from 'lucide-react';
+import { LogOut, Ticket as TicketIcon, Archive, Home, LayoutDashboard, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import React from 'react';
@@ -47,8 +47,10 @@ export function SiteHeader() {
     const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
     const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
     const isGestaoPage = pathname === '/suporte-gre/gestao';
+    const isConfiguracoesPage = pathname === '/suporte-gre/configuracoes';
     const allowedManagementRoles = ['adm', 'greadmin', 'gre'];
     const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
+    const canViewSettings = cargo && ['adm', 'greadmin'].includes(cargo);
 
 
     // Header for Ticket System (Dashboard, Form)
@@ -73,7 +75,7 @@ export function SiteHeader() {
             <nav className="flex items-center gap-1 sm:gap-2">
                {isAuthenticated && (
                   <>
-                  {(isTicketDashboardArea || isGestaoPage) && (
+                  {(isTicketDashboardArea || isGestaoPage || isConfiguracoesPage) && (
                       <>
                       <Link href="/hub" passHref>
                           <Button variant="outline" size="sm" aria-label="Portal Principal">
@@ -83,7 +85,7 @@ export function SiteHeader() {
                       </Link>
                       </>
                   )}
-                  {isGestaoPage && (
+                  {(isGestaoPage || isConfiguracoesPage) && (
                     <Link href="/suporte-gre/painel" passHref>
                       <Button variant="ghost" size="sm" aria-label="Painel Principal">
                         <TicketIcon className="h-4 w-4 sm:mr-2" />
@@ -96,6 +98,14 @@ export function SiteHeader() {
                       <Button variant="ghost" size="sm" aria-label="Gestão de Suporte">
                         <LayoutDashboard className="h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Gestão</span>
+                      </Button>
+                    </Link>
+                  )}
+                   {isTicketDashboardArea && canViewSettings && (
+                    <Link href="/suporte-gre/configuracoes" passHref>
+                      <Button variant="ghost" size="sm" aria-label="Configurações">
+                        <Settings className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Configurações</span>
                       </Button>
                     </Link>
                   )}
