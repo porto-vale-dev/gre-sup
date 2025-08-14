@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { FileText, Info, Send, Paperclip, UploadCloud, AlertTriangle, X } from 'lucide-react';
 
 export function TicketForm() {
-  const [selectedReason, setSelectedReason] = useState<(typeof TICKET_REASONS)[0] | null>(null);
+  const [selectedReasonInfo, setSelectedReasonInfo] = useState<(typeof TICKET_REASONS)[0] | null>(null);
   const { addTicket } = useTickets();
   const { toast } = useToast();
 
@@ -43,14 +43,21 @@ export function TicketForm() {
       copy_email_prefix: "",
     },
   });
-
+  
   const selectedFiles = form.watch("file");
   const selectedFilesArray = selectedFiles ? Array.from(selectedFiles) : [];
+  const selectedReason = form.watch("reason");
+
+  const isCopyEmailRequired = selectedReason === 'Boleto do mês' || selectedReason === 'Boleto de quitação';
 
   const handleReasonChange = (value: string) => {
     const reason = TICKET_REASONS.find(r => r.value === value) || null;
-    setSelectedReason(reason);
-    form.setValue("reason", value);
+    setSelectedReasonInfo(reason);
+    form.setValue("reason", value, { shouldValidate: true });
+    // Trigger validation for copy_email_prefix when reason changes
+    if (form.formState.touchedFields.copy_email_prefix) {
+        form.trigger("copy_email_prefix");
+    }
   };
   
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -124,7 +131,7 @@ export function TicketForm() {
       grupo: data.grupo,
       cota: data.cota,
       reason: data.reason,
-      estimated_response_time: selectedReason?.responseTime || "N/A",
+      estimated_response_time: selectedReasonInfo?.responseTime || "N/A",
       observations: data.observations,
       copy_email_prefix: data.copy_email_prefix,
       files: filesToUpload,
@@ -134,7 +141,7 @@ export function TicketForm() {
 
     if (success) {
       form.reset();
-      setSelectedReason(null);
+      setSelectedReasonInfo(null);
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = "";
     }
@@ -203,7 +210,9 @@ export function TicketForm() {
               name="copy_email_prefix"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>E-mail para cópia</FormLabel>
+                  <FormLabel>
+                    E-mail para cópia {isCopyEmailRequired && <span className="text-destructive">*</span>}
+                  </FormLabel>
                   <div className="flex items-center">
                     <FormControl>
                       <Input placeholder="usuario" {...field} className="rounded-r-none focus:z-10"/>
@@ -300,10 +309,10 @@ export function TicketForm() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {selectedReason && (
+                  {selectedReasonInfo && (
                     <FormDescription className="mt-2 text-destructive flex items-center gap-1.5">
                       <Info className="h-4 w-4" />
-                      Previsão de resposta: {selectedReason.responseTime}
+                      Previsão de resposta: {selectedReasonInfo.responseTime}
                     </FormDescription>
                   )}
                   <FormMessage />

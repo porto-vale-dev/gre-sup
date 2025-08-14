@@ -31,6 +31,15 @@ export const ticketSchema = z.object({
        });
     }, "Um ou mais arquivos são de tipo inválido. Tipos permitidos: PDF, DOC(X), TXT, XLS(X), CSV, Imagens.")
     .optional(),
+}).superRefine((data, ctx) => {
+    const requiredForReason = data.reason === "Boleto do mês" || data.reason === "Boleto de quitação";
+    if (requiredForReason && (!data.copy_email_prefix || data.copy_email_prefix.trim() === '')) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['copy_email_prefix'],
+            message: 'O e-mail para cópia é obrigatório para este motivo.',
+        });
+    }
 });
 
 export type TicketFormData = z.infer<typeof ticketSchema>;
