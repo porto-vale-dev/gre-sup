@@ -149,10 +149,11 @@ export function ConfiguracoesClient() {
 
   const handleStatusChange = async (id: string, newStatus: boolean) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_active_in_queue: newStatus })
-        .eq('id', id);
+      // Chamar a nova função RPC segura
+      const { error } = await supabase.rpc('update_attendant_status', {
+        p_user_id: id,
+        p_is_active: newStatus
+      });
 
       if (error) throw error;
       
@@ -166,7 +167,7 @@ export function ConfiguracoesClient() {
     } catch (err: any) {
        toast({
         title: "Erro ao atualizar",
-        description: "Não foi possível alterar o status do atendente.",
+        description: err.message || "Não foi possível alterar o status do atendente.",
         variant: "destructive"
       });
       console.error("Erro ao atualizar status:", err);
