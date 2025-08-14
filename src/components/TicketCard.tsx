@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TICKET_STATUSES } from '@/lib/constants';
 import { useTickets } from '@/contexts/TicketContext';
-import { CalendarDays, Clock, FileText, User, Tag, Edit3, Check, AlertTriangle, Hourglass, CheckCircle2, ExternalLink, X, Ticket as TicketIcon, Activity, Mail } from 'lucide-react';
+import { CalendarDays, Clock, FileText, User, Tag, Edit3, Check, AlertTriangle, Hourglass, CheckCircle2, ExternalLink, X, Ticket as TicketIcon, Activity } from 'lucide-react';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -83,13 +83,6 @@ export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
           <Clock className="h-4 w-4 text-muted-foreground" />
           <span>Resposta: {ticket.estimated_response_time}</span>
         </div>
-        
-        {ticket.copy_email && (
-            <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="truncate" title={ticket.copy_email}>{ticket.copy_email}</span>
-            </div>
-        )}
 
         <div className="flex items-center gap-2">
           <Tag className="h-4 w-4 text-muted-foreground" />
