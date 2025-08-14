@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Ticket, TicketStatus, SolutionFile } from '@/types';
+import type { Ticket, TicketStatus, SolutionFile, ReasonAssignment } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { supabaseAnon } from '@/lib/supabaseAnonClient';
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +36,10 @@ interface TicketContextType {
   fetchTickets: () => void;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
   createPreviewUrl: (filePath: string) => Promise<string | null>;
+  
+  // New methods for reason assignments
+  fetchReasonAssignments: () => Promise<ReasonAssignment[]>;
+  updateReasonAssignment: (reason: string, username: string | null) => Promise<boolean>;
 }
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
@@ -301,6 +305,51 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // === Reason Assignment Methods ===
+
+  const fetchReasonAssignments = async (): Promise<ReasonAssignment[]> => {
+    const { data, error } = await supabase
+        .from('reason_assignments')
+        .select('reason, username');
+    
+    if (error) {
+        console.error('Error fetching reason assignments:', error);
+        toast({ title: 'Erro ao buscar atribuições', description: error.message, variant: 'destructive' });
+        return [];
+    }
+    return data || [];
+  };
+
+  const updateReasonAssignment = async (reason: string, username: string | null): Promise<boolean> => {
+    if (username) {
+        // Upsert (Insert or Update) the assignment
+        const { error } = await supabase
+            .from('reason_assignments')
+            .upsert({ reason, username }, { onConflict: 'reason' });
+
+        if (error) {
+            console.error('Error updating reason assignment:', error);
+            toast({ title: 'Erro ao salvar atribuição', description: error.message, variant: 'destructive' });
+            return false;
+        }
+    } else {
+        // Delete the assignment if username is null
+        const { error } = await supabase
+            .from('reason_assignments')
+            .delete()
+            .eq('reason', reason);
+        
+        if (error) {
+            console.error('Error deleting reason assignment:', error);
+            toast({ title: 'Erro ao remover atribuição', description: error.message, variant: 'destructive' });
+            return false;
+        }
+    }
+    toast({ title: 'Atribuição atualizada com sucesso!' });
+    return true;
+  };
+
+
   return (
     <TicketContext.Provider value={{ 
         tickets, 
@@ -313,7 +362,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         getTicketById, 
         fetchTickets, 
         downloadFile,
-        createPreviewUrl
+        createPreviewUrl,
+        fetchReasonAssignments,
+        updateReasonAssignment,
     }}>
       {children}
     </TicketContext.Provider>
@@ -327,5 +378,3 @@ export function useTickets() {
   }
   return context;
 }
-
-    

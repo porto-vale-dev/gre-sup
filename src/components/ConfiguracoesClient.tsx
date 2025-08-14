@@ -4,13 +4,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
+import { useTickets } from '@/contexts/TicketContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, UserCog, Users } from 'lucide-react';
+import { AlertCircle, UserCog, Users, Link as LinkIcon, Loader2, Trash2 } from 'lucide-react';
 import { Badge } from './ui/badge';
+import { TICKET_REASONS } from '@/lib/constants';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { ReasonAssignment } from '@/types';
+import { Button } from './ui/button';
 
 interface Profile {
   id: string;
@@ -45,36 +50,102 @@ const AttendantRow = ({ profile, onStatusChange }: { profile: Profile; onStatusC
   );
 };
 
+const AssignmentRow = ({
+  reason,
+  assignment,
+  attendants,
+  onAssignmentChange
+}: {
+  reason: { value: string; label: string; };
+  assignment: ReasonAssignment | undefined;
+  attendants: Profile[];
+  onAssignmentChange: (reason: string, username: string | null) => Promise<void>;
+}) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleValueChange = async (username: string) => {
+      setIsUpdating(true);
+      await onAssignmentChange(reason.value, username);
+      setIsUpdating(false);
+  };
+  
+  const handleRemoveAssignment = async () => {
+    setIsUpdating(true);
+    await onAssignmentChange(reason.value, null);
+    setIsUpdating(false);
+  }
+
+  return (
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b last:border-b-0 gap-4">
+          <Label htmlFor={`reason-${reason.value}`} className="font-normal text-base">{reason.label}</Label>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+              {isUpdating && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
+              <Select
+                  value={assignment?.username || "default"}
+                  onValueChange={handleValueChange}
+                  disabled={isUpdating}
+              >
+                  <SelectTrigger id={`reason-${reason.value}`} className="w-full sm:w-[200px]" aria-label={`Atribuir responsável para ${reason.label}`}>
+                      <SelectValue placeholder="Padrão (Rodízio)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="default">Padrão (Rodízio)</SelectItem>
+                      {attendants.map(attendant => (
+                          <SelectItem key={attendant.id} value={attendant.username} className="capitalize">
+                              {attendant.username}
+                          </SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+              {assignment && (
+                 <Button size="icon" variant="ghost" onClick={handleRemoveAssignment} disabled={isUpdating} aria-label="Remover atribuição">
+                    <Trash2 className="h-4 w-4 text-destructive"/>
+                 </Button>
+              )}
+          </div>
+      </div>
+  );
+};
+
 
 export function ConfiguracoesClient() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [assignments, setAssignments] = useState<ReasonAssignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { fetchReasonAssignments, updateReasonAssignment } = useTickets();
 
-  const fetchProfiles = useCallback(async () => {
+  const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase
+      const profilePromise = supabase
         .from('profiles')
         .select('id, username, is_active_in_queue')
         .eq('cargo', 'gre')
         .order('username', { ascending: true });
 
-      if (error) throw error;
-      setProfiles(data || []);
+      const assignmentPromise = fetchReasonAssignments();
+
+      const [profileResult, assignmentResult] = await Promise.all([profilePromise, assignmentPromise]);
+      
+      if (profileResult.error) throw profileResult.error;
+      
+      setProfiles(profileResult.data || []);
+      setAssignments(assignmentResult || []);
+
     } catch (err: any) {
       setError(err.message);
-      console.error("Erro ao buscar perfis:", err);
+      console.error("Erro ao buscar dados de configuração:", err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchReasonAssignments]);
 
   useEffect(() => {
-    fetchProfiles();
-  }, [fetchProfiles]);
+    fetchInitialData();
+  }, [fetchInitialData]);
 
   const handleStatusChange = async (id: string, newStatus: boolean) => {
     try {
@@ -90,7 +161,7 @@ export function ConfiguracoesClient() {
         description: `O atendente foi ${newStatus ? 'ativado' : 'desativado'} na fila.`,
       });
       // Re-fetch to get the latest state
-      await fetchProfiles();
+      await fetchInitialData();
 
     } catch (err: any) {
        toast({
@@ -102,25 +173,48 @@ export function ConfiguracoesClient() {
     }
   };
 
+  const handleAssignmentChange = async (reason: string, username: string | null) => {
+    const success = await updateReasonAssignment(reason, username);
+    if (success) {
+      await fetchInitialData(); // Refresh data on success
+    }
+  };
+
   if (isLoading) {
     return (
-        <Card>
-            <CardHeader>
-                <Skeleton className="h-7 w-64" />
-                <Skeleton className="h-4 w-96 mt-2" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {[1, 2, 3].map(i => (
-                     <div key={i} className="flex items-center justify-between p-4 border-b">
-                        <div className="space-y-2">
-                           <Skeleton className="h-5 w-24" />
-                           <Skeleton className="h-4 w-32" />
+        <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-7 w-64" />
+                    <Skeleton className="h-4 w-96 mt-2" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="flex items-center justify-between p-4 border-b">
+                            <div className="space-y-2">
+                            <Skeleton className="h-5 w-24" />
+                            <Skeleton className="h-4 w-32" />
+                            </div>
+                            <Skeleton className="h-6 w-11" />
                         </div>
-                        <Skeleton className="h-6 w-11" />
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
+                    ))}
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <Skeleton className="h-7 w-64" />
+                    <Skeleton className="h-4 w-96 mt-2" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="flex items-center justify-between p-4 border-b">
+                            <Skeleton className="h-6 w-48" />
+                            <Skeleton className="h-10 w-52" />
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+        </div>
     );
   }
 
@@ -135,12 +229,12 @@ export function ConfiguracoesClient() {
   }
   
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Users className="h-6 w-6"/> Fila de Atendimento</CardTitle>
                 <CardDescription>
-                    Ative ou desative os atendentes que receberão tickets distribuídos automaticamente.
+                    Ative ou desative os atendentes que receberão tickets distribuídos automaticamente no rodízio (round-robin).
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -155,17 +249,31 @@ export function ConfiguracoesClient() {
                 )}
             </CardContent>
         </Card>
-         <Card className="bg-muted/30">
+         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><UserCog className="h-6 w-6"/>Atribuição por Motivo</CardTitle>
+                <CardTitle className="flex items-center gap-2"><LinkIcon className="h-6 w-6"/>Atribuição por Motivo</CardTitle>
                 <CardDescription>
-                    Associe motivos de ticket específicos a atendentes. Esta funcionalidade está em desenvolvimento.
+                    Associe motivos de ticket específicos a um atendente. Isso ignora o rodízio para aquele motivo.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                 <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-md">
-                    <p className="text-sm text-muted-foreground">Em breve...</p>
-                 </div>
+                 {TICKET_REASONS.length > 0 && profiles.length > 0 ? (
+                    <div className="border rounded-md">
+                      {TICKET_REASONS.map(reason => (
+                          <AssignmentRow
+                            key={reason.value}
+                            reason={reason}
+                            assignment={assignments.find(a => a.reason === reason.value)}
+                            attendants={profiles}
+                            onAssignmentChange={handleAssignmentChange}
+                          />
+                      ))}
+                    </div>
+                 ) : (
+                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-md">
+                        <p className="text-sm text-muted-foreground text-center p-4">Nenhum motivo de ticket ou atendente encontrado para configurar.</p>
+                    </div>
+                 )}
             </CardContent>
         </Card>
     </div>

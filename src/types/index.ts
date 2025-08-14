@@ -32,3 +32,8 @@ export interface Ticket {
   solution?: string | null;
   solution_files?: SolutionFile[] | null;
 }
+
+export interface ReasonAssignment {
+  reason: string;
+  username: string;
+}
