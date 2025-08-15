@@ -22,7 +22,7 @@ const allRankingServices: Service[] = [
   { title: "Ranking Diretor", href: "/rankings/diretor", Icon: Crown, description: "Visualize o ranking de diretores.", allowedRoles: ["adm", "diretor", "greadmin"] },
   { title: "Ranking Gerente", href: "/rankings/gerente", Icon: Users, description: "Acompanhe o desempenho dos gerentes.", allowedRoles: ["adm", "diretor", "gerente", "greadmin"] },
   { title: "Ranking Campanha", href: "/rankings/campanha", Icon: Target, description: "Confira os resultados da campanha atual.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
-  { title: "Ranking Campanha - Seguros", href: "/rankings/campanha-seguros", Icon: Shield, description: "Resultados da campanha de seguros.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
+  { title: "Ranking Campanha - Seguros", href: "/rankings/campanha-seguros", Icon: Shield, description: "Resultados da campanha de seguros.", allowedRoles: ["adm", "greadmin"] },
   { title: "Ranking Trimestral", href: "/rankings/trimestral", Icon: Award, description: "Veja o balanço do trimestre.", allowedRoles: ["adm", "diretor", "greadmin"] },
 ];
 
