@@ -19,7 +19,7 @@ type Option = Record<"value" | "label", string>;
 interface MultiSelectProps {
   options: Option[];
   selected: string[];
-  onChange: React.Dispatch<React.SetStateAction<string[]>>;
+  onChange: (value: string[]) => void;
   className?: string;
   placeholder?: string;
   disabled?: boolean;
