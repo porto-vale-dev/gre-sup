@@ -50,7 +50,7 @@ export function SiteHeader() {
     const isConfiguracoesPage = pathname === '/suporte-gre/configuracoes';
     const allowedManagementRoles = ['adm', 'greadmin', 'gre'];
     const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
-    const canViewSettings = cargo === 'adm';
+    const canViewSettings = cargo === 'adm' || cargo === 'greadmin';
 
 
     // Header for Ticket System (Dashboard, Form)
