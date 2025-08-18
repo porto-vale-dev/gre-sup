@@ -65,7 +65,13 @@ export function MultiSelect({
       onKeyDown={handleKeyDown}
       className={cn("overflow-visible bg-transparent", className)}
     >
-      <div className="group rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+      <div 
+        className="group rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+        onClick={() => {
+            setOpen(true);
+            inputRef.current?.focus();
+        }}
+      >
         <div className="flex flex-wrap gap-1">
           {selectedOptions.map((option) => {
             return (
@@ -82,7 +88,10 @@ export function MultiSelect({
                     e.preventDefault();
                     e.stopPropagation();
                   }}
-                  onClick={() => handleUnselect(option.value)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent opening the dropdown
+                    handleUnselect(option.value);
+                  }}
                   disabled={disabled}
                 >
                   <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
