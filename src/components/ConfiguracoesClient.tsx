@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { useTickets } from '@/contexts/TicketContext';
@@ -10,12 +10,13 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, UserCog, Users, Link as LinkIcon, Loader2, Trash2 } from 'lucide-react';
+import { AlertCircle, Users, Link as LinkIcon, Loader2, Trash2 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { TICKET_REASONS } from '@/lib/constants';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { ReasonAssignment } from '@/types';
 import { Button } from './ui/button';
+import { MultiSelect } from './ui/multi-select';
+
 
 interface Profile {
   id: string;
@@ -52,56 +53,46 @@ const AttendantRow = ({ profile, onStatusChange }: { profile: Profile; onStatusC
 
 const AssignmentRow = ({
   reason,
-  assignment,
+  assignments,
   attendants,
-  onAssignmentChange
+  onAssignmentChange,
 }: {
-  reason: { value: string; label: string; };
-  assignment: ReasonAssignment | undefined;
+  reason: { value: string; label: string };
+  assignments: ReasonAssignment[];
   attendants: Profile[];
-  onAssignmentChange: (reason: string, username: string | null) => Promise<void>;
+  onAssignmentChange: (reason: string, usernames: string[]) => Promise<void>;
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selected, setSelected] = useState<string[]>(
+    assignments.filter(a => a.reason === reason.value).map(a => a.username)
+  );
 
-  const handleValueChange = async (username: string) => {
+  const attendantOptions = useMemo(() => 
+    attendants.map(attendant => ({
+        value: attendant.username,
+        label: attendant.username,
+    })), [attendants]);
+
+  const handleSelectionChange = async (newSelection: string[]) => {
+      setSelected(newSelection);
       setIsUpdating(true);
-      await onAssignmentChange(reason.value, username);
+      await onAssignmentChange(reason.value, newSelection);
       setIsUpdating(false);
   };
   
-  const handleRemoveAssignment = async () => {
-    setIsUpdating(true);
-    await onAssignmentChange(reason.value, null);
-    setIsUpdating(false);
-  }
-
   return (
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b last:border-b-0 gap-4">
-          <Label htmlFor={`reason-${reason.value}`} className="font-normal text-base">{reason.label}</Label>
+          <Label htmlFor={`reason-${reason.value}`} className="font-normal text-base shrink-0">{reason.label}</Label>
           <div className="flex items-center gap-2 w-full sm:w-auto">
               {isUpdating && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
-              <Select
-                  value={assignment?.username || "default"}
-                  onValueChange={handleValueChange}
+              <MultiSelect
+                  options={attendantOptions}
+                  selected={selected}
+                  onChange={handleSelectionChange}
+                  className="w-full sm:min-w-[250px]"
+                  placeholder="Atribuir..."
                   disabled={isUpdating}
-              >
-                  <SelectTrigger id={`reason-${reason.value}`} className="w-full sm:w-[200px]" aria-label={`Atribuir responsável para ${reason.label}`}>
-                      <SelectValue placeholder="Padrão (Rodízio)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="default">Padrão (Rodízio)</SelectItem>
-                      {attendants.map(attendant => (
-                          <SelectItem key={attendant.id} value={attendant.username} className="capitalize">
-                              {attendant.username}
-                          </SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
-              {assignment && (
-                 <Button size="icon" variant="ghost" onClick={handleRemoveAssignment} disabled={isUpdating} aria-label="Remover atribuição">
-                    <Trash2 className="h-4 w-4 text-destructive"/>
-                 </Button>
-              )}
+              />
           </div>
       </div>
   );
@@ -149,7 +140,6 @@ export function ConfiguracoesClient() {
 
   const handleStatusChange = async (id: string, newStatus: boolean) => {
     try {
-      // Chamar a nova função RPC segura
       const { error } = await supabase.rpc('update_attendant_status', {
         p_user_id: id,
         p_is_active: newStatus
@@ -161,7 +151,6 @@ export function ConfiguracoesClient() {
         title: "Status atualizado!",
         description: `O atendente foi ${newStatus ? 'ativado' : 'desativado'} na fila.`,
       });
-      // Re-fetch to get the latest state
       await fetchInitialData();
 
     } catch (err: any) {
@@ -174,10 +163,10 @@ export function ConfiguracoesClient() {
     }
   };
 
-  const handleAssignmentChange = async (reason: string, username: string | null) => {
-    const success = await updateReasonAssignment(reason, username);
+  const handleAssignmentChange = async (reason: string, usernames: string[]) => {
+    const success = await updateReasonAssignment(reason, usernames);
     if (success) {
-      await fetchInitialData(); // Refresh data on success
+      await fetchInitialData(); 
     }
   };
 
@@ -254,7 +243,7 @@ export function ConfiguracoesClient() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><LinkIcon className="h-6 w-6"/>Atribuição por Motivo</CardTitle>
                 <CardDescription>
-                    Associe motivos de ticket específicos a um atendente. Isso ignora o rodízio para aquele motivo.
+                    Associe motivos de ticket específicos a um ou mais atendentes. Isso ignora o rodízio geral para aquele motivo.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -264,7 +253,7 @@ export function ConfiguracoesClient() {
                           <AssignmentRow
                             key={reason.value}
                             reason={reason}
-                            assignment={assignments.find(a => a.reason === reason.value)}
+                            assignments={assignments}
                             attendants={profiles}
                             onAssignmentChange={handleAssignmentChange}
                           />

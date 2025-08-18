@@ -24,15 +24,14 @@ export interface Ticket {
   responsible?: string | null;
   user_id?: string | null; 
   
-  // File properties matching the database schema
   file_path?: string | null;
   file_name?: string | null;
 
-  // New solution fields
   solution?: string | null;
   solution_files?: SolutionFile[] | null;
 }
 
+// Represents one row in the reason_assignments table
 export interface ReasonAssignment {
   reason: string;
   username: string;

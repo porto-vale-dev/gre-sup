@@ -37,9 +37,8 @@ interface TicketContextType {
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
   createPreviewUrl: (filePath: string) => Promise<string | null>;
   
-  // New methods for reason assignments
   fetchReasonAssignments: () => Promise<ReasonAssignment[]>;
-  updateReasonAssignment: (reason: string, username: string | null) => Promise<boolean>;
+  updateReasonAssignment: (reason: string, usernames: string[]) => Promise<boolean>;
 }
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
@@ -305,7 +304,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // === Reason Assignment Methods ===
 
   const fetchReasonAssignments = async (): Promise<ReasonAssignment[]> => {
     const { data, error } = await supabase
@@ -320,34 +318,34 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     return data || [];
   };
 
-  const updateReasonAssignment = async (reason: string, username: string | null): Promise<boolean> => {
-      // First, delete any existing assignment for this reason to avoid conflicts.
-      // This simplifies the logic and works well with RLS.
+  const updateReasonAssignment = async (reason: string, usernames: string[]): Promise<boolean> => {
+      // First, delete all existing assignments for this reason.
       const { error: deleteError } = await supabase
           .from('reason_assignments')
           .delete()
           .eq('reason', reason);
 
       if (deleteError) {
-          console.error('Error deleting previous assignment:', deleteError);
-          toast({ title: 'Erro ao atualizar atribuição', description: `Não foi possível remover a regra antiga. Erro: ${deleteError.message}`, variant: 'destructive' });
+          console.error('Error deleting previous assignments:', deleteError);
+          toast({ title: 'Erro ao atualizar atribuição', description: `Não foi possível remover as regras antigas. Erro: ${deleteError.message}`, variant: 'destructive' });
           return false;
       }
 
-      // If a new username is provided, insert the new assignment.
-      if (username) {
+      // If new usernames are provided, insert the new assignments.
+      if (usernames.length > 0) {
+          const newAssignments = usernames.map(username => ({ reason, username }));
           const { error: insertError } = await supabase
               .from('reason_assignments')
-              .insert({ reason, username });
+              .insert(newAssignments);
 
           if (insertError) {
-              console.error('Error inserting new assignment:', insertError);
-              toast({ title: 'Erro ao salvar atribuição', description: `Não foi possível criar a nova regra. Erro: ${insertError.message}`, variant: 'destructive' });
+              console.error('Error inserting new assignments:', insertError);
+              toast({ title: 'Erro ao salvar atribuição', description: `Não foi possível criar as novas regras. Erro: ${insertError.message}`, variant: 'destructive' });
               return false;
           }
       }
 
-      toast({ title: 'Atribuição atualizada com sucesso!' });
+      toast({ title: 'Atribuições atualizadas com sucesso!' });
       return true;
   };
 
