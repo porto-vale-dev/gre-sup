@@ -4,6 +4,7 @@ import type { TicketStatus } from '@/types';
 export const TICKET_REASONS = [
   { value: "Boleto do mês", label: "Boleto do mês", responseTime: "1 dia útil" },
   { value: "Boleto de quitação", label: "Boleto de quitação", responseTime: "até 1 dia útil antes do vencimento" },
+  { value: "BOLETO EM ATRASO", label: "BOLETO EM ATRASO", responseTime: "1 dia útil" },
   { value: "Bloqueio temporário COL (erro de acesso)", label: "Bloqueio temporário COL (erro de acesso)", responseTime: "1 dia útil" },
   { value: "Cancelamento", label: "Cancelamento", responseTime: "1 dia útil" },
   { value: "Cadastro COL", label: "Cadastro COL", responseTime: "1 dia útil" },
@@ -13,11 +14,15 @@ export const TICKET_REASONS = [
   { value: "Correção de cadastro - nome e estado civil", label: "Correção de cadastro - nome e estado civil", responseTime: "3 dias úteis" },
   { value: "Devolução de valores", label: "Devolução de valores", responseTime: "10 a 15 dias úteis" },
   { value: "Dúvidas", label: "Dúvidas", responseTime: "1 dia útil" },
+  { value: "ERROS NO APP DO CONSÓRCIO", label: "ERROS NO APP DO CONSÓRCIO", responseTime: "5 dias úteis" },
   { value: "Extrato financeiro", label: "Extrato financeiro", responseTime: "1 dia útil" },
   { value: "Inscrições ABAC", label: "Inscrições ABAC", responseTime: "1 dia útil" },
   { value: "Link de cartão", label: "Link de cartão", responseTime: "1 dia útil" },
+  { value: "OFERTA DE LANCE", label: "OFERTA DE LANCE", responseTime: "1 dia útil" },
   { value: "Parcela divergente", label: "Parcela divergente", responseTime: "prazo variável" },
   { value: "Processo de transferencia", label: "Processo de transferencia", responseTime: "7 a 10 dias úteis" },
+  { value: "SIMULAÇÃO DE REDUÇÃO DE CRÉDITO", label: "SIMULAÇÃO DE REDUÇÃO DE CRÉDITO", responseTime: "Simulação 1 dia útil e Efetivação após solicitação do titular: 5 dias úteis" },
+  { value: "SIMULAÇÃO DE RATEIO", label: "SIMULAÇÃO DE RATEIO", responseTime: "Simulação 1 dia útil e efetivação após pagamento da multa 5 dias úteis" },
   { value: "Simulação de aumento de crédito", label: "Simulação de aumento de crédito", responseTime: "1 dia útil" },
   { value: "Tratativas de duplicidade de pagamento", label: "Tratativas de duplicidade de pagamento", responseTime: "10 a 15 dias úteis" },
 ];
@@ -51,3 +56,4 @@ export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 export const MAX_FILES_COUNT = 10;
 export const MAX_SOLUTION_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 export const MAX_OBSERVATIONS_LENGTH = 10000;
+
