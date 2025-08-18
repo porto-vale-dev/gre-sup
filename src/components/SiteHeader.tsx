@@ -75,7 +75,7 @@ export function SiteHeader() {
             <nav className="flex items-center gap-1 sm:gap-2">
                {isAuthenticated && (
                   <>
-                  {(isTicketDashboardArea || isGestaoPage || isConfiguracoesPage) && (
+                  {(isTicketDashboardArea || isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
                       <>
                       <Link href="/hub" passHref>
                           <Button variant="outline" size="sm" aria-label="Portal Principal">
@@ -85,7 +85,7 @@ export function SiteHeader() {
                       </Link>
                       </>
                   )}
-                  {(isGestaoPage || isConfiguracoesPage) && (
+                  {(isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
                     <Link href="/suporte-gre/painel" passHref>
                       <Button variant="ghost" size="sm" aria-label="Painel Principal">
                         <TicketIcon className="h-4 w-4 sm:mr-2" />
@@ -93,7 +93,7 @@ export function SiteHeader() {
                       </Button>
                     </Link>
                   )}
-                  {isTicketDashboardArea && canViewManagement && (
+                  {isTicketDashboardArea && canViewManagement && !isArchivedPage && (
                     <Link href="/suporte-gre/gestao" passHref>
                       <Button variant="ghost" size="sm" aria-label="Gestão de Suporte">
                         <LayoutDashboard className="h-4 w-4 sm:mr-2" />
@@ -101,32 +101,13 @@ export function SiteHeader() {
                       </Button>
                     </Link>
                   )}
-                   {isTicketDashboardArea && canViewSettings && (
+                   {isTicketDashboardArea && canViewSettings && !isArchivedPage && (
                     <Link href="/suporte-gre/configuracoes" passHref>
                       <Button variant="ghost" size="sm" aria-label="Configurações">
                         <Settings className="h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Configurações</span>
                       </Button>
                     </Link>
-                  )}
-                  {isTicketDashboardArea && (
-                      <>
-                        {isArchivedPage ? (
-                        <Link href="/suporte-gre/painel" passHref>
-                            <Button variant="ghost" size="sm" aria-label="Painel Principal">
-                            <TicketIcon className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Painel</span>
-                            </Button>
-                        </Link>
-                        ) : (
-                        <Link href="/suporte-gre/painel/archived" passHref>
-                            <Button variant="ghost" size="sm" aria-label="Tickets Arquivados">
-                            <Archive className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Arquivados</span>
-                            </Button>
-                        </Link>
-                        )}
-                      </>
                   )}
                 </>
                )}

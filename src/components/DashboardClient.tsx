@@ -11,9 +11,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle } from 'lucide-react';
+import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle, Archive } from 'lucide-react';
 import { Button } from './ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import Link from 'next/link';
 
 export function DashboardClient() {
   const { tickets, isLoadingTickets, error, fetchTickets } = useTickets();
@@ -162,6 +163,12 @@ export function DashboardClient() {
                         <SelectItem value="asc">Mais Antigos</SelectItem>
                     </SelectContent>
                 </Select>
+                 <Button asChild variant="outline" className="w-full sm:w-auto">
+                  <Link href="/suporte-gre/painel/archived">
+                    <Archive className="mr-2 h-4 w-4" />
+                    Ver Arquivados
+                  </Link>
+                </Button>
                 <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {if(value) setViewMode(value as "grid" | "list")}} className="hidden sm:flex">
                     <ToggleGroupItem value="grid" aria-label="Visualização em grade">
                         <LayoutGrid className="h-4 w-4" />

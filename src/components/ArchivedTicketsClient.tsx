@@ -29,8 +29,9 @@ export function ArchivedTicketsClient() {
   }, [tickets]);
 
   const responsibleNamesForFilter = useMemo(() => {
-    return ["Todos", "mayara", "luana", "marcelo", "não atribuído"];
-  }, []);
+    const allResponsibles = new Set(tickets.map(t => t.responsible).filter(Boolean) as string[]);
+    return ["Todos", ...Array.from(allResponsibles), "não atribuído"];
+  }, [tickets]);
 
   const filteredAndSortedTickets = useMemo(() => {
     return archivedTickets
