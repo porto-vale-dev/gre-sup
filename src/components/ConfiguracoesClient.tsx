@@ -15,7 +15,7 @@ import { Badge } from './ui/badge';
 import { TICKET_REASONS } from '@/lib/constants';
 import type { ReasonAssignment } from '@/types';
 import { Button } from './ui/button';
-import { MultiSelect } from './ui/multi-select';
+import { MultiSelect, OptionType } from './ui/multi-select';
 
 
 interface Profile {
@@ -63,18 +63,21 @@ const AssignmentRow = ({
   onAssignmentChange: (reason: string, usernames: string[]) => Promise<void>;
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [selected, setSelected] = useState<string[]>(
-    assignments.filter(a => a.reason === reason.value).map(a => a.username)
-  );
-
-  const attendantOptions = useMemo(() => 
+  
+  const attendantOptions: OptionType[] = useMemo(() => 
     attendants.map(attendant => ({
         value: attendant.username,
         label: attendant.username,
     })), [attendants]);
 
+  const selectedUsernames = useMemo(() => 
+    assignments
+      .filter(a => a.reason === reason.value)
+      .map(a => a.username),
+    [assignments, reason.value]
+  );
+
   const handleSelectionChange = async (newSelection: string[]) => {
-      setSelected(newSelection);
       setIsUpdating(true);
       await onAssignmentChange(reason.value, newSelection);
       setIsUpdating(false);
@@ -87,7 +90,7 @@ const AssignmentRow = ({
               {isUpdating && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
               <MultiSelect
                   options={attendantOptions}
-                  selected={selected}
+                  selected={selectedUsernames}
                   onChange={handleSelectionChange}
                   className="w-full sm:min-w-[250px]"
                   placeholder="Atribuir..."
