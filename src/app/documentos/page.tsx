@@ -230,7 +230,7 @@ export default function DocumentosPage() {
   const getTitle = (sub: string) => {
     if (sub === 'Todos') return 'Todos os Documentos';
     if (sub === 'Financeiro') return 'Documentos Financeiros';
-    if (sub === 'COMEX') return 'Documentos de Comércio Exterior';
+    if (sub === 'COMEX') return 'Documentos do Comitê Executivo';
     return `Documentos - ${sub}`;
   };
 
