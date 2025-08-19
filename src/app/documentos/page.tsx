@@ -17,6 +17,30 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const BUCKET_NAME = 'documentos';
 
+const monthNames: { [key: string]: string } = {
+  '01': 'Janeiro', '02': 'Fevereiro', '03': 'Março', '04': 'Abril',
+  '05': 'Maio', '06': 'Junho', '07': 'Julho', '08': 'Agosto',
+  '09': 'Setembro', '10': 'Outubro', '11': 'Novembro', '12': 'Dezembro'
+};
+
+const formatDocumentTitle = (fileName: string, subCategory: string): string => {
+  const namePrefix = subCategory === 'Relatórios Gerais' ? 'Comex' : 'BOARD';
+  const pattern = new RegExp(`^${namePrefix}_(\\d{2})(\\d{2})\\.pdf$`, 'i');
+  const match = fileName.match(pattern);
+  
+  if (match) {
+    const month = match[1];
+    const year = match[2];
+    const monthName = monthNames[month];
+    const fullYear = `20${year}`;
+    const displayPrefix = subCategory === 'Relatórios Gerais' ? 'Relatório COMEX' : 'Board COMEX';
+    return `${displayPrefix} - ${monthName} ${fullYear}`;
+  }
+  
+  return fileName.replace('.pdf', '').replace(/_/g, ' ');
+};
+
+
 const DocumentCard = ({
   document,
   onPreview,
@@ -89,9 +113,14 @@ export default function DocumentosPage() {
 
             fileList.forEach(file => {
                 if(file.name.toLowerCase().endsWith('.pdf')) { // Process only PDFs
+                    const title = formatDocumentTitle(file.name, subCategory);
+                    const description = title.startsWith('Relatório') || title.startsWith('Board')
+                        ? `Documento ${subCategory} de ${title.split(' - ')[1]}`
+                        : `Documento ${subCategory}`;
+
                     newComexDocs.push({
-                      title: file.name.replace('.pdf', '').replace(/_/g, ' '),
-                      description: `Documento ${subCategory} - ${file.name}`,
+                      title: title,
+                      description: description,
                       category: 'COMEX',
                       subCategory: subCategory,
                       Icon: Icon,
@@ -379,5 +408,7 @@ export default function DocumentosPage() {
     </>
   );
 }
+
+    
 
     
