@@ -263,7 +263,7 @@ export default function DocumentosPage() {
             <h1 className="text-3xl font-bold font-headline text-primary">
               {getTitle(selectedSubCategory)}
             </h1>
-            {selectedSubCategory === 'Relatórios Gerais' && (
+            {(selectedSubCategory === 'Relatórios Gerais' || selectedSubCategory === 'Comex Board') && (
                 <Button>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Adicionar Arquivo
