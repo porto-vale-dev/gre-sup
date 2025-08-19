@@ -75,7 +75,7 @@ export const documentsData: Document[] = [
     subCategory: 'Relatórios Gerais',
     Icon: FileText,
     fileName: 'Comex_0225.pdf',
-    pathInBucket: 'comex/Comex _0225.pdf',
+    pathInBucket: 'comex/Comex_0225.pdf',
   },
   {
     title: 'Relatório COMEX - Março 2025',
@@ -84,7 +84,7 @@ export const documentsData: Document[] = [
     subCategory: 'Relatórios Gerais',
     Icon: FileText,
     fileName: 'Comex_0325.pdf',
-    pathInBucket: 'comex/Comex _0325.pdf',
+    pathInBucket: 'comex/Comex_0325.pdf',
   },
   {
     title: 'Relatório COMEX - Abril 2025',
@@ -93,7 +93,7 @@ export const documentsData: Document[] = [
     subCategory: 'Relatórios Gerais',
     Icon: FileText,
     fileName: 'Comex_0425.pdf',
-    pathInBucket: 'comex/Comex _0425.pdf',
+    pathInBucket: 'comex/Comex_0425.pdf',
   },
   {
     title: 'Relatório COMEX - Maio 2025',
@@ -102,7 +102,7 @@ export const documentsData: Document[] = [
     subCategory: 'Relatórios Gerais',
     Icon: FileText,
     fileName: 'Comex_0525.pdf',
-    pathInBucket: 'comex/Comex _0525.pdf',
+    pathInBucket: 'comex/Comex_0525.pdf',
   },
   {
     title: 'Relatório COMEX - Junho 2025',
@@ -111,7 +111,7 @@ export const documentsData: Document[] = [
     subCategory: 'Relatórios Gerais',
     Icon: FileText,
     fileName: 'Comex_0625.pdf',
-    pathInBucket: 'comex/Comex _0625.pdf',
+    pathInBucket: 'comex/Comex_0625.pdf',
   },
   {
     title: 'Relatório COMEX - Julho 2025',
@@ -120,7 +120,7 @@ export const documentsData: Document[] = [
     subCategory: 'Relatórios Gerais',
     Icon: FileText,
     fileName: 'Comex_0725.pdf',
-    pathInBucket: 'comex/Comex _0725.pdf',
+    pathInBucket: 'comex/Comex_0725.pdf',
   },
   {
     title: 'Relatório COMEX - Agosto 2025',
@@ -129,7 +129,7 @@ export const documentsData: Document[] = [
     subCategory: 'Relatórios Gerais',
     Icon: FileText,
     fileName: 'Comex_0825.pdf',
-    pathInBucket: 'comex/Comex _0825.pdf',
+    pathInBucket: 'comex/Comex_0825.pdf',
   },
   // COMEX - Comex Board
   {
