@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight } from 'lucide-react';
+import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight, Ship } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const BUCKET_NAME = 'documentos';
@@ -52,7 +52,7 @@ const DocumentCard = ({
 
 export default function DocumentosPage() {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
-  const [accordionValue, setAccordionValue] = useState<string | undefined>();
+  const [accordionValue, setAccordionValue] = useState<string[]>([]);
   const [loadingState, setLoadingState] = useState<{ id: string | null; type: 'preview' | 'download' | null }>({ id: null, type: null });
   const { toast } = useToast();
 
@@ -110,6 +110,7 @@ export default function DocumentosPage() {
   const filteredDocuments = useMemo(() => {
     if (selectedSubCategory === 'Todos') return documentsData;
     if (selectedSubCategory === 'Financeiro') return documentsData.filter(doc => doc.category === 'Financeiro');
+    if (selectedSubCategory === 'COMEX') return documentsData.filter(doc => doc.category === 'COMEX');
     return documentsData.filter(doc => doc.subCategory === selectedSubCategory);
   }, [selectedSubCategory]);
 
@@ -122,16 +123,32 @@ export default function DocumentosPage() {
     );
   }, []);
 
+  const comexSubcategories = useMemo(() => {
+    const subCategories = documentsData
+      .filter(doc => doc.category === 'COMEX')
+      .map(doc => ({ name: doc.subCategory, Icon: doc.Icon }));
+    return subCategories.filter((item, index, self) =>
+      index === self.findIndex(t => t.name === item.name)
+    );
+  }, []);
+
   const getTitle = (sub: string) => {
     if (sub === 'Todos') return 'Todos os Documentos';
     if (sub === 'Financeiro') return 'Documentos Financeiros';
+    if (sub === 'COMEX') return 'Documentos de Comércio Exterior';
     return `Documentos - ${sub}`;
   };
 
-  const handleAccordionTriggerClick = () => {
-    setAccordionValue(current => (current === 'financeiro' ? undefined : 'financeiro'));
-    setSelectedSubCategory('Financeiro');
-  };
+  const isCategorySelected = (category: string) => {
+    if (selectedSubCategory === category) return true;
+    if (category === 'Financeiro') {
+      return financialSubcategories.some(sub => sub.name === selectedSubCategory);
+    }
+    if (category === 'COMEX') {
+      return comexSubcategories.some(sub => sub.name === selectedSubCategory);
+    }
+    return false;
+  }
 
   return (
     <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
@@ -156,8 +173,7 @@ export default function DocumentosPage() {
               </Button>
 
               <Accordion
-                type="single"
-                collapsible
+                type="multiple"
                 value={accordionValue}
                 onValueChange={setAccordionValue}
                 className="w-full"
@@ -167,7 +183,7 @@ export default function DocumentosPage() {
                         onClick={() => setSelectedSubCategory('Financeiro')}
                         className={cn(
                             "py-2 px-3 rounded-md text-base font-medium no-underline hover:no-underline",
-                            selectedSubCategory === 'Financeiro' || financialSubcategories.some(sub => sub.name === selectedSubCategory)
+                            isCategorySelected('Financeiro')
                                 ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                                 : "hover:bg-accent hover:text-accent-foreground"
                         )}
@@ -175,11 +191,42 @@ export default function DocumentosPage() {
                       <div className="flex items-center gap-2">
                         <Landmark className="h-4 w-4" /> Financeiro
                       </div>
-                      <ChevronRight data-no-animation className={cn("h-4 w-4 shrink-0 transition-transform duration-200", accordionValue === 'financeiro' && "rotate-90")} />
+                      <ChevronRight data-no-animation className={cn("h-4 w-4 shrink-0 transition-transform duration-200", accordionValue.includes('financeiro') && "rotate-90")} />
                   </AccordionTrigger>
                   <AccordionContent className="pl-4 pt-1">
                     <div className="flex flex-col gap-1">
                       {financialSubcategories.map(({ name, Icon }) => (
+                        <Button
+                          key={name}
+                          variant={selectedSubCategory === name ? 'secondary' : 'ghost'}
+                          className="justify-start h-auto py-1.5 px-2 text-left text-sm font-normal"
+                          onClick={() => setSelectedSubCategory(name)}
+                        >
+                          {(Icon ? <Icon /> : <Folder />)}
+                          <span className="ml-2 leading-tight">{name}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="comex" className="border-b-0">
+                    <AccordionTrigger
+                        onClick={() => setSelectedSubCategory('COMEX')}
+                        className={cn(
+                            "py-2 px-3 rounded-md text-base font-medium no-underline hover:no-underline",
+                            isCategorySelected('COMEX')
+                                ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                : "hover:bg-accent hover:text-accent-foreground"
+                        )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Ship className="h-4 w-4" /> COMEX
+                      </div>
+                      <ChevronRight data-no-animation className={cn("h-4 w-4 shrink-0 transition-transform duration-200", accordionValue.includes('comex') && "rotate-90")} />
+                  </AccordionTrigger>
+                  <AccordionContent className="pl-4 pt-1">
+                    <div className="flex flex-col gap-1">
+                      {comexSubcategories.map(({ name, Icon }) => (
                         <Button
                           key={name}
                           variant={selectedSubCategory === name ? 'secondary' : 'ghost'}

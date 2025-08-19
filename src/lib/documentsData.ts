@@ -1,10 +1,10 @@
 import type { LucideIcon } from 'lucide-react';
-import { FileText, Receipt, ArrowRightLeft, Car, FileSpreadsheet, Trophy } from 'lucide-react';
+import { FileText, Receipt, ArrowRightLeft, Car, FileSpreadsheet, Trophy, Ship } from 'lucide-react';
 
 export interface Document {
   title: string;
   description: string;
-  category: 'Financeiro';
+  category: 'Financeiro' | 'COMEX';
   subCategory: string;
   Icon: LucideIcon;
   pathInBucket: string; // The path to the file within the Supabase bucket
@@ -12,6 +12,7 @@ export interface Document {
 }
 
 export const documentsData: Document[] = [
+  // Financeiro
   {
     title: 'Solicitação de Contas a Pagar',
     description: 'Formulário para solicitação de pagamento de contas',
@@ -65,5 +66,24 @@ export const documentsData: Document[] = [
     Icon: Trophy,
     fileName: 'solicitacao-pagamento-premiacao.pdf',
     pathInBucket: 'financeiro/solicitacao-pagamento-premiacao.pdf',
+  },
+  // COMEX
+  {
+    title: 'Declaração de Importação',
+    description: 'Modelo de declaração de importação (DI).',
+    category: 'COMEX',
+    subCategory: 'Importação',
+    Icon: Ship,
+    fileName: 'declaracao-importacao-modelo.pdf',
+    pathInBucket: 'comex/declaracao-importacao-modelo.pdf',
+  },
+  {
+    title: 'Fatura Comercial',
+    description: 'Exemplo de fatura comercial para exportação.',
+    category: 'COMEX',
+    subCategory: 'Exportação',
+    Icon: FileText,
+    fileName: 'fatura-comercial-exemplo.pdf',
+    pathInBucket: 'comex/fatura-comercial-exemplo.pdf',
   },
 ];
