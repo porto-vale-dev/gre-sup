@@ -87,49 +87,32 @@ export function UploadDocumentDialog({ isOpen, onClose, subCategory, onUploadSuc
     const filePathInBucket = `${pathPrefix}${finalFileName}`;
 
     try {
-      // Check if file exists to prevent overwriting without confirmation
-      const { data: existingFileData, error: checkError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
-        .getPublicUrl(filePathInBucket);
-
-      let proceedUpload = true;
-      // getPublicUrl returns a URL even if the file doesn't exist, but it also returns an error.
-      // So we check if the url is valid by trying to fetch its headers. A 4xx or 5xx status means it doesn't exist.
-      if (checkError && !checkError.message.includes('Object not found')) {
-         // An unexpected error occurred
-         throw checkError;
-      }
-
-      if(!checkError) {
-         proceedUpload = window.confirm(`O arquivo ${finalFileName} já existe. Deseja substituí-lo?`);
-      }
-
-      if (proceedUpload) {
-        const { error: uploadError } = await supabase.storage
-          .from(BUCKET_NAME)
-          .upload(filePathInBucket, file, {
-            cacheControl: '3600',
-            upsert: true, 
-          });
-
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        toast({
-          title: "Upload bem-sucedido!",
-          description: `O arquivo ${finalFileName} foi salvo.`,
+        .upload(filePathInBucket, file, {
+          cacheControl: '3600',
+          upsert: true, // This will overwrite the file if it already exists
         });
-        onUploadSuccess();
-        // Reset state after successful upload
-        setMonth('');
-        setYear('');
-        setFile(null);
+
+      if (uploadError) {
+        throw uploadError;
       }
+
+      toast({
+        title: "Upload bem-sucedido!",
+        description: `O arquivo ${finalFileName} foi salvo.`,
+      });
+      onUploadSuccess();
+      // Reset state after successful upload
+      setMonth('');
+      setYear('');
+      setFile(null);
+      onClose(); // Close the dialog on success
+      
     } catch (error: any) {
         toast({
           title: "Erro no Upload",
-          description: `Não foi possível salvar o arquivo. Detalhes: ${error.message}`,
+          description: `Não foi possível salvar o arquivo. Verifique se o bucket 'documentos' permite uploads e se as permissões (RLS) estão corretas. Detalhes: ${error.message}`,
           variant: "destructive",
         });
         console.error("Upload error:", error);
