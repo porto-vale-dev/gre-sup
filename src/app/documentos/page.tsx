@@ -10,9 +10,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight, Ship, PlusCircle } from 'lucide-react';
+import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight, Ship, PlusCircle, FileSpreadsheet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UploadDocumentDialog } from '@/components/UploadDocumentDialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const BUCKET_NAME = 'documentos';
 
@@ -378,3 +379,5 @@ export default function DocumentosPage() {
     </>
   );
 }
+
+    
