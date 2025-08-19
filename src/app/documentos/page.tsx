@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight, Ship } from 'lucide-react';
+import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight, Ship, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const BUCKET_NAME = 'documentos';
@@ -259,9 +259,17 @@ export default function DocumentosPage() {
 
       {/* Main */}
       <main className="flex-1">
-        <h1 className="text-3xl font-bold font-headline mb-8 text-primary">
-          {getTitle(selectedSubCategory)}
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold font-headline text-primary">
+              {getTitle(selectedSubCategory)}
+            </h1>
+            {selectedSubCategory === 'Relatórios Gerais' && (
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Adicionar Arquivo
+                </Button>
+            )}
+        </div>
 
         {selectedSubCategory === 'COMEX' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
