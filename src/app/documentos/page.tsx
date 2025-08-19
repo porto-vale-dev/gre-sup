@@ -202,8 +202,8 @@ export default function DocumentosPage() {
                           className="justify-start h-auto py-1.5 px-2 text-left text-sm font-normal"
                           onClick={() => setSelectedSubCategory(name)}
                         >
-                          {(Icon ? <Icon /> : <Folder />)}
-                          <span className="ml-2 leading-tight">{name}</span>
+                          {(Icon ? <Icon className="w-4 h-4 mr-2" /> : <Folder className="w-4 h-4 mr-2" />)}
+                          <span className="leading-tight">{name}</span>
                         </Button>
                       ))}
                     </div>
@@ -233,8 +233,8 @@ export default function DocumentosPage() {
                           className="justify-start h-auto py-1.5 px-2 text-left text-sm font-normal"
                           onClick={() => setSelectedSubCategory(name)}
                         >
-                          {(Icon ? <Icon /> : <Folder />)}
-                          <span className="ml-2 leading-tight">{name}</span>
+                          {(Icon ? <Icon className="w-4 h-4 mr-2" /> : <Folder className="w-4 h-4 mr-2" />)}
+                          <span className="leading-tight">{name}</span>
                         </Button>
                       ))}
                     </div>
