@@ -203,7 +203,7 @@ export default function DocumentosPage() {
   };
   
   const filteredDocuments = useMemo(() => {
-    if (selectedSubCategory === 'Todos') return documentsData;
+    if (selectedSubCategory === 'Todos') return documentsData.filter(doc => doc.category === 'Financeiro');
     if (selectedSubCategory === 'Financeiro') return documentsData.filter(doc => doc.category === 'Financeiro');
     if (selectedSubCategory === 'COMEX') return []; // Do not show documents directly when COMEX is clicked
     return documentsData.filter(doc => doc.subCategory === selectedSubCategory);
