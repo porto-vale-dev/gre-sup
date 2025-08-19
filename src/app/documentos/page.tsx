@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -12,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight, Ship, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UploadDocumentDialog } from '@/components/UploadDocumentDialog';
 
 const BUCKET_NAME = 'documentos';
 
@@ -65,6 +65,7 @@ export default function DocumentosPage() {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
   const [loadingState, setLoadingState] = useState<{ id: string | null; type: 'preview' | 'download' | null }>({ id: null, type: null });
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handlePreview = async (doc: Document) => {
@@ -160,8 +161,19 @@ export default function DocumentosPage() {
     }
     return false;
   }
+  
+  const handleUploadSuccess = () => {
+    // Here you would typically refetch the document list
+    // For now, just show a toast and close the dialog
+    setIsUploadDialogOpen(false);
+    toast({
+        title: "Upload bem-sucedido!",
+        description: "O documento estará disponível em breve.",
+    });
+  };
 
   return (
+    <>
     <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
       {/* Sidebar */}
       <aside className="w-full md:w-64 lg:w-72 shrink-0">
@@ -264,7 +276,7 @@ export default function DocumentosPage() {
               {getTitle(selectedSubCategory)}
             </h1>
             {(selectedSubCategory === 'Relatórios Gerais' || selectedSubCategory === 'Comex Board') && (
-                <Button>
+                <Button onClick={() => setIsUploadDialogOpen(true)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Adicionar Arquivo
                 </Button>
@@ -305,5 +317,12 @@ export default function DocumentosPage() {
       </main>
 
     </div>
+    <UploadDocumentDialog 
+        isOpen={isUploadDialogOpen}
+        onClose={() => setIsUploadDialogOpen(false)}
+        subCategory={selectedSubCategory}
+        onUploadSuccess={handleUploadSuccess}
+    />
+    </>
   );
 }
