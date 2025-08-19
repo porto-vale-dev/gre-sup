@@ -249,6 +249,92 @@ export default function DocumentosPage() {
     setIsUploadDialogOpen(false);
     fetchComexDocuments();
   };
+  
+  const renderContent = () => {
+    if (isComexLoading && (selectedSubCategory.includes('COMEX') || selectedSubCategory === 'Relatórios Gerais' || selectedSubCategory === 'Comex Board' || selectedSubCategory === 'Todos')) {
+        return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+            </div>
+        );
+    }
+
+    if (selectedSubCategory === 'Todos') {
+        return (
+            <div className="space-y-8">
+                <section>
+                    <h2 className="text-2xl font-semibold tracking-tight border-b pb-2 mb-6">Financeiro</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {filteredDocuments.map(doc => (
+                            <DocumentCard
+                                key={doc.pathInBucket}
+                                document={doc}
+                                onPreview={handlePreview}
+                                onDownload={handleDownload}
+                                isLoadingPreview={loadingState.id === doc.pathInBucket && loadingState.type === 'preview'}
+                                isLoadingDownload={loadingState.id === doc.pathInBucket && loadingState.type === 'download'}
+                            />
+                        ))}
+                    </div>
+                </section>
+                <section>
+                    <h2 className="text-2xl font-semibold tracking-tight border-b pb-2 mb-6">COMEX</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                         {comexSubcategories.map(sub => (
+                            <SubCategoryCard
+                                key={sub.name}
+                                name={sub.name}
+                                icon={sub.Icon || Folder}
+                                onClick={() => setSelectedSubCategory(sub.name)}
+                            />
+                        ))}
+                    </div>
+                </section>
+            </div>
+        );
+    }
+    
+    if (selectedSubCategory === 'COMEX') {
+        return (
+             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {comexSubcategories.map(sub => (
+                    <SubCategoryCard
+                        key={sub.name}
+                        name={sub.name}
+                        icon={sub.Icon || Folder}
+                        onClick={() => setSelectedSubCategory(sub.name)}
+                    />
+                ))}
+            </div>
+        );
+    }
+
+    if (filteredDocuments.length > 0) {
+        return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredDocuments.map(doc => (
+                    <DocumentCard
+                        key={doc.pathInBucket}
+                        document={doc}
+                        onPreview={handlePreview}
+                        onDownload={handleDownload}
+                        isLoadingPreview={loadingState.id === doc.pathInBucket && loadingState.type === 'preview'}
+                        isLoadingDownload={loadingState.id === doc.pathInBucket && loadingState.type === 'download'}
+                    />
+                ))}
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col items-center justify-center text-center bg-card border rounded-lg p-8 h-64">
+            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold">Nenhum Documento</h3>
+            <p className="text-muted-foreground mt-1">Não há documentos para exibir nesta categoria.</p>
+        </div>
+    );
+  };
+
 
   return (
     <>
@@ -361,41 +447,8 @@ export default function DocumentosPage() {
             )}
         </div>
         
-        {isComexLoading && (selectedSubCategory.includes('COMEX') || selectedSubCategory === 'Relatórios Gerais' || selectedSubCategory === 'Comex Board') ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
-            </div>
-        ) : selectedSubCategory === 'COMEX' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-            {comexSubcategories.map(sub => (
-              <SubCategoryCard
-                key={sub.name}
-                name={sub.name}
-                icon={sub.Icon || Folder}
-                onClick={() => setSelectedSubCategory(sub.name)}
-              />
-            ))}
-          </div>
-        ) : filteredDocuments.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredDocuments.map(doc => (
-              <DocumentCard
-                key={doc.pathInBucket}
-                document={doc}
-                onPreview={handlePreview}
-                onDownload={handleDownload}
-                isLoadingPreview={loadingState.id === doc.pathInBucket && loadingState.type === 'preview'}
-                isLoadingDownload={loadingState.id === doc.pathInBucket && loadingState.type === 'download'}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center bg-card border rounded-lg p-8 h-64">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold">Nenhum Documento</h3>
-            <p className="text-muted-foreground mt-1">Não há documentos para exibir nesta categoria.</p>
-          </div>
-        )}
+        {renderContent()}
+        
       </main>
 
     </div>
