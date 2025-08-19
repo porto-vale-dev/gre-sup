@@ -50,6 +50,17 @@ const DocumentCard = ({
   );
 };
 
+const SubCategoryCard = ({ name, icon: Icon, onClick }: { name: string, icon: React.ElementType, onClick: () => void }) => (
+    <Card 
+        onClick={onClick}
+        className="group cursor-pointer hover:shadow-lg hover:border-primary transition-all flex flex-col items-center justify-center text-center p-6"
+    >
+        <Icon className="h-12 w-12 text-primary/80 group-hover:text-primary transition-colors" />
+        <CardTitle className="mt-4 text-lg">{name}</CardTitle>
+    </Card>
+);
+
+
 export default function DocumentosPage() {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
@@ -110,7 +121,7 @@ export default function DocumentosPage() {
   const filteredDocuments = useMemo(() => {
     if (selectedSubCategory === 'Todos') return documentsData;
     if (selectedSubCategory === 'Financeiro') return documentsData.filter(doc => doc.category === 'Financeiro');
-    if (selectedSubCategory === 'COMEX') return documentsData.filter(doc => doc.category === 'COMEX');
+    if (selectedSubCategory === 'COMEX') return []; // Do not show documents directly when COMEX is clicked
     return documentsData.filter(doc => doc.subCategory === selectedSubCategory);
   }, [selectedSubCategory]);
 
@@ -252,7 +263,18 @@ export default function DocumentosPage() {
           {getTitle(selectedSubCategory)}
         </h1>
 
-        {filteredDocuments.length > 0 ? (
+        {selectedSubCategory === 'COMEX' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            {comexSubcategories.map(sub => (
+              <SubCategoryCard
+                key={sub.name}
+                name={sub.name}
+                icon={sub.Icon || Folder}
+                onClick={() => setSelectedSubCategory(sub.name)}
+              />
+            ))}
+          </div>
+        ) : filteredDocuments.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredDocuments.map(doc => (
               <DocumentCard
