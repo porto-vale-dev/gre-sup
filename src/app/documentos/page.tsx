@@ -1,8 +1,9 @@
+
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { documentsData } from '@/lib/documentsData';
+import { documentsData as staticDocumentsData } from '@/lib/documentsData';
 import type { Document } from '@/lib/documentsData';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
@@ -67,6 +68,58 @@ export default function DocumentosPage() {
   const [loadingState, setLoadingState] = useState<{ id: string | null; type: 'preview' | 'download' | null }>({ id: null, type: null });
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [documentsData, setDocumentsData] = useState<Document[]>(staticDocumentsData);
+  const [isComexLoading, setIsComexLoading] = useState(true);
+
+  const fetchComexDocuments = useCallback(async () => {
+    setIsComexLoading(true);
+    const comexFolders = ['comex', 'comex/comex_board'];
+    const newComexDocs: Document[] = [];
+    
+    try {
+        for(const folder of comexFolders) {
+            const { data: fileList, error } = await supabase.storage.from(BUCKET_NAME).list(folder, {
+              sortBy: { column: 'name', order: 'desc' },
+            });
+            if (error) throw error;
+            
+            const subCategory = folder === 'comex' ? 'Relatórios Gerais' : 'Comex Board';
+            const Icon = subCategory === 'Relatórios Gerais' ? FileText : FileSpreadsheet;
+
+            fileList.forEach(file => {
+                if(file.name.toLowerCase().endsWith('.pdf')) { // Process only PDFs
+                    newComexDocs.push({
+                      title: file.name.replace('.pdf', '').replace(/_/g, ' '),
+                      description: `Documento ${subCategory} - ${file.name}`,
+                      category: 'COMEX',
+                      subCategory: subCategory,
+                      Icon: Icon,
+                      pathInBucket: `${folder}/${file.name}`,
+                      fileName: file.name,
+                    });
+                }
+            });
+        }
+        
+        // Combine static finance docs with dynamic comex docs
+        const financialDocs = staticDocumentsData.filter(doc => doc.category === 'Financeiro');
+        setDocumentsData([...financialDocs, ...newComexDocs]);
+
+    } catch (error: any) {
+        toast({
+            title: "Erro ao buscar documentos COMEX",
+            description: `Não foi possível listar os arquivos do COMEX. Erro: ${error.message}`,
+            variant: "destructive",
+        });
+    } finally {
+        setIsComexLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchComexDocuments();
+  }, [fetchComexDocuments]);
+
 
   const handlePreview = async (doc: Document) => {
     setLoadingState({ id: doc.pathInBucket, type: 'preview' });
@@ -124,7 +177,7 @@ export default function DocumentosPage() {
     if (selectedSubCategory === 'Financeiro') return documentsData.filter(doc => doc.category === 'Financeiro');
     if (selectedSubCategory === 'COMEX') return []; // Do not show documents directly when COMEX is clicked
     return documentsData.filter(doc => doc.subCategory === selectedSubCategory);
-  }, [selectedSubCategory]);
+  }, [selectedSubCategory, documentsData]);
 
   const financialSubcategories = useMemo(() => {
     const subCategories = documentsData
@@ -133,7 +186,7 @@ export default function DocumentosPage() {
     return subCategories.filter((item, index, self) =>
       index === self.findIndex(t => t.name === item.name)
     );
-  }, []);
+  }, [documentsData]);
 
   const comexSubcategories = useMemo(() => {
     const subCategories = documentsData
@@ -142,7 +195,7 @@ export default function DocumentosPage() {
     return subCategories.filter((item, index, self) =>
       index === self.findIndex(t => t.name === item.name)
     );
-  }, []);
+  }, [documentsData]);
 
   const getTitle = (sub: string) => {
     if (sub === 'Todos') return 'Todos os Documentos';
@@ -163,13 +216,8 @@ export default function DocumentosPage() {
   }
   
   const handleUploadSuccess = () => {
-    // Here you would typically refetch the document list
-    // For now, just show a toast and close the dialog
     setIsUploadDialogOpen(false);
-    toast({
-        title: "Upload bem-sucedido!",
-        description: "O documento estará disponível em breve.",
-    });
+    fetchComexDocuments();
   };
 
   return (
@@ -282,8 +330,12 @@ export default function DocumentosPage() {
                 </Button>
             )}
         </div>
-
-        {selectedSubCategory === 'COMEX' ? (
+        
+        {isComexLoading && (selectedSubCategory.includes('COMEX') || selectedSubCategory === 'Relatórios Gerais' || selectedSubCategory === 'Comex Board') ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+            </div>
+        ) : selectedSubCategory === 'COMEX' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
             {comexSubcategories.map(sub => (
               <SubCategoryCard

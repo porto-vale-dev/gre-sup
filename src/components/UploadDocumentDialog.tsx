@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, FileUp, Paperclip } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface UploadDocumentDialogProps {
   isOpen: boolean;
@@ -22,6 +24,8 @@ interface UploadDocumentDialogProps {
   subCategory: 'Relatórios Gerais' | 'Comex Board' | string;
   onUploadSuccess: () => void;
 }
+
+const BUCKET_NAME = 'documentos';
 
 const months = [
     { value: '01', label: 'Janeiro' }, { value: '02', label: 'Fevereiro' },
@@ -46,33 +50,96 @@ export function UploadDocumentDialog({ isOpen, onClose, subCategory, onUploadSuc
   const [year, setYear] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
+      if(event.target.files[0].type !== 'application/pdf') {
+        toast({
+          title: "Formato inválido",
+          description: "Por favor, selecione um arquivo PDF.",
+          variant: "destructive",
+        });
+        event.target.value = '';
+        setFile(null);
+        return;
+      }
       setFile(event.target.files[0]);
     }
   };
 
+  const namePrefix = subCategory === 'Relatórios Gerais' ? 'Comex' : 'BOARD';
+  const pathPrefix = subCategory === 'Relatórios Gerais' ? 'comex/' : 'comex/comex_board/';
+  const finalFileName = file && month && year ? `${namePrefix}_${month}${year.slice(-2)}.pdf` : "Selecione mês, ano e arquivo";
+
   const handleSave = async () => {
-    // This is where the upload logic will go.
-    // For now, it's just a placeholder.
+    if (!file || !month || !year) {
+      toast({
+        title: "Campos Incompletos",
+        description: "Por favor, preencha todos os campos e selecione um arquivo.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
-    console.log({
-        subCategory,
-        month,
-        year,
-        file
-    });
-    // Simulate upload
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    onUploadSuccess();
+    
+    const filePathInBucket = `${pathPrefix}${finalFileName}`;
+
+    try {
+      // Check if file exists to prevent overwriting without confirmation
+      const { data: existingFileData, error: checkError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .getPublicUrl(filePathInBucket);
+
+      let proceedUpload = true;
+      // getPublicUrl returns a URL even if the file doesn't exist, but it also returns an error.
+      // So we check if the url is valid by trying to fetch its headers. A 4xx or 5xx status means it doesn't exist.
+      if (checkError && !checkError.message.includes('Object not found')) {
+         // An unexpected error occurred
+         throw checkError;
+      }
+
+      if(!checkError) {
+         proceedUpload = window.confirm(`O arquivo ${finalFileName} já existe. Deseja substituí-lo?`);
+      }
+
+      if (proceedUpload) {
+        const { error: uploadError } = await supabase.storage
+          .from(BUCKET_NAME)
+          .upload(filePathInBucket, file, {
+            cacheControl: '3600',
+            upsert: true, 
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        toast({
+          title: "Upload bem-sucedido!",
+          description: `O arquivo ${finalFileName} foi salvo.`,
+        });
+        onUploadSuccess();
+        // Reset state after successful upload
+        setMonth('');
+        setYear('');
+        setFile(null);
+      }
+    } catch (error: any) {
+        toast({
+          title: "Erro no Upload",
+          description: `Não foi possível salvar o arquivo. Detalhes: ${error.message}`,
+          variant: "destructive",
+        });
+        console.error("Upload error:", error);
+    } finally {
+        setIsLoading(false);
+    }
   };
   
   const years = getYears();
-  const namePrefix = subCategory === 'Relatórios Gerais' ? 'Comex' : 'BOARD';
-  const fileNamePreview = file && month && year ? `${namePrefix}_${month}${year.slice(-2)}.pdf` : "Selecione mês, ano e arquivo";
-
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[480px]">
@@ -129,7 +196,7 @@ export function UploadDocumentDialog({ isOpen, onClose, subCategory, onUploadSuc
                 />
                 <p className="text-xs text-muted-foreground flex items-center gap-2">
                     <Paperclip className="h-3 w-3" />
-                    Nome final: <strong>{fileNamePreview}</strong>
+                    Nome final: <strong>{finalFileName}</strong>
                 </p>
              </div>
            </div>
