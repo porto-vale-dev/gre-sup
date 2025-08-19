@@ -69,6 +69,15 @@ export const documentsData: Document[] = [
   },
   // COMEX - Relatórios Gerais
   {
+    title: 'Relatório COMEX - Fevereiro 2025',
+    description: 'Relatório geral de Comércio Exterior de Fevereiro de 2025.',
+    category: 'COMEX',
+    subCategory: 'Relatórios Gerais',
+    Icon: FileText,
+    fileName: 'Comex_0225.pdf',
+    pathInBucket: 'comex/Comex _0225.pdf',
+  },
+  {
     title: 'Relatório COMEX - Março 2025',
     description: 'Relatório geral de Comércio Exterior de Março de 2025.',
     category: 'COMEX',
