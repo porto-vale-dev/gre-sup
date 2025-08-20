@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight, PlusCircle, FileSpreadsheet } from 'lucide-react';
+import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight, PlusCircle, FileSpreadsheet, Book } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UploadDocumentDialog } from '@/components/UploadDocumentDialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -33,7 +33,7 @@ const formatDocumentTitle = (fileName: string, subCategory: string): string => {
     const year = match[2];
     const monthName = monthNames[month];
     const fullYear = `20${year}`;
-    const displayPrefix = subCategory === 'Comex Geral' ? 'Relatório Comex' : 'Board Comex';
+    const displayPrefix = subCategory === 'Comex Geral' ? 'Relatório Comex' : 'Relatório Comex Board';
     return `${displayPrefix} - ${monthName} ${fullYear}`;
   }
   
@@ -429,7 +429,7 @@ export default function DocumentosPage() {
                         )}
                     >
                       <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" /> Comex
+                        <Book className="h-4 w-4" /> Comex
                       </div>
                       <ChevronRight data-no-animation className={cn("h-4 w-4 shrink-0 transition-transform duration-200", accordionValue.includes('comex') && "rotate-90")} />
                   </AccordionTrigger>
@@ -483,3 +483,5 @@ export default function DocumentosPage() {
     </>
   );
 }
+
+      
