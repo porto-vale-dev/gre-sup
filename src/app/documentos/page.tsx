@@ -278,7 +278,7 @@ export default function DocumentosPage() {
                     </div>
                 </section>
                 <section>
-                    <h2 className="text-2xl font-semibold tracking-tight border-b pb-2 mb-6">COMEX</h2>
+                    <h2 className="text-2xl font-semibold tracking-tight border-b pb-2 mb-6">Comex</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                          {comexSubcategories.map(sub => (
                             <SubCategoryCard
