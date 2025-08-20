@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 interface UploadDocumentDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  subCategory: 'Relatórios Gerais' | 'Comex Board' | string;
+  subCategory: 'Comex Geral' | 'Comex Board' | string;
   onUploadSuccess: () => void;
 }
 
@@ -68,8 +68,8 @@ export function UploadDocumentDialog({ isOpen, onClose, subCategory, onUploadSuc
     }
   };
 
-  const namePrefix = subCategory === 'Relatórios Gerais' ? 'Comex' : 'BOARD';
-  const pathPrefix = subCategory === 'Relatórios Gerais' ? 'comex/' : 'comex/comex_board/';
+  const namePrefix = subCategory === 'Comex Geral' ? 'Comex' : 'BOARD';
+  const pathPrefix = subCategory === 'Comex Geral' ? 'comex/' : 'comex/comex_board/';
   const finalFileName = file && month && year ? `${namePrefix}_${month}${year.slice(-2)}.pdf` : "Selecione mês, ano e arquivo";
 
   const handleSave = async () => {

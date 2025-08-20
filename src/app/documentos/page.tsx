@@ -24,7 +24,7 @@ const monthNames: { [key: string]: string } = {
 };
 
 const formatDocumentTitle = (fileName: string, subCategory: string): string => {
-  const namePrefix = subCategory === 'Relatórios Gerais' ? 'Comex' : 'BOARD';
+  const namePrefix = subCategory === 'Comex Geral' ? 'Comex' : 'BOARD';
   const pattern = new RegExp(`^${namePrefix}_(\\d{2})(\\d{2})\\.pdf$`, 'i');
   const match = fileName.match(pattern);
   
@@ -33,7 +33,7 @@ const formatDocumentTitle = (fileName: string, subCategory: string): string => {
     const year = match[2];
     const monthName = monthNames[month];
     const fullYear = `20${year}`;
-    const displayPrefix = subCategory === 'Relatórios Gerais' ? 'Relatório COMEX' : 'Board COMEX';
+    const displayPrefix = subCategory === 'Comex Geral' ? 'Relatório COMEX' : 'Board COMEX';
     return `${displayPrefix} - ${monthName} ${fullYear}`;
   }
   
@@ -117,8 +117,8 @@ export default function DocumentosPage() {
             const { data: fileList, error } = await supabase.storage.from(BUCKET_NAME).list(folder);
             if (error) throw error;
             
-            const subCategory = folder === 'comex' ? 'Relatórios Gerais' : 'Comex Board';
-            const Icon = subCategory === 'Relatórios Gerais' ? FileSpreadsheet : FileText;
+            const subCategory = folder === 'comex' ? 'Comex Geral' : 'Comex Board';
+            const Icon = subCategory === 'Comex Geral' ? FileSpreadsheet : FileText;
 
             fileList.forEach(file => {
                 if(file.name.toLowerCase().endsWith('.pdf')) { // Process only PDFs
@@ -273,7 +273,7 @@ export default function DocumentosPage() {
   };
   
   const renderContent = () => {
-    if (isComexLoading && (selectedSubCategory.includes('COMEX') || selectedSubCategory === 'Relatórios Gerais' || selectedSubCategory === 'Comex Board' || selectedSubCategory === 'Todos')) {
+    if (isComexLoading && (selectedSubCategory.includes('COMEX') || selectedSubCategory === 'Comex Geral' || selectedSubCategory === 'Comex Board' || selectedSubCategory === 'Todos')) {
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
@@ -461,7 +461,7 @@ export default function DocumentosPage() {
             <h1 className="text-3xl font-bold font-headline text-primary">
               {getTitle(selectedSubCategory)}
             </h1>
-            {(selectedSubCategory === 'Relatórios Gerais' || selectedSubCategory === 'Comex Board') && (
+            {(selectedSubCategory === 'Comex Geral' || selectedSubCategory === 'Comex Board') && (
                 <Button onClick={() => setIsUploadDialogOpen(true)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Adicionar Arquivo
