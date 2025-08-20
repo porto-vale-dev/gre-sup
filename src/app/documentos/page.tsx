@@ -33,7 +33,7 @@ const formatDocumentTitle = (fileName: string, subCategory: string): string => {
     const year = match[2];
     const monthName = monthNames[month];
     const fullYear = `20${year}`;
-    const displayPrefix = subCategory === 'Comex Geral' ? 'Relatório COMEX' : 'Board COMEX';
+    const displayPrefix = subCategory === 'Comex Geral' ? 'Relatório Comex' : 'Board Comex';
     return `${displayPrefix} - ${monthName} ${fullYear}`;
   }
   
