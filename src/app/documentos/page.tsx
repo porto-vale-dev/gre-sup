@@ -407,7 +407,7 @@ export default function DocumentosPage() {
                         )}
                     >
                       <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" /> COMEX
+                        <FileText className="h-4 w-4" /> Comex
                       </div>
                       <ChevronRight data-no-animation className={cn("h-4 w-4 shrink-0 transition-transform duration-200", accordionValue.includes('comex') && "rotate-90")} />
                   </AccordionTrigger>
@@ -461,5 +461,7 @@ export default function DocumentosPage() {
     </>
   );
 }
+
+    
 
     
