@@ -40,6 +40,17 @@ const formatDocumentTitle = (fileName: string, subCategory: string): string => {
   return fileName.replace('.pdf', '').replace(/_/g, ' ');
 };
 
+const getSortableDateFromFileName = (fileName: string): Date | null => {
+  const pattern = /_(\d{2})(\d{2})\.pdf$/i;
+  const match = fileName.match(pattern);
+  if (match) {
+    const month = match[1];
+    const year = `20${match[2]}`;
+    // Create a date object for sorting (month is 0-indexed)
+    return new Date(parseInt(year), parseInt(month) - 1, 1);
+  }
+  return null;
+}
 
 const DocumentCard = ({
   document,
@@ -103,9 +114,7 @@ export default function DocumentosPage() {
     
     try {
         for(const folder of comexFolders) {
-            const { data: fileList, error } = await supabase.storage.from(BUCKET_NAME).list(folder, {
-              sortBy: { column: 'name', order: 'desc' },
-            });
+            const { data: fileList, error } = await supabase.storage.from(BUCKET_NAME).list(folder);
             if (error) throw error;
             
             const subCategory = folder === 'comex' ? 'Relatórios Gerais' : 'Comex Board';
@@ -131,6 +140,19 @@ export default function DocumentosPage() {
             });
         }
         
+        // Sort COMEX docs by date (year then month) descending
+        newComexDocs.sort((a, b) => {
+            const dateA = getSortableDateFromFileName(a.fileName);
+            const dateB = getSortableDateFromFileName(b.fileName);
+            if (dateA && dateB) {
+                return dateB.getTime() - dateA.getTime();
+            }
+            // Fallback for files that don't match the pattern
+            if (dateA) return -1;
+            if (dateB) return 1;
+            return 0;
+        });
+
         // Combine static finance docs with dynamic comex docs
         const financialDocs = staticDocumentsData.filter(doc => doc.category === 'Financeiro');
         setDocumentsData([...financialDocs, ...newComexDocs]);
@@ -461,7 +483,3 @@ export default function DocumentosPage() {
     </>
   );
 }
-
-    
-
-    
