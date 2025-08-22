@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, CheckCircle } from 'lucide-react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
@@ -94,7 +94,7 @@ const FilePreviewItem: React.FC<{
 };
 
 export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: TicketDetailsModalProps) {
-  const { downloadFile, createPreviewUrl, updateTicketSolution, getTicketById } = useTickets();
+  const { downloadFile, createPreviewUrl, updateTicketSolution, getTicketById, updateAndCompleteTicket } = useTickets();
   const { toast } = useToast();
   
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
@@ -177,14 +177,33 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
   const handleSaveSolution = async () => {
     setIsSaving(true);
     try {
-      await updateTicketSolution(ticket.id, solutionText, stagedFiles);
-      setStagedFiles([]); 
+      const success = await updateTicketSolution(ticket.id, solutionText, stagedFiles);
+      if (success) {
+        setStagedFiles([]);
+        onClose();
+      }
     } catch (error) {
       // Toast is already shown in context
     } finally {
       setIsSaving(false);
     }
   };
+
+  const handleSaveAndComplete = async () => {
+    setIsSaving(true);
+    try {
+        const success = await updateAndCompleteTicket(ticket.id, solutionText, stagedFiles);
+        if (success) {
+            setStagedFiles([]);
+            onClose();
+        }
+    } catch (error) {
+        // Toast handled in context
+    } finally {
+        setIsSaving(false);
+    }
+  };
+
 
   const handleWhatsAppClick = () => {
     if (!ticket || !ticket.phone) {
@@ -371,17 +390,25 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
           </div>
         </div>
         
-        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-row justify-end items-center gap-2 shrink-0">
-          <Button variant="secondary" onClick={handleWhatsAppClick}>
-            <WhatsAppIcon className="mr-2 h-4 w-4"/>
-            Continuar no WhatsApp
-          </Button>
-          <div className="flex-grow" />
-          <Button variant="outline" onClick={onClose}>Fechar</Button>
-          <Button onClick={handleSaveSolution} disabled={isSaving}>
-            <Save className="mr-2 h-4 w-4" />
-            {isSaving ? 'Salvando...' : 'Salvar Solução'}
-          </Button>
+        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-wrap sm:flex-nowrap justify-center sm:justify-end items-center gap-2 shrink-0">
+            <div className="w-full sm:w-auto">
+              <Button variant="secondary" onClick={handleWhatsAppClick} className="w-full">
+                <WhatsAppIcon className="mr-2 h-4 w-4"/>
+                Continuar no WhatsApp
+              </Button>
+            </div>
+            <div className="flex-grow hidden sm:block" />
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" onClick={onClose} className="w-full">Fechar</Button>
+              <Button onClick={handleSaveSolution} disabled={isSaving} className="w-full">
+                <Save className="mr-2 h-4 w-4" />
+                {isSaving ? 'Salvando...' : 'Salvar'}
+              </Button>
+               <Button onClick={handleSaveAndComplete} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                {isSaving ? 'Concluindo...' : 'Salvar e Concluir'}
+              </Button>
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

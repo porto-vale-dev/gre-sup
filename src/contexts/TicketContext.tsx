@@ -31,7 +31,8 @@ interface TicketContextType {
   }) => Promise<boolean>;
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
   updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
-  updateTicketSolution: (ticketId: string, solution: string, newFiles: File[]) => Promise<void>;
+  updateTicketSolution: (ticketId: string, solution: string, newFiles: File[]) => Promise<boolean>;
+  updateAndCompleteTicket: (ticketId: string, solution: string, newFiles: File[]) => Promise<boolean>;
   getTicketById: (ticketId: string) => Ticket | undefined;
   fetchTickets: () => void;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
@@ -210,7 +211,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
   };
   
-  const updateTicketSolution = async (ticketId: string, solution: string, newFiles: File[]) => {
+  const updateTicketSolution = async (ticketId: string, solution: string, newFiles: File[]): Promise<boolean> => {
     try {
       const currentTicket = getTicketById(ticketId);
       if (!currentTicket) throw new Error("Ticket não encontrado.");
@@ -251,13 +252,42 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
       toast({ title: "Solução Salva", description: "As informações da solução foram salvas com sucesso." });
       await fetchTickets();
+      return true;
 
     } catch (error: any) {
       toast({ title: "Erro ao Salvar Solução", description: error.message, variant: "destructive" });
       console.error("Error updating ticket solution:", error);
-      throw error;
+      return false;
     }
   };
+
+  const updateAndCompleteTicket = async (ticketId: string, solution: string, newFiles: File[]): Promise<boolean> => {
+    try {
+        const solutionSaved = await updateTicketSolution(ticketId, solution, newFiles);
+        if (!solutionSaved) {
+            // Error toast is already shown by updateTicketSolution
+            return false;
+        }
+
+        const { error: statusError } = await supabase
+            .from('tickets')
+            .update({ status: 'Concluído' })
+            .eq('id', ticketId);
+
+        if (statusError) {
+            throw new Error(`Erro ao atualizar o status: ${statusError.message}`);
+        }
+
+        toast({ title: "Ticket Concluído", description: "O ticket foi salvo e marcado como concluído." });
+        await fetchTickets();
+        return true;
+    } catch (error: any) {
+        toast({ title: "Erro ao Concluir Ticket", description: error.message, variant: "destructive" });
+        console.error("Error completing ticket:", error);
+        return false;
+    }
+  };
+
 
   const getTicketById = (ticketId: string): Ticket | undefined => {
     return tickets.find(ticket => ticket.id === ticketId);
@@ -358,7 +388,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         addTicket, 
         updateTicketStatus, 
         updateTicketResponsible,
-        updateTicketSolution, 
+        updateTicketSolution,
+        updateAndCompleteTicket,
         getTicketById, 
         fetchTickets, 
         downloadFile,
