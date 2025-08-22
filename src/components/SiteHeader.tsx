@@ -33,6 +33,7 @@ export function SiteHeader() {
                 width={160}
                 height={56}
                 priority
+                style={{ height: 'auto' }}
               />
           </Link>
         </div>
@@ -68,49 +69,43 @@ export function SiteHeader() {
               width={149}
               height={45}
               priority
+              style={{ height: 'auto' }}
             />
           </Link>
 
-          {!isLoading && (
+          {!isLoading && isAuthenticated && (
             <nav className="flex items-center gap-1 sm:gap-2">
-               {isAuthenticated && (
-                  <>
-                  {(isTicketDashboardArea || isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
-                      <>
-                      <Link href="/hub" passHref>
-                          <Button variant="outline" size="sm" aria-label="Portal Principal">
-                          <Home className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Portal</span>
-                          </Button>
-                      </Link>
-                      </>
-                  )}
-                  {(isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
-                    <Link href="/suporte-gre/painel" passHref>
-                      <Button variant="ghost" size="sm" aria-label="Painel Principal">
-                        <TicketIcon className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Painel</span>
-                      </Button>
-                    </Link>
-                  )}
-                  {isTicketDashboardArea && canViewManagement && !isArchivedPage && (
-                    <Link href="/suporte-gre/gestao" passHref>
-                      <Button variant="ghost" size="sm" aria-label="Gestão de Suporte">
-                        <LayoutDashboard className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Gestão</span>
-                      </Button>
-                    </Link>
-                  )}
-                   {isTicketDashboardArea && canViewSettings && !isArchivedPage && (
-                    <Link href="/suporte-gre/configuracoes" passHref>
-                      <Button variant="ghost" size="sm" aria-label="Configurações">
-                        <Settings className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Configurações</span>
-                      </Button>
-                    </Link>
-                  )}
-                </>
-               )}
+              {(isTicketDashboardArea || isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
+                <Link href="/hub" passHref>
+                    <Button variant="ghost" size="icon" aria-label="Portal Principal">
+                      <Home className="h-5 w-5" />
+                    </Button>
+                </Link>
+              )}
+              {(isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
+                <Link href="/suporte-gre/painel" passHref>
+                  <Button variant="ghost" size="sm" aria-label="Painel Principal">
+                    <TicketIcon className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Painel</span>
+                  </Button>
+                </Link>
+              )}
+              {isTicketDashboardArea && canViewManagement && !isArchivedPage && (
+                <Link href="/suporte-gre/gestao" passHref>
+                  <Button variant="ghost" size="sm" aria-label="Gestão de Suporte">
+                    <LayoutDashboard className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Gestão</span>
+                  </Button>
+                </Link>
+              )}
+              {isTicketDashboardArea && canViewSettings && !isArchivedPage && (
+                <Link href="/suporte-gre/configuracoes" passHref>
+                  <Button variant="ghost" size="sm" aria-label="Configurações">
+                    <Settings className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Configurações</span>
+                  </Button>
+                </Link>
+              )}
             </nav>
           )}
         </div>
@@ -129,6 +124,7 @@ export function SiteHeader() {
               width={130}
               height={46}
               priority
+              style={{ height: 'auto' }}
             />
         </Link>
 
