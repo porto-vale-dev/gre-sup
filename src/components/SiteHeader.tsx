@@ -33,7 +33,7 @@ export function SiteHeader() {
                 width={160}
                 height={56}
                 priority
-                style={{ height: 'auto' }}
+                style={{ height: 'auto', width: 'auto' }}
               />
           </Link>
         </div>
@@ -75,13 +75,6 @@ export function SiteHeader() {
 
           {!isLoading && isAuthenticated && (
             <nav className="flex items-center gap-1 sm:gap-2">
-              {(isTicketDashboardArea || isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
-                <Link href="/hub" passHref>
-                    <Button variant="ghost" size="icon" aria-label="Portal Principal">
-                      <Home className="h-5 w-5" />
-                    </Button>
-                </Link>
-              )}
               {(isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
                 <Link href="/suporte-gre/painel" passHref>
                   <Button variant="ghost" size="sm" aria-label="Painel Principal">
@@ -106,6 +99,13 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               )}
+               {(isTicketDashboardArea || isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
+                <Link href="/hub" passHref>
+                    <Button variant="ghost" size="icon" aria-label="Portal Principal">
+                      <Home className="h-5 w-5" />
+                    </Button>
+                </Link>
+              )}
             </nav>
           )}
         </div>
@@ -124,7 +124,7 @@ export function SiteHeader() {
               width={130}
               height={46}
               priority
-              style={{ height: 'auto' }}
+              style={{ height: 'auto', width: 'auto' }}
             />
         </Link>
 
