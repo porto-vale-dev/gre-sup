@@ -34,7 +34,7 @@ export async function createUserAction(
   // 2. Create the user directly and send a confirmation email.
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email: email,
-    password: password, // This was the missing field
+    password: password,
     email_confirm: false, // This sends a confirmation email instead of auto-confirming.
     user_metadata: {
       username: username,
