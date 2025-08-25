@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -30,11 +31,11 @@ export async function createUserAction(
   const email = `${email_prefix}@portovaleconsorcios.com.br`;
   const username = email_prefix;
 
-  // 2. Invite the user using the admin client
+  // 2. Create the user using the admin client, sending a confirmation email
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    email_confirm: true, // Auto-confirms email, useful if you handle verification differently. Set to false to send a confirmation link.
+    email_confirm: false, // Set to false to send a confirmation link
     user_metadata: {
         username: username,
         cargo: 'colaborador' // Always set cargo to 'colaborador'
@@ -51,5 +52,5 @@ export async function createUserAction(
   }
 
   // 3. Return success message
-  return { success: true, message: `Usuário ${username} criado com sucesso!` };
+  return { success: true, message: `Usuário ${username} criado. Um e-mail de confirmação foi enviado para ${email}.` };
 }
