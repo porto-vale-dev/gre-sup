@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, KeyRound, Loader2, Mail, Lock } from 'lucide-react';
