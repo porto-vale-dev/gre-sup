@@ -1,53 +1,50 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { createUserSchema, type CreateUserFormData } from '@/lib/schemas';
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, KeyRound, Loader2 } from 'lucide-react';
+import { UserPlus, KeyRound, Loader2, Mail, Lock } from 'lucide-react';
 import Link from 'next/link';
+import { createUserAction } from '@/actions/createUser';
+
+// A submit button that shows a loading state
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" className="w-full" disabled={pending}>
+       {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {pending ? "Criando..." : "Criar Conta"}
+    </Button>
+  );
+}
 
 export default function CreateUserPage() {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Initial state for the form action
+  const initialState = {
+    success: false,
+    message: '',
+  };
 
-  const form = useForm<CreateUserFormData>({
-    resolver: zodResolver(createUserSchema),
-    defaultValues: {
-      email_prefix: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
+  // useFormState hook to manage form submission and state
+  const [state, formAction] = useFormState(createUserAction, initialState);
 
-  async function onSubmit(data: CreateUserFormData) {
-    setIsSubmitting(true);
-    
-    // Combine prefix and domain to form the full email
-    const fullEmail = `${data.email_prefix}@portovaleconsorcios.com.br`;
-
-    console.log({
-        email: fullEmail,
-        password: data.password,
-    });
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    toast({
-      title: "Conta Criada (Simulação)",
-      description: `Usuário com e-mail ${fullEmail} seria criado.`,
-    });
-    
-    setIsSubmitting(false);
-    form.reset();
-  }
+  // Show a toast message when the action completes
+  useEffect(() => {
+    if (state.message) {
+      toast({
+        title: state.success ? "Sucesso!" : "Erro na Criação",
+        description: state.message,
+        variant: state.success ? "default" : "destructive",
+      });
+    }
+  }, [state, toast]);
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-10rem-theme(spacing.20))]">
@@ -59,58 +56,57 @@ export default function CreateUserPage() {
           <CardDescription>Preencha os dados para criar uma nova conta.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="email_prefix"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-mail</FormLabel>
-                    <div className="flex items-center">
-                        <FormControl>
-                            <Input placeholder="usuario" {...field} className="rounded-r-none focus:z-10"/>
-                        </FormControl>
-                        <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-l-0 border-input rounded-r-md h-10">
-                            @portovaleconsorcios.com.br
-                        </span>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
+          {/* The form now uses the server action */}
+          <form action={formAction} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email_prefix">E-mail</Label>
+              <div className="flex items-center">
+                  <span className="inline-flex items-center pl-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md h-10">
+                    <Mail className="h-4 w-4" />
+                  </span>
+                  <Input 
+                    id="email_prefix"
+                    name="email_prefix"
+                    placeholder="usuario" 
+                    className="rounded-l-none rounded-r-none focus:z-10"
+                    required
+                  />
+                  <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-l-0 border-input rounded-r-md h-10">
+                      @portovaleconsorcios.com.br
+                  </span>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password">
+                <span className="flex items-center gap-1.5"><KeyRound className="h-4 w-4 text-muted-foreground" /> Senha</span>
+              </Label>
+              <Input 
+                id="password"
                 name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1.5"><KeyRound className="h-4 w-4 text-muted-foreground" /> Senha</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isSubmitting} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                type="password" 
+                placeholder="••••••••" 
+                required
+                minLength={8}
               />
-              <FormField
-                control={form.control}
+            </div>
+            
+             <div className="space-y-2">
+              <Label htmlFor="confirmPassword">
+                <span className="flex items-center gap-1.5"><Lock className="h-4 w-4 text-muted-foreground" /> Confirmar Senha</span>
+              </Label>
+              <Input 
+                id="confirmPassword"
                 name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1.5"><KeyRound className="h-4 w-4 text-muted-foreground" /> Confirmar Senha</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isSubmitting} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                type="password"
+                placeholder="••••••••"
+                required
+                minLength={8}
               />
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isSubmitting ? "Criando..." : "Criar Conta"}
-              </Button>
-            </form>
-          </Form>
+            </div>
+
+            <SubmitButton />
+          </form>
         </CardContent>
         <CardFooter className="justify-center">
             <Button variant="outline" asChild className="w-full">

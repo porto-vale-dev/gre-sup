@@ -1,4 +1,3 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Augment the window type to avoid TypeScript errors
