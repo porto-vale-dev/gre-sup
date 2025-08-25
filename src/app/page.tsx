@@ -88,9 +88,12 @@ export default function PortalLoginPage() {
                   </FormItem>
                 )}
               />
-               <div className="text-sm">
+               <div className="flex items-center justify-between text-sm">
                 <Link href="/recuperar-senha" className="font-medium text-primary hover:underline">
                   Esqueceu sua senha?
+                </Link>
+                 <Link href="/create-user" className="font-medium text-primary hover:underline">
+                  Criar usuário
                 </Link>
               </div>
               <Button type="submit" className="w-full" disabled={isLoggingIn}>
