@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,11 @@ export default function PortalLoginPage() {
                   </FormItem>
                 )}
               />
+               <div className="text-sm">
+                <Link href="/recuperar-senha" className="font-medium text-primary hover:underline">
+                  Esqueceu sua senha?
+                </Link>
+              </div>
               <Button type="submit" className="w-full" disabled={isLoggingIn}>
                  {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoggingIn ? "Entrando..." : "Entrar"}
