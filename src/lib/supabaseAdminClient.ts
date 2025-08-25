@@ -16,7 +16,7 @@ const serviceRoleKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmF
 if (!supabaseUrl) {
   throw new Error('Supabase URL is missing for admin client. Check your environment variables for NEXT_PUBLIC_SUPABASE_URL.');
 }
-if (!serviceRoleKey || serviceRoleKey === "COLE_SUA_CHAVE_AQUI") {
+if (!serviceRoleKey || serviceRoleKey === "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6YnNxbHV0ZGp3YWJnanVoc2luIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTc2MTUzMiwiZXhwIjoyMDY1MzM3NTMyfQ.9bFsJAukdBb4LBu-1EwqMGZfDOfPc1svjANVT5Tbmhs") {
   throw new Error('A chave de serviço (Supabase Service Role Key) não foi definida. Cole a chave no arquivo src/lib/supabaseAdminClient.ts ou configure a variável de ambiente SUPABASE_SERVICE_ROLE_KEY.');
 }
 
