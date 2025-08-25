@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormState, useFormStatus } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useToast } from "@/hooks/use-toast";
 import { Key, Lock, Loader2, Save, ShieldAlert } from 'lucide-react';
 import { updatePasswordAction } from '@/actions/authActions';
+import { supabase } from '@/lib/supabaseClient';
 
 const updatePasswordSchema = z.object({
   password: z.string().min(8, { message: "A nova senha deve ter no mínimo 8 caracteres." }),
@@ -166,6 +167,3 @@ export default function AtualizarSenhaPage() {
         </div>
     );
 }
-
-// Importar o cliente Supabase é necessário para o listener de auth
-import { supabase } from '@/lib/supabaseClient';
