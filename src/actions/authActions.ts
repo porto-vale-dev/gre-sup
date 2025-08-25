@@ -24,7 +24,7 @@ export async function requestPasswordResetAction(
   }
 
   const email = `${validatedFields.data}@portovaleconsorcios.com.br`;
-  const redirectUrl = new URL('/atualizar-senha', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:9002').toString();
+  const redirectUrl = 'https://portal.portovaleconsorcio.com.br/atualizar-senha';
   
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: redirectUrl,
@@ -85,4 +85,3 @@ export async function updatePasswordAction(
 
   return { success: true, message: 'Senha atualizada com sucesso! Você já pode fazer login com sua nova senha.' };
 }
-
