@@ -37,11 +37,16 @@ function UpdatePasswordForm() {
   useEffect(() => {
     // A validação do token é implícita pelo fato de o Supabase trocar o código por uma sessão.
     // Se não houver hash com 'access_token', o link é inválido.
-    // A verificação final é feita no server-side.
+    // A verificação final é feita no server-side na action.
     if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
         setIsTokenValid(true);
     } else {
-        setIsTokenValid(false);
+        // Se não houver token, aguarda um pouco para dar tempo do Supabase processar o redirect
+        setTimeout(() => {
+             if (!window.location.hash.includes('access_token')) {
+                setIsTokenValid(false);
+             }
+        }, 1000);
     }
   }, []);
   
@@ -66,7 +71,10 @@ function UpdatePasswordForm() {
   };
   
   if (isTokenValid === null) {
-    return <Loader2 className="h-16 w-16 animate-spin text-primary" />;
+    return <div className="flex flex-col items-center justify-center p-8 text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Validando seu link de recuperação...</p>
+    </div>;
   }
 
   if (isTokenValid === false) {
