@@ -53,14 +53,17 @@ export default function CreateUserPage() {
 
   // Show a toast message when the action completes and reset form on success
   useEffect(() => {
+    // Only show toast if there's a message from the server action
     if (state.message) {
       toast({
         title: state.success ? "Sucesso!" : "Erro na Criação",
         description: state.message,
         variant: state.success ? "default" : "destructive",
       });
+      
+      // If the action was successful, reset the form fields
       if (state.success) {
-        reset(); // Reset form fields on success
+        reset();
       }
     }
   }, [state, toast, reset]);
