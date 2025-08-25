@@ -23,7 +23,7 @@ export async function createUserAction(
   if (!validatedFields.success) {
     return {
       success: false,
-      message: "Dados inválidos: " + validatedFields.error.flatten().fieldErrors,
+      message: "Dados inválidos: " + JSON.stringify(validatedFields.error.flatten().fieldErrors),
     };
   }
   
@@ -32,10 +32,11 @@ export async function createUserAction(
   const username = email_prefix;
 
   // 2. Create the user but require email confirmation.
+  // This aligns with Supabase settings where "Auto-confirm" is OFF.
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email: email,
     password: password,
-    email_confirm: false, // This sends a confirmation email to the user.
+    email_confirm: false, // This tells Supabase to send a confirmation email.
     user_metadata: {
       username: username,
       cargo: 'colaborador' // Always set cargo to 'colaborador'
