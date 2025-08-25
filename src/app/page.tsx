@@ -88,7 +88,10 @@ export default function PortalLoginPage() {
                   </FormItem>
                 )}
               />
-               <div className="flex items-center justify-end text-sm">
+               <div className="flex items-center justify-between text-sm">
+                 <Link href="/create-user" className="font-medium text-primary hover:underline">
+                    Criar usuário
+                </Link>
                 <Link href="/recuperar-senha" className="font-medium text-primary hover:underline">
                   Esqueceu sua senha?
                 </Link>
@@ -100,11 +103,6 @@ export default function PortalLoginPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="justify-center">
-            <Button variant="outline" asChild className="w-full">
-                <Link href="/create-user">Criar Novo Usuário</Link>
-            </Button>
-        </CardFooter>
       </Card>
     </div>
   );
