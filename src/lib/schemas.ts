@@ -50,3 +50,16 @@ export const loginSchema = z.object({
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
+
+
+export const createUserSchema = z.object({
+  email_prefix: z.string().min(1, { message: "O início do e-mail é obrigatório." }).regex(/^[a-zA-Z0-9._-]+$/, "Use apenas letras, números, pontos, hífens ou underscores."),
+  password: z.string().min(8, { message: "A senha deve ter no mínimo 8 caracteres." }),
+  confirmPassword: z.string()
+}).refine(data => data.password === data.confirmPassword, {
+  message: "As senhas não correspondem.",
+  path: ["confirmPassword"], // path of error
+});
+
+
+export type CreateUserFormData = z.infer<typeof createUserSchema>;
