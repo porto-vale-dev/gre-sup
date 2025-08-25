@@ -24,7 +24,7 @@ export async function requestPasswordResetAction(
   }
 
   const email = `${validatedFields.data}@portovaleconsorcios.com.br`;
-  const redirectUrl = 'https://portal.portovaleconsorcio.com.br/atualizar-senha';
+  const redirectUrl = 'https://portalportovale-dev-461942238278.southamerica-east1.run.app/atualizar-senha';
   
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: redirectUrl,
