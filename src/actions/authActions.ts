@@ -85,3 +85,4 @@ export async function updatePasswordAction(
 
   return { success: true, message: 'Senha atualizada com sucesso! Você já pode fazer login com sua nova senha.' };
 }
+
