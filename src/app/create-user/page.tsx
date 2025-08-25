@@ -113,7 +113,7 @@ export default function CreateUserPage() {
           </Form>
         </CardContent>
         <CardFooter className="justify-center">
-            <Button variant="link" asChild>
+            <Button variant="outline" asChild>
                 <Link href="/">Voltar para o Login</Link>
             </Button>
         </CardFooter>
