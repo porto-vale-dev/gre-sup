@@ -10,7 +10,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 //  Use variáveis de ambiente (.env.local) sempre que possível.
 //  Substitua "COLE_SUA_CHAVE_AQUI" pela sua service_role_key do Supabase.
 // =================================================================================
-const serviceRoleKey = "COLE_SUA_CHAVE_AQUI" // process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serviceRoleKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6YnNxbHV0ZGp3YWJnanVoc2luIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTc2MTUzMiwiZXhwIjoyMDY1MzM3NTMyfQ.9bFsJAukdBb4LBu-1EwqMGZfDOfPc1svjANVT5Tbmhs" // process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 
 if (!supabaseUrl) {
