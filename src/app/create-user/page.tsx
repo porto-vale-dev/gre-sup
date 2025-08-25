@@ -62,7 +62,7 @@ export default function CreateUserPage() {
             <div className="space-y-2">
               <Label htmlFor="email_prefix">E-mail</Label>
               <div className="flex items-center">
-                  <span className="inline-flex items-center pl-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md h-10">
+                  <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md h-10">
                     <Mail className="h-4 w-4" />
                   </span>
                   <Input 
