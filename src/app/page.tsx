@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { loginSchema, type LoginFormData } from '@/lib/schemas';
 import { useToast } from "@/hooks/use-toast";
@@ -88,10 +88,7 @@ export default function PortalLoginPage() {
                   </FormItem>
                 )}
               />
-               <div className="flex items-center justify-between text-sm">
-                 <Link href="/create-user" className="font-medium text-primary hover:underline">
-                  Criar usuário
-                </Link>
+               <div className="flex items-center justify-end text-sm">
                 <Link href="/recuperar-senha" className="font-medium text-primary hover:underline">
                   Esqueceu sua senha?
                 </Link>
@@ -103,6 +100,11 @@ export default function PortalLoginPage() {
             </form>
           </Form>
         </CardContent>
+        <CardFooter className="justify-center">
+            <Button variant="outline" asChild className="w-full">
+                <Link href="/create-user">Criar Novo Usuário</Link>
+            </Button>
+        </CardFooter>
       </Card>
     </div>
   );

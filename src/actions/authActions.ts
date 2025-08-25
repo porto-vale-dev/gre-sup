@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -71,13 +72,16 @@ export async function updatePasswordAction(
   const { password } = validatedFields.data;
 
   // updateUser requer que o usuário esteja logado (o que acontece automaticamente
-  // ao clicar no link de recuperação de senha).
-  const { error } = await supabase.auth.updateUser({ password });
+  // ao clicar no link de recuperação de senha, criando uma sessão temporária).
+  const { error: updateError } = await supabase.auth.updateUser({ password });
 
-  if (error) {
-     console.error('Password Update Error:', error.message);
-    return { success: false, message: 'Não foi possível atualizar a senha. O link pode ter expirado. Tente novamente.' };
+  if (updateError) {
+     console.error('Password Update Error:', updateError.message);
+    return { success: false, message: 'Não foi possível atualizar a senha. O link pode ter expirado ou ser inválido. Tente novamente.' };
   }
+
+  // Importante: Deslogar o usuário após a atualização da senha para forçar um novo login.
+  await supabase.auth.signOut();
 
   return { success: true, message: 'Senha atualizada com sucesso! Você já pode fazer login com sua nova senha.' };
 }

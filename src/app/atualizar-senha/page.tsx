@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
@@ -12,7 +13,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Key, Lock, Loader2, Save, ShieldAlert } from 'lucide-react';
 import { updatePasswordAction } from '@/actions/authActions';
-import { supabase } from '@/lib/supabaseClient';
 
 const updatePasswordSchema = z.object({
   password: z.string().min(8, { message: "A nova senha deve ter no mínimo 8 caracteres." }),
@@ -26,7 +26,7 @@ type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 function UpdatePasswordForm() {
   const { toast } = useToast();
   const router = useRouter();
-  const [hasError, setHasError] = useState(false);
+  const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<UpdatePasswordFormData>({
@@ -35,17 +35,14 @@ function UpdatePasswordForm() {
   });
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
-        if (event === 'PASSWORD_RECOVERY') {
-            setHasError(false);
-        }
-    });
-
-    if (typeof window !== 'undefined' && !window.location.hash.includes('access_token')) {
-        setHasError(true);
+    // A validação do token é implícita pelo fato de o Supabase trocar o código por uma sessão.
+    // Se não houver hash com 'access_token', o link é inválido.
+    // A verificação final é feita no server-side.
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+        setIsTokenValid(true);
+    } else {
+        setIsTokenValid(false);
     }
-    
-    return () => authListener.subscription.unsubscribe();
   }, []);
   
   const onSubmit = async (data: UpdatePasswordFormData) => {
@@ -68,7 +65,11 @@ function UpdatePasswordForm() {
     setIsSubmitting(false);
   };
   
-  if (hasError) {
+  if (isTokenValid === null) {
+    return <Loader2 className="h-16 w-16 animate-spin text-primary" />;
+  }
+
+  if (isTokenValid === false) {
       return (
          <Card className="w-full max-w-md shadow-xl text-center">
             <CardHeader>
