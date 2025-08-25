@@ -36,7 +36,6 @@ export async function createUserAction(
   const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
     email: email,
     password: password,
-    email_confirm: false, // Important: This creates the user but leaves them unconfirmed.
     user_metadata: {
       username: username,
       cargo: 'colaborador' // Always set cargo to 'colaborador'
