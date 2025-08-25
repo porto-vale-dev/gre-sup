@@ -13,8 +13,8 @@ export async function requestPasswordResetAction(
   prevState: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
-  const emailSchema = z.string().email();
-  const validatedFields = emailSchema.safeParse(formData.get('email'));
+  const emailPrefixSchema = z.string().min(1, { message: "O prefixo do e-mail é obrigatório."});
+  const validatedFields = emailPrefixSchema.safeParse(formData.get('email_prefix'));
 
   if (!validatedFields.success) {
     return {
@@ -23,7 +23,7 @@ export async function requestPasswordResetAction(
     };
   }
 
-  const email = validatedFields.data;
+  const email = `${validatedFields.data}@portovaleconsorcios.com.br`;
   const redirectUrl = new URL('/atualizar-senha', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:9002').toString();
   
   const { error } = await supabase.auth.resetPasswordForEmail(email, {

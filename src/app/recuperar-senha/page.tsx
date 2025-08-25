@@ -15,7 +15,7 @@ import { Mail, Key, Loader2, ArrowLeft } from 'lucide-react';
 import { requestPasswordResetAction } from '@/actions/authActions';
 
 const requestSchema = z.object({
-  email: z.string().email({ message: "Por favor, insira um e-mail válido." }),
+  email_prefix: z.string().min(1, { message: "Por favor, insira o início do seu e-mail." }),
 });
 type RequestFormData = z.infer<typeof requestSchema>;
 
@@ -35,7 +35,7 @@ export default function RecuperarSenhaPage() {
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
-    defaultValues: { email: '' },
+    defaultValues: { email_prefix: '' },
   });
 
   const [state, formAction] = useFormState(requestPasswordResetAction, {
@@ -81,14 +81,19 @@ export default function RecuperarSenhaPage() {
             className="space-y-6"
           >
             <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-1.5"><Mail className="h-4 w-4 text-muted-foreground"/> E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu.email@portovaleconsorcios.com.br"
-                {...form.register("email")}
-              />
-              {form.formState.errors.email && <p className="text-sm font-medium text-destructive">{form.formState.errors.email.message}</p>}
+              <Label htmlFor="email_prefix" className="flex items-center gap-1.5"><Mail className="h-4 w-4 text-muted-foreground"/> E-mail</Label>
+              <div className="flex items-center">
+                  <Input 
+                    id="email_prefix"
+                    {...form.register("email_prefix")}
+                    placeholder="usuario" 
+                    className="rounded-r-none focus:z-10"
+                  />
+                  <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-l-0 border-input rounded-r-md h-10">
+                      @portovaleconsorcios.com.br
+                  </span>
+              </div>
+              {form.formState.errors.email_prefix && <p className="text-sm font-medium text-destructive">{form.formState.errors.email_prefix.message}</p>}
             </div>
             <SubmitButton />
           </form>
