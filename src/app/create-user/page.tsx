@@ -2,7 +2,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { useFormState, useFormStatus } from 'react-dom';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UserPlus, KeyRound, Loader2, Mail, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { createUserAction } from '@/actions/createUser';
+import { createUserSchema, type CreateUserFormData } from '@/lib/schemas';
 
 // A submit button that shows a loading state
 function SubmitButton() {
@@ -27,6 +30,18 @@ function SubmitButton() {
 export default function CreateUserPage() {
   const { toast } = useToast();
   
+  // We still use useForm for client-side validation and form management
+  const form = useForm<CreateUserFormData>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      email_prefix: '',
+      password: '',
+      confirmPassword: '',
+    }
+  });
+
+  const { control, handleSubmit, reset } = form;
+  
   // Initial state for the form action
   const initialState = {
     success: false,
@@ -36,7 +51,7 @@ export default function CreateUserPage() {
   // useFormState hook to manage form submission and state
   const [state, formAction] = useFormState(createUserAction, initialState);
 
-  // Show a toast message when the action completes
+  // Show a toast message when the action completes and reset form on success
   useEffect(() => {
     if (state.message) {
       toast({
@@ -44,8 +59,11 @@ export default function CreateUserPage() {
         description: state.message,
         variant: state.success ? "default" : "destructive",
       });
+      if (state.success) {
+        reset(); // Reset form fields on success
+      }
     }
-  }, [state, toast]);
+  }, [state, toast, reset]);
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-10rem-theme(spacing.20))]">
@@ -57,7 +75,6 @@ export default function CreateUserPage() {
           <CardDescription>Preencha os dados para criar uma nova conta.</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* The form now uses the server action */}
           <form action={formAction} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email_prefix">E-mail</Label>

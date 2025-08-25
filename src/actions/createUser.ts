@@ -31,26 +31,27 @@ export async function createUserAction(
   const email = `${email_prefix}@portovaleconsorcios.com.br`;
   const username = email_prefix;
 
-  // 2. Create the user using the admin client, sending a confirmation email
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+  // 2. Invite the user by email, which sends a confirmation link
+  const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(
     email,
-    password,
-    email_confirm: false, // Set to false to send a confirmation link
-    user_metadata: {
+    { 
+      password: password,
+      data: {
         username: username,
         cargo: 'colaborador' // Always set cargo to 'colaborador'
+      }
     }
-  });
+  );
 
   if (error) {
-    console.error('Error creating user:', error.message);
+    console.error('Error inviting user:', error.message);
     // Provide a more user-friendly error message
-    if (error.message.includes('unique constraint')) {
+    if (error.message.includes('unique constraint') || error.message.includes('User already registered')) {
         return { success: false, message: 'Este usuário já existe.' };
     }
-    return { success: false, message: 'Não foi possível criar o usuário. Tente novamente.' };
+    return { success: false, message: 'Não foi possível criar o convite. Tente novamente.' };
   }
 
   // 3. Return success message
-  return { success: true, message: `Usuário ${username} criado. Um e-mail de confirmação foi enviado para ${email}.` };
+  return { success: true, message: `Convite enviado para ${email}. O usuário precisará confirmar o e-mail para ativar a conta.` };
 }
