@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useFormState, useFormStatus } from 'react-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,8 +29,8 @@ function SubmitButton() {
 
 export default function CreateUserPage() {
   const { toast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
   
-  // We still use useForm for client-side validation and form management
   const form = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
@@ -40,20 +40,16 @@ export default function CreateUserPage() {
     }
   });
 
-  const { control, handleSubmit, reset } = form;
+  const { reset, handleSubmit } = form;
   
-  // Initial state for the form action
   const initialState = {
     success: false,
     message: '',
   };
 
-  // useFormState hook to manage form submission and state
   const [state, formAction] = useFormState(createUserAction, initialState);
 
-  // Show a toast message when the action completes and reset form on success
   useEffect(() => {
-    // Only show toast if there's a message from the server action
     if (state.message) {
       toast({
         title: state.success ? "Sucesso!" : "Erro na Criação",
@@ -61,12 +57,17 @@ export default function CreateUserPage() {
         variant: state.success ? "default" : "destructive",
       });
       
-      // If the action was successful, reset the form fields
       if (state.success) {
         reset();
       }
     }
   }, [state, toast, reset]);
+  
+  const handleFormSubmit = handleSubmit(() => {
+      if (formRef.current) {
+          formAction(new FormData(formRef.current));
+      }
+  });
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-10rem-theme(spacing.20))]">
@@ -78,7 +79,12 @@ export default function CreateUserPage() {
           <CardDescription>Preencha os dados para criar uma nova conta.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="space-y-6">
+          <form 
+            ref={formRef} 
+            action={formAction} // Action for useFormStatus
+            onSubmit={handleFormSubmit} // Wrapper for client validation
+            className="space-y-6"
+          >
             <div className="space-y-2">
               <Label htmlFor="email_prefix">E-mail</Label>
               <div className="flex items-center">
@@ -87,15 +93,15 @@ export default function CreateUserPage() {
                   </span>
                   <Input 
                     id="email_prefix"
-                    name="email_prefix"
+                    {...form.register("email_prefix")}
                     placeholder="usuario" 
                     className="rounded-l-none rounded-r-none focus:z-10"
-                    required
                   />
                   <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-l-0 border-input rounded-r-md h-10">
                       @portovaleconsorcios.com.br
                   </span>
               </div>
+               {form.formState.errors.email_prefix && <p className="text-sm font-medium text-destructive">{form.formState.errors.email_prefix.message}</p>}
             </div>
             
             <div className="space-y-2">
@@ -104,12 +110,11 @@ export default function CreateUserPage() {
               </Label>
               <Input 
                 id="password"
-                name="password"
                 type="password" 
                 placeholder="••••••••" 
-                required
-                minLength={8}
+                {...form.register("password")}
               />
+               {form.formState.errors.password && <p className="text-sm font-medium text-destructive">{form.formState.errors.password.message}</p>}
             </div>
             
              <div className="space-y-2">
@@ -118,12 +123,11 @@ export default function CreateUserPage() {
               </Label>
               <Input 
                 id="confirmPassword"
-                name="confirmPassword"
                 type="password"
                 placeholder="••••••••"
-                required
-                minLength={8}
+                {...form.register("confirmPassword")}
               />
+               {form.formState.errors.confirmPassword && <p className="text-sm font-medium text-destructive">{form.formState.errors.confirmPassword.message}</p>}
             </div>
 
             <SubmitButton />
