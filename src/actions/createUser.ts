@@ -31,11 +31,11 @@ export async function createUserAction(
   const email = `${email_prefix}@portovaleconsorcios.com.br`;
   const username = email_prefix;
 
-  // 2. Create the user directly and send a confirmation email.
+  // 2. Create and auto-confirm the user.
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email: email,
-    password: password, // This ensures the password is set
-    email_confirm: false, // This sends a confirmation email instead of auto-confirming.
+    password: password,
+    email_confirm: true, // Auto-confirms the user, no confirmation email sent.
     user_metadata: {
       username: username,
       cargo: 'colaborador' // Always set cargo to 'colaborador'
@@ -52,5 +52,5 @@ export async function createUserAction(
   }
 
   // 3. Return success message
-  return { success: true, message: `Conta criada para ${email}. O usuário precisará confirmar o e-mail para ativar a conta.` };
+  return { success: true, message: `Conta criada com sucesso para ${email}. O usuário já pode fazer login.` };
 }
