@@ -13,7 +13,6 @@ interface CreateUserResult {
 }
 
 export async function createUserAction(
-  prevState: CreateUserResult,
   formData: FormData
 ): Promise<CreateUserResult> {
   // 1. Validate form data
@@ -22,9 +21,11 @@ export async function createUserAction(
   );
   
   if (!validatedFields.success) {
+    const errorMessages = validatedFields.error.flatten().fieldErrors;
+    const message = Object.values(errorMessages).flat().join(' ') || "Dados inválidos.";
     return {
       success: false,
-      message: "Dados inválidos: " + JSON.stringify(validatedFields.error.flatten().fieldErrors),
+      message: message,
     };
   }
   

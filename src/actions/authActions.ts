@@ -10,7 +10,6 @@ interface ActionResult {
 
 // Ação para solicitar o e-mail de recuperação
 export async function requestPasswordResetAction(
-  prevState: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
   const emailPrefixSchema = z.string().min(1, { message: "O prefixo do e-mail é obrigatório."});
@@ -55,7 +54,6 @@ const updatePasswordSchema = z.object({
 });
 
 export async function updatePasswordAction(
-  prevState: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
   const validatedFields = updatePasswordSchema.safeParse(
@@ -63,9 +61,10 @@ export async function updatePasswordAction(
   );
 
   if (!validatedFields.success) {
+    const errorMessages = validatedFields.error.flatten().fieldErrors;
     return {
       success: false,
-      message: "Dados inválidos: " + JSON.stringify(validatedFields.error.flatten().fieldErrors),
+      message: errorMessages.password?.[0] || errorMessages.confirmPassword?.[0] || "Dados inválidos.",
     };
   }
 

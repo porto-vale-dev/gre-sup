@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useFormState, useFormStatus } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,21 +13,9 @@ import Link from 'next/link';
 import { createUserAction } from '@/actions/createUser';
 import { createUserSchema, type CreateUserFormData } from '@/lib/schemas';
 
-// A submit button that shows a loading state
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" className="w-full" disabled={pending}>
-       {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {pending ? "Criando..." : "Criar Conta"}
-    </Button>
-  );
-}
-
 export default function CreateUserPage() {
   const { toast } = useToast();
-  const formRef = useRef<HTMLFormElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
@@ -38,35 +25,27 @@ export default function CreateUserPage() {
       confirmPassword: '',
     }
   });
-
-  const { reset, handleSubmit } = form;
   
-  const initialState = {
-    success: false,
-    message: '',
-  };
+  const onSubmit = async (data: CreateUserFormData) => {
+    setIsSubmitting(true);
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        formData.append(key, data[key as keyof CreateUserFormData]);
+    });
 
-  const [state, formAction] = useFormState(createUserAction, initialState);
+    const result = await createUserAction(formData);
 
-  useEffect(() => {
-    if (state.message) {
-      toast({
-        title: state.success ? "Sucesso!" : "Erro na Criação",
-        description: state.message,
-        variant: state.success ? "default" : "destructive",
-      });
-      
-      if (state.success) {
-        reset();
-      }
+    toast({
+        title: result.success ? "Sucesso!" : "Erro na Criação",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+    });
+    
+    if (result.success) {
+        form.reset();
     }
-  }, [state, toast, reset]);
-  
-  const handleFormSubmit = handleSubmit(() => {
-      if (formRef.current) {
-          formAction(new FormData(formRef.current));
-      }
-  });
+    setIsSubmitting(false);
+  };
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-10rem-theme(spacing.20))]">
@@ -79,9 +58,7 @@ export default function CreateUserPage() {
         </CardHeader>
         <CardContent>
           <form 
-            ref={formRef} 
-            action={formAction} // Action for useFormStatus
-            onSubmit={handleFormSubmit} // Wrapper for client validation
+            onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6"
           >
             <div className="space-y-2">
@@ -95,6 +72,7 @@ export default function CreateUserPage() {
                     {...form.register("email_prefix")}
                     placeholder="usuario" 
                     className="rounded-l-none rounded-r-none focus:z-10"
+                    disabled={isSubmitting}
                   />
                   <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-l-0 border-input rounded-r-md h-10">
                       @portovaleconsorcios.com.br
@@ -112,6 +90,7 @@ export default function CreateUserPage() {
                 type="password" 
                 placeholder="••••••••" 
                 {...form.register("password")}
+                disabled={isSubmitting}
               />
                {form.formState.errors.password && <p className="text-sm font-medium text-destructive">{form.formState.errors.password.message}</p>}
             </div>
@@ -125,11 +104,15 @@ export default function CreateUserPage() {
                 type="password"
                 placeholder="••••••••"
                 {...form.register("confirmPassword")}
+                disabled={isSubmitting}
               />
                {form.formState.errors.confirmPassword && <p className="text-sm font-medium text-destructive">{form.formState.errors.confirmPassword.message}</p>}
             </div>
 
-            <SubmitButton />
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? "Criando..." : "Criar Conta"}
+            </Button>
           </form>
         </CardContent>
         <CardFooter className="justify-center">

@@ -1,15 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
-import { useFormState, useFormStatus } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Key, Lock, Loader2, Save, ShieldAlert } from 'lucide-react';
 import { updatePasswordAction } from '@/actions/authActions';
@@ -24,68 +23,50 @@ const updatePasswordSchema = z.object({
 });
 type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" className="w-full" disabled={pending}>
-       {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {pending ? "Salvando..." : "Salvar Nova Senha"}
-    </Button>
-  );
-}
-
 function UpdatePasswordForm() {
   const { toast } = useToast();
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
   const [hasError, setHasError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<UpdatePasswordFormData>({
     resolver: zodResolver(updatePasswordSchema),
     defaultValues: { password: '', confirmPassword: '' },
   });
 
-  const [state, formAction] = useFormState(updatePasswordAction, {
-    success: false,
-    message: '',
-  });
-
   useEffect(() => {
-     // A sessão do Supabase pode não estar disponível imediatamente após o redirecionamento.
-    // O evento 'SIGNED_IN' ou 'USER_UPDATED' será disparado quando a sessão for processada.
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
         if (event === 'PASSWORD_RECOVERY') {
             setHasError(false);
         }
     });
 
-    // Se o fragmento de hash não estiver na URL, o usuário provavelmente acessou a página diretamente.
     if (typeof window !== 'undefined' && !window.location.hash.includes('access_token')) {
         setHasError(true);
     }
     
     return () => authListener.subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (state.message) {
-      toast({
-        title: state.success ? "Sucesso!" : "Ocorreu um Erro",
-        description: state.message,
-        variant: state.success ? "default" : "destructive",
-      });
-      if (state.success) {
-        router.push('/');
-      }
-    }
-  }, [state, toast, router]);
   
-  const handleFormSubmit = form.handleSubmit(() => {
-    if (formRef.current) {
-        formAction(new FormData(formRef.current));
+  const onSubmit = async (data: UpdatePasswordFormData) => {
+    setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append('password', data.password);
+    formData.append('confirmPassword', data.confirmPassword);
+    
+    const result = await updatePasswordAction(formData);
+
+    toast({
+      title: result.success ? "Sucesso!" : "Ocorreu um Erro",
+      description: result.message,
+      variant: result.success ? "default" : "destructive",
+    });
+
+    if (result.success) {
+      router.push('/');
     }
-  });
+    setIsSubmitting(false);
+  };
   
   if (hasError) {
       return (
@@ -119,9 +100,7 @@ function UpdatePasswordForm() {
         </CardHeader>
         <CardContent>
           <form 
-            ref={formRef} 
-            action={formAction}
-            onSubmit={handleFormSubmit}
+            onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6"
           >
              <div className="space-y-2">
@@ -133,6 +112,7 @@ function UpdatePasswordForm() {
                 type="password" 
                 placeholder="••••••••" 
                 {...form.register("password")}
+                disabled={isSubmitting}
               />
                {form.formState.errors.password && <p className="text-sm font-medium text-destructive">{form.formState.errors.password.message}</p>}
             </div>
@@ -146,18 +126,20 @@ function UpdatePasswordForm() {
                 type="password"
                 placeholder="••••••••"
                 {...form.register("confirmPassword")}
+                disabled={isSubmitting}
               />
                {form.formState.errors.confirmPassword && <p className="text-sm font-medium text-destructive">{form.formState.errors.confirmPassword.message}</p>}
             </div>
-            <SubmitButton />
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? "Salvando..." : "Salvar Nova Senha"}
+            </Button>
           </form>
         </CardContent>
       </Card>
   )
 }
 
-// O Suspense é usado aqui porque a lógica dentro de UpdatePasswordForm pode
-// precisar de um momento para verificar a URL e o estado da autenticação.
 export default function AtualizarSenhaPage() {
     return (
         <div className="flex items-center justify-center min-h-[calc(100vh-10rem-theme(spacing.20))]">

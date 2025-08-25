@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useFormState, useFormStatus } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
@@ -19,48 +18,33 @@ const requestSchema = z.object({
 });
 type RequestFormData = z.infer<typeof requestSchema>;
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {pending ? "Enviando..." : "Enviar E-mail de Recuperação"}
-    </Button>
-  );
-}
-
 export default function RecuperarSenhaPage() {
   const { toast } = useToast();
-  const formRef = useRef<HTMLFormElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
     defaultValues: { email_prefix: '' },
   });
 
-  const [state, formAction] = useFormState(requestPasswordResetAction, {
-    success: false,
-    message: '',
-  });
+  const onSubmit = async (data: RequestFormData) => {
+    setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append('email_prefix', data.email_prefix);
 
-  useEffect(() => {
-    if (state.message) {
-      toast({
-        title: state.success ? "Verifique seu E-mail" : "Ocorreu um Erro",
-        description: state.message,
-        variant: state.success ? "default" : "destructive",
-      });
-      if(state.success) {
-        form.reset();
-      }
+    const result = await requestPasswordResetAction(formData);
+
+    toast({
+      title: result.success ? "Verifique seu E-mail" : "Ocorreu um Erro",
+      description: result.message,
+      variant: result.success ? "default" : "destructive",
+    });
+    
+    if(result.success) {
+      form.reset();
     }
-  }, [state, toast, form]);
-  
-  const handleFormSubmit = form.handleSubmit(() => {
-    if (formRef.current) {
-        formAction(new FormData(formRef.current));
-    }
-  });
+    setIsSubmitting(false);
+  };
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-10rem-theme(spacing.20))]">
@@ -75,9 +59,7 @@ export default function RecuperarSenhaPage() {
         </CardHeader>
         <CardContent>
           <form 
-            ref={formRef} 
-            action={formAction}
-            onSubmit={handleFormSubmit}
+            onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6"
           >
             <div className="space-y-2">
@@ -88,6 +70,7 @@ export default function RecuperarSenhaPage() {
                     {...form.register("email_prefix")}
                     placeholder="usuario" 
                     className="rounded-r-none focus:z-10"
+                    disabled={isSubmitting}
                   />
                   <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-l-0 border-input rounded-r-md h-10">
                       @portovaleconsorcios.com.br
@@ -95,7 +78,10 @@ export default function RecuperarSenhaPage() {
               </div>
               {form.formState.errors.email_prefix && <p className="text-sm font-medium text-destructive">{form.formState.errors.email_prefix.message}</p>}
             </div>
-            <SubmitButton />
+             <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? "Enviando..." : "Enviar E-mail de Recuperação"}
+            </Button>
           </form>
         </CardContent>
         <CardFooter>
