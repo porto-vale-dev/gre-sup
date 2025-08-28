@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
+import { headers } from 'next/headers';
 
 interface ActionResult {
     success: boolean;
@@ -23,9 +24,10 @@ export async function requestPasswordResetAction(
     };
   }
 
+  const origin = headers().get('origin');
   const email = `${validatedFields.data}@portovaleconsorcios.com.br`;
-  // URL de redirecionamento explícita para o ambiente de desenvolvimento
-  const redirectUrl = 'https://portal.portovaleconsorcio.com.br/atualizar-senha';
+  // URL de redirecionamento agora é dinâmica, baseada na origem da requisição
+  const redirectUrl = `${origin}/atualizar-senha`;
   
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: redirectUrl,
