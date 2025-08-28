@@ -105,7 +105,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       let filePath: string | null = null;
       let fileName: string | null = null;
       const submissionDate = new Date().toISOString();
-      const dbClient = isAuthenticated ? supabase : supabaseAnon;
+      // Always use the anonymous client for this public function call
+      const dbClient = supabaseAnon;
 
       if (ticketData.files && ticketData.files.length > 0) {
         const folderPath = `public/${crypto.randomUUID()}`;
