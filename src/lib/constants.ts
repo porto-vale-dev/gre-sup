@@ -2,6 +2,7 @@
 import type { TicketStatus } from '@/types';
 
 export const TICKET_REASONS = [
+  { value: "Baixa de pagamento", label: "Baixa de pagamento", responseTime: "1 dia útil" },
   { value: "Boleto do mês", label: "Boleto do mês", responseTime: "1 dia útil" },
   { value: "Boleto de quitação", label: "Boleto de quitação", responseTime: "até 1 dia útil antes do vencimento" },
   { value: "Boleto em atraso", label: "Boleto em atraso", responseTime: "1 dia útil" },
@@ -56,5 +57,6 @@ export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 export const MAX_FILES_COUNT = 10;
 export const MAX_SOLUTION_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 export const MAX_OBSERVATIONS_LENGTH = 10000;
+
 
 
