@@ -1,9 +1,7 @@
-
 'use server';
 
 import { z } from 'zod';
-import { supabaseAdmin } from '@/lib/supabaseAdminClient';
-import { supabase } from '@/lib/supabaseClient'; // Import the client-side instance for resend
+import { supabase } from '@/lib/supabaseClient'; 
 import { createUserSchema } from '@/lib/schemas';
 
 // Define the shape of the return value
@@ -33,41 +31,35 @@ export async function createUserAction(
   const email = `${email_prefix}@portovaleconsorcios.com.br`;
   const username = email_prefix;
 
-  // 2. Create the user with the admin client, but do not confirm the email.
-  const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+  // 2. Create the user using the standard signUp method.
+  // This is secure and automatically handles sending the confirmation email.
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email: email,
     password: password,
-    user_metadata: {
-      username: username,
-      cargo: 'colaborador' // Always set cargo to 'colaborador'
+    options: {
+      data: {
+        username: username,
+        cargo: 'colaborador' // Set user metadata here
+      }
     }
   });
 
-  if (createError) {
-    console.error('Error creating user:', createError.message);
-    if (createError.message.includes('unique constraint') || createError.message.includes('User already registered')) {
+  if (signUpError) {
+    console.error('Error creating user:', signUpError.message);
+    if (signUpError.message.includes('User already registered')) {
         return { success: false, message: 'Este usuário já existe.' };
     }
     return { success: false, message: 'Não foi possível criar o usuário. Tente novamente.' };
   }
-
-  // 3. Explicitly send the confirmation email using the public client's `resend` method.
-  const { error: resendError } = await supabase.auth.resend({
-    type: 'signup',
-    email: email,
-  });
-
-  if (resendError) {
-      console.error('Error sending confirmation email:', resendError.message);
-      // Even if the email fails, the user was created. This is a partial success.
-      // We inform the admin that the user exists but the email might not have been sent.
-      return { 
-          success: true, 
-          message: `Conta criada para ${email}, mas falha ao enviar o e-mail de confirmação. Verifique as configurações de SMTP no Supabase. O usuário pode solicitar um novo e-mail na tela de login.` 
-      };
+  
+  if (signUpData.user && !signUpData.user.identities?.length) {
+    return {
+      success: false,
+      message: 'Este usuário já existe, mas está inativo. Contate o suporte.',
+    };
   }
 
-  // 4. Return full success message
+  // 3. Return success message
   return { 
     success: true, 
     message: `Conta criada para ${email}. Um e-mail de confirmação foi enviado para que o usuário possa ativar a conta.` 
