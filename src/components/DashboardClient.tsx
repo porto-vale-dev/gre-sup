@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Ticket } from '@/types';
@@ -11,10 +11,16 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle, Archive } from 'lucide-react';
+import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle, Archive, Calendar as CalendarIcon, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import Link from 'next/link';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from 'date-fns/locale';
+import type { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
 
 export function DashboardClient() {
   const { tickets, isLoadingTickets, error, fetchTickets } = useTickets();
@@ -27,6 +33,19 @@ export function DashboardClient() {
   const [responsibleFilter, setResponsibleFilter] = useState<string>("Todos");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc"); // desc for newest first
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  
+  // Date filter state
+  const [date, setDate] = useState<DateRange | undefined>(undefined);
+  const [tempDate, setTempDate] = useState<DateRange | undefined>(undefined);
+  const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+
+  // Sync tempDate with official date when popover opens
+  useEffect(() => {
+    if(isDatePopoverOpen) {
+      setTempDate(date);
+    }
+  }, [isDatePopoverOpen, date]);
+
 
   const activeTickets = useMemo(() => {
     const baseTickets = tickets.filter(ticket => ticket.status !== "Concluído");
@@ -43,22 +62,38 @@ export function DashboardClient() {
   const filteredAndSortedTickets = useMemo(() => {
     return activeTickets
       .filter(ticket => {
-        const searchMatch = ticket.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            ticket.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (ticket.responsible && ticket.responsible.toLowerCase().includes(searchTerm.toLowerCase()));
+        const cleanedSearchTerm = searchTerm.toLowerCase().replace(/^#/, '');
+        const searchMatch = ticket.name.toLowerCase().includes(cleanedSearchTerm) ||
+                            String(ticket.protocol).padStart(4, '0').includes(cleanedSearchTerm) ||
+                            ticket.reason.toLowerCase().includes(cleanedSearchTerm) ||
+                            (ticket.responsible && ticket.responsible.toLowerCase().includes(cleanedSearchTerm));
+
         const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
-        // Responsible filter is only applied if the user is an admin
+        
         const responsibleMatch = (cargo === 'adm' || cargo === 'greadmin') 
             ? (responsibleFilter === "Todos" || ticket.responsible === responsibleFilter)
             : true;
-        return searchMatch && statusMatch && responsibleMatch;
+
+        let dateMatch = true;
+        if (date?.from) {
+            const fromDate = new Date(date.from);
+            fromDate.setHours(0, 0, 0, 0); // Start of the day
+
+            const toDate = date.to ? new Date(date.to) : new Date(date.from);
+            toDate.setHours(23, 59, 59, 999); // End of the day
+            
+            const submissionDate = new Date(ticket.submission_date);
+            dateMatch = submissionDate >= fromDate && submissionDate <= toDate;
+        }
+
+        return searchMatch && statusMatch && responsibleMatch && dateMatch;
       })
       .sort((a, b) => {
         const dateA = new Date(a.submission_date).getTime();
         const dateB = new Date(b.submission_date).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
-  }, [activeTickets, searchTerm, statusFilter, responsibleFilter, sortOrder, cargo]);
+  }, [activeTickets, searchTerm, statusFilter, responsibleFilter, sortOrder, cargo, date]);
 
   const handleOpenDetails = (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -84,9 +119,9 @@ export function DashboardClient() {
          <div className="flex flex-col lg:flex-row gap-2 items-center w-full p-4 bg-card border rounded-lg shadow">
           <Skeleton className="h-10 w-full lg:flex-grow" />
           <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto items-center shrink-0">
-            <Skeleton className="h-10 w-full sm:w-[180px]" />
-            <Skeleton className="h-10 w-full sm:w-[180px]" />
-            <Skeleton className="h-10 w-full sm:w-[180px]" />
+            <Skeleton className="h-10 w-full sm:w-[150px]" />
+            <Skeleton className="h-10 w-full sm:w-[150px]" />
+            <Skeleton className="h-10 w-full sm:w-[150px]" />
             <Skeleton className="h-10 w-20 hidden sm:block" />
           </div>
         </div>
@@ -119,7 +154,7 @@ export function DashboardClient() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Buscar por nome, motivo, responsável..."
+                    placeholder="Buscar por protocolo, nome, motivo, responsável..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 w-full"
@@ -128,8 +163,57 @@ export function DashboardClient() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto items-center shrink-0">
+                <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="date"
+                      variant={"outline"}
+                      className={cn(
+                        "w-full sm:w-auto px-3 justify-start text-left font-normal",
+                        !date && "text-muted-foreground",
+                        date && "bg-[#5F5F5F] text-white hover:bg-[#5F5F5F]/90 hover:text-white"
+                      )}
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={date?.from}
+                      selected={tempDate}
+                      onSelect={setTempDate}
+                      numberOfMonths={1}
+                      locale={ptBR}
+                    />
+                    <div className="p-2 border-t flex justify-end gap-2">
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => {
+                                setDate(undefined);
+                                setTempDate(undefined);
+                                setIsDatePopoverOpen(false);
+                            }}
+                        >
+                            Limpar
+                        </Button>
+                        <Button 
+                            size="sm" 
+                            onClick={() => {
+                                setDate(tempDate);
+                                setIsDatePopoverOpen(false);
+                            }}
+                        >
+                            Aplicar
+                        </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por status">
+                    <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por status">
                         <ListFilter className="h-4 w-4 mr-2 text-muted-foreground" />
                         <SelectValue placeholder="Filtrar por status" />
                     </SelectTrigger>
@@ -142,7 +226,7 @@ export function DashboardClient() {
 
                 {(cargo === 'adm' || cargo === 'greadmin') && (
                   <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
-                      <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por responsável">
+                      <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por responsável">
                           <User className="h-4 w-4 mr-2 text-muted-foreground" />
                           <SelectValue placeholder="Filtrar por responsável" />
                       </SelectTrigger>
@@ -155,7 +239,7 @@ export function DashboardClient() {
                 )}
 
                 <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
-                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Ordenar por data">
+                    <SelectTrigger className="w-full sm:w-[150px]" aria-label="Ordenar por data">
                          <SelectValue placeholder="Ordenar por data" />
                     </SelectTrigger>
                     <SelectContent>
@@ -210,3 +294,9 @@ export function DashboardClient() {
     </div>
   );
 }
+
+    
+
+    
+
+    

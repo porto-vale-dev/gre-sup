@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -10,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight, PlusCircle, FileSpreadsheet, Book } from 'lucide-react';
+import { Landmark, Folder, ArrowLeft, FileText, Download, Loader2, Eye, ChevronRight, PlusCircle, FileSpreadsheet, Book, Receipt, ArrowRightLeft, Car, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UploadDocumentDialog } from '@/components/UploadDocumentDialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -232,13 +231,17 @@ export default function DocumentosPage() {
   }, [selectedSubCategory, documentsData]);
 
   const financialSubcategories = useMemo(() => {
-    const subCategories = documentsData
+    const subcategoriesMap = new Map<string, { name: string; Icon: React.ElementType }>();
+    staticDocumentsData
       .filter(doc => doc.category === 'Financeiro')
-      .map(doc => ({ name: doc.subCategory, Icon: doc.Icon }));
-    return subCategories.filter((item, index, self) =>
-      index === self.findIndex(t => t.name === item.name)
-    );
-  }, [documentsData]);
+      .forEach(doc => {
+        if (!subcategoriesMap.has(doc.subCategory)) {
+          subcategoriesMap.set(doc.subCategory, { name: doc.subCategory, Icon: doc.Icon });
+        }
+      });
+    return Array.from(subcategoriesMap.values());
+  }, []);
+
 
   const comexSubcategories = useMemo(() => {
     const subCategories = documentsData
@@ -391,7 +394,7 @@ export default function DocumentosPage() {
                     <AccordionTrigger
                         onClick={() => setSelectedSubCategory('Financeiro')}
                         className={cn(
-                            "py-2 px-3 rounded-md text-base font-medium no-underline hover:no-underline",
+                            "py-2 px-3 rounded-md text-base font-medium hover:no-underline",
                             isCategorySelected('Financeiro')
                                 ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                                 : "hover:bg-accent hover:text-accent-foreground"
@@ -411,8 +414,10 @@ export default function DocumentosPage() {
                           className="justify-start h-auto py-1.5 px-2 text-left text-sm font-normal"
                           onClick={() => setSelectedSubCategory(name)}
                         >
-                          {(Icon ? <Icon className="w-4 h-4 mr-2" /> : <Folder className="w-4 h-4 mr-2" />)}
-                          <span className="leading-tight">{name}</span>
+                          <div className="flex items-center gap-2 w-full">
+                            {Icon ? <Icon className="w-4 h-4 shrink-0" /> : <Folder className="w-4 h-4 shrink-0" />}
+                            <span className="leading-tight truncate">{name}</span>
+                          </div>
                         </Button>
                       ))}
                     </div>
@@ -422,7 +427,7 @@ export default function DocumentosPage() {
                     <AccordionTrigger
                         onClick={() => setSelectedSubCategory('COMEX')}
                         className={cn(
-                            "py-2 px-3 rounded-md text-base font-medium no-underline hover:no-underline",
+                            "py-2 px-3 rounded-md text-base font-medium hover:no-underline",
                             isCategorySelected('COMEX')
                                 ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                                 : "hover:bg-accent hover:text-accent-foreground"
@@ -483,5 +488,3 @@ export default function DocumentosPage() {
     </>
   );
 }
-
-      

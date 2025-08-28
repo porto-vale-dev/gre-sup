@@ -1,7 +1,9 @@
+
 'use server';
 
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/supabaseAdminClient';
+import { supabase } from '@/lib/supabaseClient'; // Import the client-side instance for resend
 import { createUserSchema } from '@/lib/schemas';
 
 // Define the shape of the return value
@@ -11,7 +13,6 @@ interface CreateUserResult {
 }
 
 export async function createUserAction(
-  prevState: CreateUserResult,
   formData: FormData
 ): Promise<CreateUserResult> {
   // 1. Validate form data
@@ -20,9 +21,11 @@ export async function createUserAction(
   );
   
   if (!validatedFields.success) {
+    const errorMessages = validatedFields.error.flatten().fieldErrors;
+    const message = Object.values(errorMessages).flat().join(' ') || "Dados inválidos.";
     return {
       success: false,
-      message: "Dados inválidos: " + validatedFields.error.flatten().fieldErrors,
+      message: message,
     };
   }
   
@@ -30,26 +33,43 @@ export async function createUserAction(
   const email = `${email_prefix}@portovaleconsorcios.com.br`;
   const username = email_prefix;
 
-  // 2. Invite the user using the admin client
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true, // Auto-confirms email, useful if you handle verification differently. Set to false to send a confirmation link.
+  // 2. Create the user with the admin client, but do not confirm the email.
+  const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+    email: email,
+    password: password,
     user_metadata: {
-        username: username,
-        cargo: 'colaborador' // Always set cargo to 'colaborador'
+      username: username,
+      cargo: 'colaborador' // Always set cargo to 'colaborador'
     }
   });
 
-  if (error) {
-    console.error('Error creating user:', error.message);
-    // Provide a more user-friendly error message
-    if (error.message.includes('unique constraint')) {
+  if (createError) {
+    console.error('Error creating user:', createError.message);
+    if (createError.message.includes('unique constraint') || createError.message.includes('User already registered')) {
         return { success: false, message: 'Este usuário já existe.' };
     }
     return { success: false, message: 'Não foi possível criar o usuário. Tente novamente.' };
   }
 
-  // 3. Return success message
-  return { success: true, message: `Usuário ${username} criado com sucesso!` };
+  // 3. Explicitly send the confirmation email using the public client's `resend` method.
+  const { error: resendError } = await supabase.auth.resend({
+    type: 'signup',
+    email: email,
+  });
+
+  if (resendError) {
+      console.error('Error sending confirmation email:', resendError.message);
+      // Even if the email fails, the user was created. This is a partial success.
+      // We inform the admin that the user exists but the email might not have been sent.
+      return { 
+          success: true, 
+          message: `Conta criada para ${email}, mas falha ao enviar o e-mail de confirmação. Verifique as configurações de SMTP no Supabase. O usuário pode solicitar um novo e-mail na tela de login.` 
+      };
+  }
+
+  // 4. Return full success message
+  return { 
+    success: true, 
+    message: `Conta criada para ${email}. Um e-mail de confirmação foi enviado para que o usuário possa ativar a conta.` 
+  };
 }

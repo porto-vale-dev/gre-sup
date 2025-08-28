@@ -3,11 +3,22 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Ticket as TicketIcon, Archive, Home, LayoutDashboard, Settings } from 'lucide-react';
+import { LogOut, Home, LayoutDashboard, Settings, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import React from 'react';
 import Image from 'next/image';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Ticket as TicketIcon } from 'lucide-react';
+
 
 // Import local images
 import logoTicket from './logo_ticket_pv.webp';
@@ -20,6 +31,15 @@ export function SiteHeader() {
   const handleLogout = () => {
     logout();
   };
+
+  const capitalizeFirstLetter = (string: string) => {
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+
+  const displayName = capitalizeFirstLetter(username || user?.email?.split('@')[0] || '');
+  const avatarFallback = displayName ? displayName.charAt(0) : <UserCircle className="h-6 w-6" />;
+
 
   // Minimal header for the main login page
   if (pathname === '/') {
@@ -129,15 +149,34 @@ export function SiteHeader() {
         </Link>
 
         {!isLoading && isAuthenticated && (
-          <div className="flex items-center gap-2 sm:gap-4">
-              <div className="text-right hidden sm:block">
-                  <p className="text-sm font-medium text-foreground">Bem-vindo, {username || user?.email?.split('@')[0]}</p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Sair da conta">
-                <LogOut className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Sair</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2">
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-medium text-foreground -mb-1">{displayName}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{cargo}</p>
+                </div>
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback>{avatarFallback}</AvatarFallback>
+                </Avatar>
               </Button>
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <Link href="/atualizar-senha" passHref>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Redefinir Senha</span>
+                </DropdownMenuItem>
+              </Link>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sair</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
     </header>

@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Define routes that do not require authentication
-const PUBLIC_PATHS = ['/', '/login', '/suporte-gre', '/suporte-gre/login', '/create-user'];
+const PUBLIC_PATHS = ['/', '/login', '/recuperar-senha', '/atualizar-senha', '/suporte-gre', '/suporte-gre/login', '/create-user'];
 const AUTHENTICATED_ROOT = '/hub';
 
 const AuthLoadingSkeleton = () => (

@@ -5,10 +5,11 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { loginSchema, type LoginFormData } from '@/lib/schemas';
 import { useToast } from "@/hooks/use-toast";
@@ -87,6 +88,14 @@ export default function PortalLoginPage() {
                   </FormItem>
                 )}
               />
+               <div className="flex items-center justify-end text-sm">
+                 {/* <Link href="/create-user" className="font-medium text-primary hover:underline">
+                    Criar usuário
+                </Link> */}
+                <Link href="/recuperar-senha" className="font-medium text-primary hover:underline">
+                  Esqueceu sua senha?
+                </Link>
+              </div>
               <Button type="submit" className="w-full" disabled={isLoggingIn}>
                  {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoggingIn ? "Entrando..." : "Entrar"}
