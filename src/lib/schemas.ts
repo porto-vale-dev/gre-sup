@@ -5,7 +5,7 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_C
 export const ticketSchema = z.object({
   name: z.string().min(1, { message: "Nome do solicitante é obrigatório." }),
   phone: z.string().min(14, { message: "Telefone inválido. Preencha o DDD e o número." }),
-  copy_email_prefix: z.string().optional(),
+  copy_email: z.string().email({ message: "E-mail inválido." }).optional().or(z.literal('')),
   client_name: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
   cpf: z.string().min(1, { message: "CPF ou CNPJ do cliente é obrigatório." }),
   grupo: z.string().min(1, { message: "Grupo é obrigatório." }),
@@ -33,10 +33,10 @@ export const ticketSchema = z.object({
     .optional(),
 }).superRefine((data, ctx) => {
     const requiredForReason = data.reason === "Boleto do mês" || data.reason === "Boleto de quitação";
-    if (requiredForReason && (!data.copy_email_prefix || data.copy_email_prefix.trim() === '')) {
+    if (requiredForReason && (!data.copy_email || data.copy_email.trim() === '')) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            path: ['copy_email_prefix'],
+            path: ['copy_email'],
             message: 'O e-mail para cópia é obrigatório para este motivo.',
         });
     }

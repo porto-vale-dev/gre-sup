@@ -40,7 +40,7 @@ export function TicketForm() {
       reason: "",
       observations: "",
       file: undefined,
-      copy_email_prefix: "",
+      copy_email: "",
     },
   });
   
@@ -54,9 +54,9 @@ export function TicketForm() {
     const reason = TICKET_REASONS.find(r => r.value === value) || null;
     setSelectedReasonInfo(reason);
     form.setValue("reason", value, { shouldValidate: true });
-    // Trigger validation for copy_email_prefix when reason changes
-    if (form.formState.touchedFields.copy_email_prefix) {
-        form.trigger("copy_email_prefix");
+    // Trigger validation for copy_email when reason changes
+    if (form.formState.touchedFields.copy_email) {
+        form.trigger("copy_email");
     }
   };
   
@@ -118,6 +118,19 @@ export function TicketForm() {
 
     return formatted + `${cleanedValue.substring(2, 7)}-${cleanedValue.substring(7, 11)}`;
   };
+  
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const currentValue = e.target.value;
+    const previousValue = form.getValues('copy_email');
+
+    // Autocomplete only when user types '@' and it wasn't there before
+    if (currentValue.endsWith('@') && !previousValue.includes('@')) {
+      const prefix = currentValue.slice(0, -1);
+      form.setValue('copy_email', `${prefix}@portovaleconsorcios.com.br`, { shouldValidate: true });
+    } else {
+      form.setValue('copy_email', currentValue, { shouldValidate: true });
+    }
+  };
 
 
   async function onSubmit(data: TicketFormData) {
@@ -133,7 +146,7 @@ export function TicketForm() {
       reason: data.reason,
       estimated_response_time: selectedReasonInfo?.responseTime || "N/A",
       observations: data.observations,
-      copy_email_prefix: data.copy_email_prefix,
+      copy_email: data.copy_email,
       files: filesToUpload,
     };
 
@@ -207,20 +220,19 @@ export function TicketForm() {
 
             <FormField
               control={form.control}
-              name="copy_email_prefix"
+              name="copy_email"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
                     E-mail para cópia {isCopyEmailRequired && <span className="text-destructive">*</span>}
                   </FormLabel>
-                  <div className="flex items-center">
-                    <FormControl>
-                      <Input placeholder="usuario" {...field} className="rounded-r-none focus:z-10"/>
-                    </FormControl>
-                    <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-l-0 border-input rounded-r-md h-10">
-                      @portovaleconsorcios.com.br
-                    </span>
-                  </div>
+                  <FormControl>
+                    <Input 
+                      placeholder="usuario@portovaleconsorcios.com.br" 
+                      {...field}
+                      onChange={handleEmailChange}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -408,5 +420,3 @@ export function TicketForm() {
     </Card>
   );
 }
-
-    
