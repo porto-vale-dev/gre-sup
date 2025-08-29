@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
@@ -50,14 +50,18 @@ export function TicketForm() {
 
   const isCopyEmailRequired = selectedReason === 'Boleto do mês' || selectedReason === 'Boleto de quitação';
 
+  // This useEffect will re-validate the copy_email field whenever the reason changes.
+  useEffect(() => {
+    if (form.formState.isSubmitted || form.formState.touchedFields.copy_email) {
+      form.trigger("copy_email");
+    }
+  }, [selectedReason, form]);
+
+
   const handleReasonChange = (value: string) => {
     const reason = TICKET_REASONS.find(r => r.value === value) || null;
     setSelectedReasonInfo(reason);
     form.setValue("reason", value, { shouldValidate: true });
-    // Trigger validation for copy_email when reason changes
-    if (form.formState.touchedFields.copy_email) {
-        form.trigger("copy_email");
-    }
   };
   
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -121,7 +125,7 @@ export function TicketForm() {
   
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const currentValue = e.target.value;
-    const previousValue = form.getValues('copy_email');
+    const previousValue = form.getValues('copy_email') || '';
 
     // Autocomplete only when user types '@' and it wasn't there before
     if (currentValue.endsWith('@') && !previousValue.includes('@')) {
