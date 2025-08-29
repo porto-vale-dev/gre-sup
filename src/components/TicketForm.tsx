@@ -61,14 +61,16 @@ export function TicketForm() {
 
   useEffect(() => {
     // Initialize the ref with the initial value from the form
-    previousEmailValue.current = form.getValues('copy_email');
+    previousEmailValue.current = form.getValues('copy_email') ?? '';
   }, [form]);
 
 
   const handleEmailChange = (e: ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string) => void) => {
     const currentValue = e.target.value;
+    const previousValue = previousEmailValue.current;
+    
     // Autocomplete only when user types '@' and it wasn't there before
-    if (currentValue.endsWith('@') && !previousEmailValue.current.includes('@')) {
+    if (currentValue.endsWith('@') && !previousValue.includes('@')) {
         const prefix = currentValue.slice(0, -1);
         fieldOnChange(`${prefix}@portovaleconsorcios.com.br`);
     } else {
