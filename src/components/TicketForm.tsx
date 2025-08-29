@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, type ChangeEvent, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, type ChangeEvent, useEffect, useRef } from 'react';
+import { useForm, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ export function TicketForm() {
   const [selectedReasonInfo, setSelectedReasonInfo] = useState<(typeof TICKET_REASONS)[0] | null>(null);
   const { addTicket } = useTickets();
   const { toast } = useToast();
+  const previousEmailValue = useRef('');
 
   const form = useForm<TicketFormData>({
     resolver: zodResolver(ticketSchema),
@@ -42,6 +43,7 @@ export function TicketForm() {
       file: undefined,
       copy_email: "",
     },
+    mode: 'onBlur' // Validate on blur to avoid premature error messages
   });
   
   const selectedFiles = form.watch("file");
@@ -56,6 +58,25 @@ export function TicketForm() {
       form.trigger("copy_email");
     }
   }, [selectedReason, form]);
+
+  useEffect(() => {
+    // Initialize the ref with the initial value from the form
+    previousEmailValue.current = form.getValues('copy_email');
+  }, [form]);
+
+
+  const handleEmailChange = (e: ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string) => void) => {
+    const currentValue = e.target.value;
+    // Autocomplete only when user types '@' and it wasn't there before
+    if (currentValue.endsWith('@') && !previousEmailValue.current.includes('@')) {
+        const prefix = currentValue.slice(0, -1);
+        fieldOnChange(`${prefix}@portovaleconsorcios.com.br`);
+    } else {
+        fieldOnChange(currentValue);
+    }
+    // Update the ref for the next change
+    previousEmailValue.current = currentValue;
+  };
 
 
   const handleReasonChange = (value: string) => {
@@ -122,19 +143,6 @@ export function TicketForm() {
 
     return formatted + `${cleanedValue.substring(2, 7)}-${cleanedValue.substring(7, 11)}`;
   };
-  
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const currentValue = e.target.value;
-    const previousValue = form.getValues('copy_email') || '';
-
-    // Autocomplete only when user types '@' and it wasn't there before
-    if (currentValue.endsWith('@') && !previousValue.includes('@')) {
-      const prefix = currentValue.slice(0, -1);
-      form.setValue('copy_email', `${prefix}@portovaleconsorcios.com.br`, { shouldValidate: true });
-    } else {
-      form.setValue('copy_email', currentValue, { shouldValidate: true });
-    }
-  };
 
 
   async function onSubmit(data: TicketFormData) {
@@ -164,6 +172,16 @@ export function TicketForm() {
     }
   }
 
+  function onInvalid(errors: FieldErrors<TicketFormData>) {
+    console.error("Validation errors:", errors);
+    const errorMessages = Object.values(errors).map(e => e.message).join(' ');
+    toast({
+        title: "Erro de Validação",
+        description: `Por favor, corrija os campos inválidos. ${errorMessages}`,
+        variant: "destructive"
+    });
+  }
+
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
@@ -187,7 +205,7 @@ export function TicketForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -234,7 +252,7 @@ export function TicketForm() {
                     <Input 
                       placeholder="usuario@portovaleconsorcios.com.br" 
                       {...field}
-                      onChange={handleEmailChange}
+                      onChange={(e) => handleEmailChange(e, field.onChange)}
                     />
                   </FormControl>
                   <FormMessage />
