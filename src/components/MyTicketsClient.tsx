@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, LifeBuoy } from 'lucide-react';
+import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays } from 'lucide-react';
 import { formatDistanceToNow, parseISO, subDays, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDetailsModal } from './TicketDetailsModal';
@@ -161,7 +161,7 @@ export function MyTicketsClient() {
         
         <Card className="p-6">
             <div className="flex flex-col md:flex-row gap-6 items-center">
-                 <LifeBuoy className="w-24 h-24 text-primary/20 hidden md:block shrink-0" />
+                 <TicketIcon className="w-24 h-24 text-primary/20 hidden md:block shrink-0" />
                 <div className="text-center md:text-left">
                     <h2 className="text-2xl font-bold">Acompanhe o andamento das suas solicitações</h2>
                     <p className="text-muted-foreground mt-1">Veja abaixo suas solicitações e acompanhe a resposta do nosso time especializado.</p>
