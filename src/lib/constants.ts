@@ -20,7 +20,7 @@ export const TICKET_REASONS = [
   { value: "Inscrições ABAC", label: "Inscrições ABAC", responseTime: "1 dia útil" },
   { value: "Link de cartão", label: "Link de cartão", responseTime: "1 dia útil" },
   { value: "Oferta de lance", label: "Oferta de lance", responseTime: "1 dia útil" },
-  { value: "OLOLU", label: "OLULU", responseTime: "1 dia útil" },
+  { value: "OLOLU", label: "OLOLU", responseTime: "1 dia útil" },
   { value: "Parcela divergente", label: "Parcela divergente", responseTime: "prazo variável" },
   { value: "Processo de transferencia", label: "Processo de transferencia", responseTime: "7 a 10 dias úteis" },
   { value: "Simulação de redução de crédito", label: "Simulação de redução de crédito", responseTime: "Simulação 1 dia útil e Efetivação após solicitação do titular: 5 dias úteis" },
