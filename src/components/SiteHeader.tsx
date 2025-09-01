@@ -69,6 +69,7 @@ export function SiteHeader() {
     const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
     const isGestaoPage = pathname === '/suporte-gre/gestao';
     const isConfiguracoesPage = pathname === '/suporte-gre/configuracoes';
+    const isMyTicketsPage = pathname === '/suporte-gre/minhas-solicitacoes';
     const allowedManagementRoles = ['adm', 'greadmin', 'gre'];
     const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
     const canViewSettings = cargo === 'adm' || cargo === 'greadmin';
@@ -119,7 +120,7 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               )}
-               {(isTicketDashboardArea || isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
+               {(isTicketDashboardArea || isGestaoPage || isConfiguracoesPage || isArchivedPage || isMyTicketsPage) && (
                 <Link href="/hub" passHref>
                     <Button variant="ghost" size="icon" aria-label="Portal Principal">
                       <Home className="h-5 w-5" />
