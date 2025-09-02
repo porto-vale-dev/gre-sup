@@ -119,7 +119,7 @@ export default function CobrancaPage() {
     setIsSubmitting(true);
     try {
         const { error } = await supabase
-            .rpc('create_cobranca_ticket', {
+            .rpc('create_ticket_cobranca', {
                 p_nome_cliente: data.nome_cliente,
                 p_cpf: data.cpf,
                 p_cota: data.cota,
@@ -129,7 +129,9 @@ export default function CobrancaPage() {
                 p_diretor: data.diretor,
                 p_gerente: data.gerente,
                 p_motivo: data.motivo,
+                p_data_atend: new Date().toISOString(), // Passa a data atual
                 p_observacoes: data.observacoes || '',
+                // p_status é definido por padrão na função SQL
             });
 
 
