@@ -147,7 +147,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         p_file_name: fileName,
         p_submission_date: submissionDate,
         p_user_id: user?.id ?? null,
-        p_cobranca: ticketData.cobranca ?? false,
       };
 
       const { data: newTicket, error: rpcError } = await dbClient
@@ -157,6 +156,20 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erro ao salvar ticket: ${rpcError.message}`);
       }
       
+      // If the ticket is a "cobranca" ticket, update the row after creation.
+      // This avoids changing the public RPC function signature.
+      if (ticketData.cobranca && newTicket.id) {
+          const { error: updateError } = await supabase
+            .from('tickets')
+            .update({ cobranca: true })
+            .eq('id', newTicket.id);
+
+          if (updateError) {
+            // Log the error but don't fail the whole process, as the ticket was already created.
+            console.error('Could not set cobranca flag:', updateError.message);
+          }
+      }
+
       const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
       fetch(webhookUrl, {
         method: 'POST',
@@ -413,5 +426,3 @@ export function useTickets() {
   }
   return context;
 }
-
-    
