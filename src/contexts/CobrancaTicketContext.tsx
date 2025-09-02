@@ -7,6 +7,7 @@ import type { CobrancaTicket, CobrancaTicketStatus, CreateCobrancaTicket } from 
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
+import { gerentesPorDiretor } from '@/lib/cobrancaData';
 
 interface CobrancaTicketContextType {
   tickets: CobrancaTicket[];
@@ -70,8 +71,12 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     try {
       if (!user) throw new Error("Usuário não autenticado.");
 
+      const allGerentes = Object.values(gerentesPorDiretor).flat();
+      const selectedGerente = allGerentes.find(g => g.name === ticketData.gerente);
+
       const payload = {
         ...ticketData,
+        gerente_email: selectedGerente?.email,
         data_atend: new Date().toISOString(),
         status: 'Aberta' as CobrancaTicketStatus,
       };

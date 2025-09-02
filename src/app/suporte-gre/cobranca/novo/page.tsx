@@ -127,14 +127,11 @@ export default function CobrancaPage() {
         });
         return;
     }
-
-    const selectedGerente = availableGerentes.find(g => g.name === data.gerente);
       
     setIsSubmitting(true);
     
     const success = await addCobrancaTicket({
         ...data,
-        gerente_email: selectedGerente?.email,
         observacoes: data.observacoes || '',
         user_id: user.id,
     });

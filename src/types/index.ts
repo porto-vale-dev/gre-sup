@@ -62,7 +62,7 @@ export interface CobrancaTicket {
   user_id?: string | null; // Who created the ticket
 }
 
-export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'retorno_comercial_status' | 'observacoes_retorno'>;
+export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'retorno_comercial_status' | 'observacoes_retorno' | 'gerente_email'>;
 
 
 // Represents one row in the reason_assignments table for Suporte GRE
