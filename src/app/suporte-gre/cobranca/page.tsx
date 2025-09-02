@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,7 +21,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { diretores, gerentesPorDiretor, motivosCobranca, Gerente } from '@/lib/cobrancaData';
-import { FileText, Send, Loader2 } from 'lucide-react';
+import { FileText, Send, Loader2, Calendar } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const cobrancaTicketSchema = z.object({
     nome_cliente: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
@@ -42,6 +44,11 @@ export default function CobrancaPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableGerentes, setAvailableGerentes] = useState<Gerente[]>([]);
+  const [currentDate, setCurrentDate] = useState('');
+
+  useEffect(() => {
+    setCurrentDate(format(new Date(), "dd/MM/yyyy HH:mm:ss", { locale: ptBR }));
+  }, []);
 
   const form = useForm<CobrancaTicketFormData>({
     resolver: zodResolver(cobrancaTicketSchema),
@@ -194,6 +201,15 @@ export default function CobrancaPage() {
                                     </FormItem>
                                 )}
                             />
+                            <div className="space-y-2">
+                                <Label htmlFor="data_atend" className="flex items-center gap-1.5"><Calendar className="h-4 w-4 text-muted-foreground" /> Data do Atendimento</Label>
+                                <Input
+                                    id="data_atend"
+                                    value={currentDate}
+                                    disabled
+                                    className="cursor-not-allowed bg-muted/50"
+                                />
+                            </div>
                         </div>
                     </div>
                      <div className="space-y-4 p-4 border rounded-md">
