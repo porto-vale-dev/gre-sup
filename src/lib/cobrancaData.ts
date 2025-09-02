@@ -1,4 +1,6 @@
 
+import type { CobrancaTicketStatus } from '@/types';
+
 export interface Diretor {
   name: string;
   email: string;
@@ -90,4 +92,22 @@ export const motivosCobranca = [
     'Valores de parcela',
     'Solicitar Contato de Consultor',
     'Reclamação / Sem Retorno',
+];
+
+export const RETORNO_COMERCIAL_STATUSES = [
+    'Tirou dúvidas',
+    'Tentando contato',
+    'Em andamento',
+    'Revertido',
+    'Não Revertido',
+    'Sem retorno'
+];
+
+export const COBRANCA_TICKET_STATUSES: CobrancaTicketStatus[] = [
+    "Aberta",
+    "Em análise",
+    "Encaminhada",
+    "Resolvida",
+    "Dentro do prazo",
+    "Fora do prazo"
 ];

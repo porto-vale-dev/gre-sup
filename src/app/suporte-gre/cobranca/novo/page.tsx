@@ -24,7 +24,7 @@ import { diretores, gerentesPorDiretor, motivosCobranca, Gerente } from '@/lib/c
 import { FileText, Send, Loader2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useAuth } from '@/contexts/AuthContext'; // Importar useAuth
+import { useAuth } from '@/contexts/AuthContext'; 
 
 const cobrancaTicketSchema = z.object({
     nome_cliente: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
@@ -43,7 +43,7 @@ type CobrancaTicketFormData = z.infer<typeof cobrancaTicketSchema>;
 
 export default function CobrancaPage() {
   const { toast } = useToast();
-  const { user } = useAuth(); // Obter o usuário logado
+  const { user } = useAuth(); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableGerentes, setAvailableGerentes] = useState<Gerente[]>([]);
   const [currentDate, setCurrentDate] = useState('');
@@ -70,24 +70,24 @@ export default function CobrancaPage() {
 
   const handleDiretorChange = (diretorName: string) => {
     setAvailableGerentes(gerentesPorDiretor[diretorName] || []);
-    form.setValue('gerente', ''); // Reset manager selection
+    form.setValue('gerente', ''); 
     form.setValue("diretor", diretorName, { shouldValidate: true });
   };
 
 
   const formatCpfCnpj = (value: string) => {
-    const cleanedValue = value.replace(/\D/g, ''); // Remove non-digit characters
+    const cleanedValue = value.replace(/\D/g, ''); 
   
     if (cleanedValue.length <= 11) {
-      // CPF format
+      
       return cleanedValue
         .replace(/(\d{3})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
     } else {
-      // CNPJ format
+      
       return cleanedValue
-        .substring(0, 14) // Limit to 14 digits for CNPJ
+        .substring(0, 14) 
         .replace(/(\d{2})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d)/, '$1/$2')
@@ -141,7 +141,7 @@ export default function CobrancaPage() {
                 p_gerente: data.gerente,
                 p_motivo: data.motivo,
                 p_observacoes: data.observacoes || null,
-                p_user_id: user.id // Enviar o ID do usuário
+                p_user_id: user.id 
             });
 
 
@@ -172,10 +172,10 @@ export default function CobrancaPage() {
        <Card className="w-full max-w-4xl mx-auto shadow-xl">
             <CardHeader>
                 <CardTitle className="font-headline text-3xl text-primary flex items-center gap-2">
-                <FileText className="h-8 w-8" /> Ticket de Cobrança - Retenção
+                <FileText className="h-8 w-8" /> Ticket de Apoio ao Comercial
                 </CardTitle>
                 <CardDescription>
-                Preencha os campos abaixo para abrir uma nova solicitação de cobrança e retenção.
+                Preencha os campos abaixo para abrir uma nova solicitação de apoio.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -394,7 +394,7 @@ export default function CobrancaPage() {
             </CardContent>
              <CardFooter>
                 <p className="text-xs text-muted-foreground">
-                As informações registradas serão usadas para a análise e retenção do cliente.
+                As informações registradas serão usadas para a análise da solicitação de apoio ao comercial.
                 </p>
             </CardFooter>
         </Card>

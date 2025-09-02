@@ -2,9 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { useTickets } from '@/contexts/TicketContext';
-import { useAuth } from '@/contexts/AuthContext';
-import type { Ticket, TicketStatus } from '@/types';
+import type { CobrancaTicket, CobrancaTicketStatus } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,42 +18,46 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
+import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
+import { COBRANCA_TICKET_STATUSES } from '@/lib/cobrancaData';
 
-const statusColors: Record<TicketStatus, string> = {
-  "Novo": "bg-blue-500",
-  "Em Andamento": "bg-yellow-500",
-  "Ativo": "bg-orange-500",
-  "Atrasado": "bg-red-500",
-  "Concluído": "bg-green-500",
+
+const statusColors: Record<CobrancaTicketStatus, string> = {
+  "Aberta": "bg-blue-500",
+  "Em análise": "bg-yellow-500",
+  "Encaminhada": "bg-orange-500",
+  "Resolvida": "bg-green-500",
+  "Dentro do prazo": "bg-teal-500",
+  "Fora do prazo": "bg-red-500",
 };
 
-const CobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetails: (ticket: Ticket) => void; }) => {
-    const protocolDisplay = ticket.id.substring(0, 8); // Use first 8 chars of UUID for display
+const CobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: CobrancaTicket; onOpenDetails: (ticket: CobrancaTicket) => void; }) => {
+    const protocolDisplay = ticket.id.substring(0, 8); 
 
     return (
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
             <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                     <CardTitle className="text-lg font-headline text-primary flex items-center gap-2">
-                        {ticket.reason.length > 30 ? `${ticket.reason.substring(0,27)}...` : ticket.reason}
+                        {ticket.motivo.length > 30 ? `${ticket.motivo.substring(0,27)}...` : ticket.motivo}
                     </CardTitle>
-                    <Badge variant={ticket.status === 'Concluído' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'} className={`whitespace-nowrap ${statusColors[ticket.status]} text-white`}>
+                    <Badge variant={ticket.status === 'Resolvida' ? 'default' : ticket.status === 'Fora do prazo' ? 'destructive' : 'secondary'} className={`whitespace-nowrap ${statusColors[ticket.status]} text-white`}>
                         {ticket.status}
                     </Badge>
                 </div>
                 <CardDescription className="text-xs text-muted-foreground flex items-center gap-4 pt-1">
                     <span className="flex items-center gap-1.5"><TicketIcon className="h-3.5 w-3.5" /> Protocolo #{protocolDisplay}</span>
-                    <span className="flex items-center gap-1.5"><CalendarIcon className="h-3.5 w-3.5" /> {format(parseISO(ticket.submission_date), "dd/MM/yyyy", { locale: ptBR })}</span>
+                    <span className="flex items-center gap-1.5"><CalendarIcon className="h-3.5 w-3.5" /> {format(parseISO(ticket.data_atend), "dd/MM/yyyy", { locale: ptBR })}</span>
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm flex-grow">
                  <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>{ticket.name}</span>
+                    <span>Diretor: {ticket.diretor}</span>
                 </div>
                  <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>Cliente: {ticket.client_name}</span>
+                    <span>Cliente: {ticket.nome_cliente}</span>
                 </div>
             </CardContent>
             <CardFooter>
@@ -70,9 +72,9 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenD
 
 
 export function CobrancaDashboardClient() {
-  const { tickets, isLoadingTickets, error, fetchTickets } = useTickets();
+  const { tickets, isLoading, error, fetchTickets } = useCobrancaTickets();
   
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<CobrancaTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("Todos");
@@ -89,19 +91,16 @@ export function CobrancaDashboardClient() {
     }
   }, [isDatePopoverOpen, date]);
 
-  const cobrancaTickets = useMemo(() => {
-    return tickets.filter(ticket => ticket.cobranca === true && ticket.status !== "Concluído");
-  }, [tickets]);
 
   const filteredAndSortedTickets = useMemo(() => {
-    return cobrancaTickets
+    return tickets
       .filter(ticket => {
         const protocolDisplay = ticket.id.substring(0, 8);
         const cleanedSearchTerm = searchTerm.toLowerCase();
         
-        const searchMatch = ticket.client_name.toLowerCase().includes(cleanedSearchTerm) ||
+        const searchMatch = ticket.nome_cliente.toLowerCase().includes(cleanedSearchTerm) ||
                             protocolDisplay.toLowerCase().includes(cleanedSearchTerm) ||
-                            ticket.reason.toLowerCase().includes(cleanedSearchTerm);
+                            ticket.motivo.toLowerCase().includes(cleanedSearchTerm);
 
         const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
         
@@ -111,31 +110,31 @@ export function CobrancaDashboardClient() {
             fromDate.setHours(0, 0, 0, 0); 
             const toDate = date.to ? new Date(date.to) : new Date(date.from);
             toDate.setHours(23, 59, 59, 999); 
-            const submissionDate = new Date(ticket.submission_date);
+            const submissionDate = new Date(ticket.data_atend);
             dateMatch = submissionDate >= fromDate && submissionDate <= toDate;
         }
 
         return searchMatch && statusMatch && dateMatch;
       })
       .sort((a, b) => {
-        const dateA = new Date(a.submission_date).getTime();
-        const dateB = new Date(b.submission_date).getTime();
+        const dateA = new Date(a.data_atend).getTime();
+        const dateB = new Date(b.data_atend).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
-  }, [cobrancaTickets, searchTerm, statusFilter, sortOrder, date]);
+  }, [tickets, searchTerm, statusFilter, sortOrder, date]);
 
-  const handleOpenDetails = (ticket: Ticket) => {
+  const handleOpenDetails = (ticket: CobrancaTicket) => {
     // Modal for details is not yet implemented for cobranca tickets
     // setSelectedTicket(ticket);
     // setIsModalOpen(true);
   };
 
   const ticketStatusesForFilter = useMemo(() => {
-    return ["Todos", "Novo", "Em Andamento", "Ativo", "Atrasado", "Concluído"];
+    return ["Todos", ...COBRANCA_TICKET_STATUSES];
   }, []);
 
 
-  if (isLoadingTickets) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
          <div className="flex flex-col lg:flex-row gap-2 items-center w-full p-4 bg-card border rounded-lg shadow">
@@ -269,9 +268,9 @@ export function CobrancaDashboardClient() {
       {filteredAndSortedTickets.length === 0 ? (
         <Alert variant="default" className="mt-6 border-primary/50 bg-primary/5">
           <Info className="h-5 w-5 text-primary" />
-          <AlertTitle className="text-primary">Nenhum Ticket de Cobrança Encontrado</AlertTitle>
+          <AlertTitle className="text-primary">Nenhum Ticket de Apoio Encontrado</AlertTitle>
           <AlertDescription>
-            Não há tickets de cobrança ativos que correspondam aos seus filtros.
+            Não há tickets de Apoio ao Comercial que correspondam aos seus filtros.
           </AlertDescription>
         </Alert>
       ) : (

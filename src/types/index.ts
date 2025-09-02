@@ -1,5 +1,8 @@
 
 export type TicketStatus = "Novo" | "Em Andamento" | "Ativo" | "Atrasado" | "Concluído";
+export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Resolvida" | "Dentro do prazo" | "Fora do prazo";
+export type RetornoComercialStatus = 'Tirou dúvidas' | 'Tentando contato' | 'Em andamento' | 'Revertido' | 'Não Revertido' | 'Sem retorno';
+
 
 export interface SolutionFile {
   file_path: string;
@@ -29,14 +32,36 @@ export interface Ticket {
 
   solution?: string | null;
   solution_files?: SolutionFile[] | null;
-
-  cobranca?: boolean | null;
 }
 
-// Represents one row in the reason_assignments table
+// Type for the new "Apoio ao Comercial" tickets
+export interface CobrancaTicket {
+  id: string;
+  // Identificação
+  nome_cliente: string;
+  cpf: string;
+  cota: string;
+  producao: string;
+  telefone: string;
+  email: string;
+  // Responsáveis
+  diretor: string;
+  gerente: string;
+  data_atend: string; // ISO String
+  // Detalhes
+  motivo: string;
+  observacoes_atend?: string | null;
+  // Retorno
+  retorno_comercial_status?: RetornoComercialStatus | null;
+  observacoes_retorno?: string | null;
+  // Controle
+  status: CobrancaTicketStatus;
+  user_id?: string | null; // Who created the ticket
+}
+
+
+// Represents one row in the reason_assignments table for Suporte GRE
 export interface ReasonAssignment {
   reason: string;
   username: string;
 }
-
-    
