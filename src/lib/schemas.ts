@@ -27,15 +27,6 @@ const emailValidation = z.string().superRefine((email, ctx) => {
     return; // Campo é opcional, então se estiver vazio, está tudo bem.
   }
   
-  // Verifica se há mais de um '@'
-  if (email.split('@').length - 1 > 1) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "O e-mail não pode conter mais de um '@'.",
-    });
-    return;
-  }
-
   // Verifica se o e-mail tem um formato válido
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
@@ -43,6 +34,15 @@ const emailValidation = z.string().superRefine((email, ctx) => {
       code: z.ZodIssueCode.custom,
       message: "Formato de e-mail inválido.",
     });
+    return;
+  }
+  
+  // Verifica se o domínio está correto
+  if (!email.toLowerCase().endsWith('@portovaleconsorcios.com.br')) {
+      ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "O e-mail deve ser do domínio @portovaleconsorcios.com.br",
+      });
   }
 });
 
