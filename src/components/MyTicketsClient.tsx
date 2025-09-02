@@ -58,7 +58,7 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetai
                 </div>
                 <p className="font-semibold text-lg">{ticket.reason}</p>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/> Enviado dia - {formatDistanceToNow(parseISO(ticket.submission_date), { addSuffix: true, locale: ptBR })}</span>
+                    <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/> Enviado {formatDistanceToNow(parseISO(ticket.submission_date), { addSuffix: true, locale: ptBR })}</span>
                     <Badge variant={ticket.status === 'Concluído' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'} className={`${statusColors[ticket.status]} text-white`}>
                         {ticket.status}
                     </Badge>
@@ -116,10 +116,10 @@ export function MyTicketsClient() {
   }), [myTickets]);
 
   const handleOpenDetails = (ticket: Ticket) => {
+    // For billing tickets, there's no detail modal for now.
+    // For support tickets, open the modal.
     if (ticket.cobranca) {
-        // Para tickets de cobrança, não há modal de detalhes por enquanto.
-        // Pode-se adicionar uma lógica aqui no futuro se necessário.
-        return;
+      return; 
     }
     setSelectedTicket(ticket);
     setIsModalOpen(true);

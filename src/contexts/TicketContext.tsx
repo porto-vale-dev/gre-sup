@@ -28,7 +28,6 @@ interface TicketContextType {
     observations?: string;
     copy_email?: string;
     files?: File[];
-    cobranca?: boolean;
   }) => Promise<boolean>;
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
   updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
@@ -82,13 +81,13 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     setIsLoadingTickets(true);
     setError(null);
     try {
-      // 1. Fetch standard support tickets
+      // 1. Fetch standard support tickets from 'tickets' table
       const ticketPromise = supabase
         .from('tickets')
         .select('*')
         .order('submission_date', { ascending: false });
 
-      // 2. Fetch billing tickets
+      // 2. Fetch billing tickets from 'tickets_cobranca' table
       const cobrancaPromise = supabase
         .from('tickets_cobranca')
         .select('*')
@@ -104,7 +103,10 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erro ao buscar tickets de cobrança: ${cobrancaResult.error.message}`);
       }
 
-      const standardTickets = ticketResult.data || [];
+      // Map support tickets and mark them as not billing tickets
+      const standardTickets = (ticketResult.data || []).map(t => ({...t, cobranca: false}));
+
+      // Map billing tickets and mark them as billing tickets
       const cobrancaTickets = (cobrancaResult.data || []).map(mapCobrancaTicketToTicket);
       
       // 3. Combine and sort the tickets
@@ -145,7 +147,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     observations?: string;
     copy_email?: string;
     files?: File[];
-    cobranca?: boolean;
   }): Promise<boolean> => {
     try {
       let filePath: string | null = null;
@@ -199,9 +200,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       if (rpcError) {
         throw new Error(`Erro ao salvar ticket: ${rpcError.message}`);
       }
-      
-      // This part is no longer necessary as cobranca tickets are created via a different form/logic
-      // if (ticketData.cobranca && newTicket.id) { ... }
 
       const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
       fetch(webhookUrl, {
