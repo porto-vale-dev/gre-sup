@@ -29,6 +29,8 @@ export interface Ticket {
 
   solution?: string | null;
   solution_files?: SolutionFile[] | null;
+
+  cobranca?: boolean | null;
 }
 
 // Represents one row in the reason_assignments table
@@ -36,3 +38,5 @@ export interface ReasonAssignment {
   reason: string;
   username: string;
 }
+
+    

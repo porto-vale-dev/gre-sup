@@ -162,6 +162,7 @@ export function CobrancaTicketForm() {
       observations: data.observations,
       copy_email: data.copy_email,
       files: filesToUpload,
+      cobranca: true,
     };
 
     const success = await addTicket(ticketPayload);
@@ -444,3 +445,5 @@ export function CobrancaTicketForm() {
     </Card>
   );
 }
+
+    

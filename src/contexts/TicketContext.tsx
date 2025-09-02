@@ -28,6 +28,7 @@ interface TicketContextType {
     observations?: string;
     copy_email?: string;
     files?: File[];
+    cobranca?: boolean;
   }) => Promise<boolean>;
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
   updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
@@ -100,6 +101,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     observations?: string;
     copy_email?: string;
     files?: File[];
+    cobranca?: boolean;
   }): Promise<boolean> => {
     try {
       let filePath: string | null = null;
@@ -145,6 +147,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         p_file_name: fileName,
         p_submission_date: submissionDate,
         p_user_id: user?.id ?? null,
+        p_cobranca: ticketData.cobranca ?? false,
       };
 
       const { data: newTicket, error: rpcError } = await dbClient
@@ -410,3 +413,5 @@ export function useTickets() {
   }
   return context;
 }
+
+    

@@ -162,6 +162,7 @@ export function TicketForm() {
       observations: data.observations,
       copy_email: data.copy_email,
       files: filesToUpload,
+      cobranca: false,
     };
 
     const success = await addTicket(ticketPayload);
@@ -444,3 +445,5 @@ export function TicketForm() {
     </Card>
   );
 }
+
+    
