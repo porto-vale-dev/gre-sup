@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Ticket, TicketStatus, SolutionFile, ReasonAssignment } from '@/types';
+import type { Ticket, TicketStatus, SolutionFile, ReasonAssignment, CobrancaTicket } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { supabaseAnon } from '@/lib/supabaseAnonClient';
 import { useToast } from "@/hooks/use-toast";
@@ -45,7 +45,7 @@ interface TicketContextType {
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
 
 // Função para mapear um ticket de cobrança para o formato de ticket padrão
-const mapCobrancaTicketToTicket = (cobrancaTicket: any): Ticket => {
+const mapCobrancaTicketToTicket = (cobrancaTicket: CobrancaTicket): Ticket => {
     return {
         id: cobrancaTicket.id,
         protocol: cobrancaTicket.id, // Usando o ID como protocolo para cobrança
@@ -59,8 +59,8 @@ const mapCobrancaTicketToTicket = (cobrancaTicket: any): Ticket => {
         estimated_response_time: 'N/A',
         observations: cobrancaTicket.observacoes,
         submission_date: cobrancaTicket.data_atend,
-        status: cobrancaTicket.status === 'Aberta' ? 'Novo' : 'Em Andamento',
-        responsible: cobrancaTicket.gerente_email || 'Cobrança', // Atribuído estaticamente
+        status: cobrancaTicket.status === 'Resolvida' ? 'Concluído' : 'Em Andamento',
+        responsible: cobrancaTicket.gerente || 'Cobrança',
         user_id: cobrancaTicket.user_id,
         cobranca: true,
     };
