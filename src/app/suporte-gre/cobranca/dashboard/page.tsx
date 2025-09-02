@@ -1,14 +1,14 @@
 
 'use client';
 
-import { DashboardClient } from "@/components/DashboardClient";
+import { CobrancaDashboardClient } from "@/components/CobrancaDashboardClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, ArrowLeft, Receipt } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function DashboardPage() {
+export default function CobrancaDashboardPage() {
   const { cargo } = useAuth();
   const allowedRoles = ['adm', 'greadmin', 'gre'];
 
@@ -43,15 +43,15 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold font-headline text-primary">Painel de Tickets</h1>
+        <h1 className="text-3xl font-bold font-headline text-primary">Painel de Cobrança</h1>
         <Button asChild>
-          <Link href="/suporte-gre/cobranca/dashboard">
-            <Receipt className="mr-2 h-4 w-4" />
-            Painel de Cobrança
+          <Link href="/suporte-gre/cobranca/novo">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Abrir Ticket de Cobrança
           </Link>
         </Button>
       </div>
-      <DashboardClient />
+      <CobrancaDashboardClient />
     </div>
   );
 }

@@ -17,10 +17,11 @@ export const diretores: Diretor[] = [
   { name: 'DUNAMIS - ROGÉRIO BIDUSCHI', email: 'rogerio.biduschi@portovaleconsorcios.com.br' },
   { name: 'ZARA - CYNTHIA NOGUEIRA', email: 'cynthia.nogueira@portovaleconsorcios.com.br' },
   { name: 'ANJOS - SIMONE ANJOS', email: 'simone.anjos@portovaleconsorcios.com.br' },
+  { name: 'LUCIANA', email: 'luciana@portovaleconsorcios.com.br' },
 ];
 
 export const gerentesPorDiretor: Record<string, Gerente[]> = {
-  'ATENAS - Denise': [
+  'ATENAS - DENISE': [
     { name: 'ANA DIAS', email: 'anadias@portovaleconsorcios.com.br' },
     { name: 'MARCUS PATTO', email: 'marcus.patto@portovaleconsorcios.com.br' },
     { name: 'MONICA BORGES', email: 'monica.borges@portovaleconsorcios.com.br' },
@@ -76,6 +77,9 @@ export const gerentesPorDiretor: Record<string, Gerente[]> = {
     { name: 'VANESSA MENDES', email: 'vanessa.mendes@portovaleconsorcios.com.br' },
     { name: 'PAULA MAROLLO', email: 'paula.marollo@portovaleconsorcios.com.br' },
     { name: 'ROSEMARY RIBEIRO', email: 'rosemary.ribeiro@portovaleconsorcios.com.br' },
+  ],
+  'LUCIANA': [
+    { name: 'LUCIANA', email: 'luciana@portovaleconsorcios.com.br' },
   ]
 };
 
