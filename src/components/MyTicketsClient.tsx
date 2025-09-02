@@ -49,8 +49,10 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetai
         <Card className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 hover:bg-muted/50 transition-colors">
             <div className="flex-grow space-y-2">
                 <div className="flex items-center gap-2">
-                    <span className={cn("h-2.5 w-2.5 rounded-full", ticket.cobranca ? 'bg-red-500' : 'bg-blue-500')}></span>
                     <p className="text-sm text-muted-foreground">#{String(ticket.protocol).padStart(4, '0')}</p>
+                    <Badge variant="outline" className={cn(ticket.cobranca ? "border-red-500 text-red-500" : "border-blue-500 text-blue-500")}>
+                      {ticket.cobranca ? 'Cobrança' : 'Suporte GRE'}
+                    </Badge>
                 </div>
                 <p className="font-semibold text-lg">{ticket.reason}</p>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
