@@ -59,8 +59,8 @@ const mapCobrancaTicketToTicket = (cobrancaTicket: any): Ticket => {
         estimated_response_time: 'N/A',
         observations: cobrancaTicket.observacoes,
         submission_date: cobrancaTicket.data_atend,
-        status: cobrancaTicket.status === 'Aberta' ? 'Novo' : 'Concluído',
-        responsible: 'Cobrança', // Atribuído estaticamente
+        status: cobrancaTicket.status === 'Aberta' ? 'Novo' : 'Em Andamento',
+        responsible: cobrancaTicket.gerente_email || 'Cobrança', // Atribuído estaticamente
         user_id: cobrancaTicket.user_id,
         cobranca: true,
     };

@@ -5,7 +5,6 @@ import { useState, useEffect, type ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +23,8 @@ import { diretores, gerentesPorDiretor, motivosCobranca, Gerente } from '@/lib/c
 import { FileText, Send, Loader2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useAuth } from '@/contexts/AuthContext'; 
+import { useAuth } from '@/contexts/AuthContext';
+import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
 
 const cobrancaTicketSchema = z.object({
     nome_cliente: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
@@ -44,6 +44,7 @@ type CobrancaTicketFormData = z.infer<typeof cobrancaTicketSchema>;
 export default function CobrancaPage() {
   const { toast } = useToast();
   const { user } = useAuth(); 
+  const { addTicket: addCobrancaTicket, isLoading } = useCobrancaTickets();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableGerentes, setAvailableGerentes] = useState<Gerente[]>([]);
   const [currentDate, setCurrentDate] = useState('');
@@ -126,45 +127,24 @@ export default function CobrancaPage() {
         });
         return;
     }
+
+    const selectedGerente = availableGerentes.find(g => g.name === data.gerente);
       
     setIsSubmitting(true);
-    try {
-        const { error } = await supabase
-            .rpc('create_ticket_cobranca', {
-                p_nome_cliente: data.nome_cliente,
-                p_cpf: data.cpf,
-                p_cota: data.cota,
-                p_producao: data.producao,
-                p_telefone: data.telefone,
-                p_email: data.email,
-                p_diretor: data.diretor,
-                p_gerente: data.gerente,
-                p_motivo: data.motivo,
-                p_observacoes: data.observacoes || null,
-                p_user_id: user.id 
-            });
-
-
-        if (error) {
-            throw error;
-        }
-
-        toast({
-            title: "Ticket de Cobrança Criado!",
-            description: "A solicitação foi registrada com sucesso.",
-        });
-        form.reset();
-        setAvailableGerentes([]);
-    } catch (error: any) {
-        toast({
-            title: "Erro ao criar ticket",
-            description: `Não foi possível salvar o ticket. Detalhes: ${error.message}`,
-            variant: "destructive",
-        });
-        console.error("Error creating cobranca ticket:", error);
-    } finally {
-        setIsSubmitting(false);
+    
+    const success = await addCobrancaTicket({
+        ...data,
+        gerente_email: selectedGerente?.email,
+        observacoes: data.observacoes || '',
+        user_id: user.id,
+    });
+    
+    if (success) {
+      form.reset();
+      setAvailableGerentes([]);
     }
+    
+    setIsSubmitting(false);
   }
 
   return (
@@ -385,9 +365,9 @@ export default function CobrancaPage() {
                             )}
                         />
                     </div>
-                    <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                        {isSubmitting ? "Enviando..." : "Enviar Solicitação"}
+                    <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting || isLoading}>
+                        {(isSubmitting || isLoading) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        {(isSubmitting || isLoading) ? "Enviando..." : "Enviar Solicitação"}
                     </Button>
                 </form>
                 </Form>

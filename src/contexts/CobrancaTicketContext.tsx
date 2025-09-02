@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { CobrancaTicket, CobrancaTicketStatus } from '@/types';
+import type { CobrancaTicket, CobrancaTicketStatus, CreateCobrancaTicket } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
@@ -12,7 +12,7 @@ interface CobrancaTicketContextType {
   tickets: CobrancaTicket[];
   isLoading: boolean;
   error: string | null;
-  addTicket: (ticketData: Omit<CobrancaTicket, 'id' | 'data_atend' | 'status'>) => Promise<boolean>;
+  addTicket: (ticketData: CreateCobrancaTicket) => Promise<boolean>;
   updateTicket: (ticketId: string, updates: Partial<CobrancaTicket>) => Promise<void>;
   fetchTickets: () => void;
 }
@@ -65,13 +65,13 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, fetchTickets]);
 
 
-  const addTicket = async (ticketData: Omit<CobrancaTicket, 'id' | 'data_atend' | 'status'>): Promise<boolean> => {
+  const addTicket = async (ticketData: CreateCobrancaTicket): Promise<boolean> => {
+    setIsLoading(true);
     try {
       if (!user) throw new Error("Usuário não autenticado.");
 
       const payload = {
         ...ticketData,
-        user_id: user.id,
         data_atend: new Date().toISOString(),
         status: 'Aberta' as CobrancaTicketStatus,
       };
@@ -90,6 +90,8 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       toast({ title: "Erro ao Criar Ticket", description: err.message, variant: "destructive" });
       console.error("Error adding cobranca ticket:", err);
       return false;
+    } finally {
+        setIsLoading(false);
     }
   };
 

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, Filter } from 'lucide-react';
+import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, Filter, User } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDetailsModal } from './TicketDetailsModal';
@@ -57,8 +57,11 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetai
                     </Badge>
                 </div>
                 <p className="font-semibold text-lg">{ticket.reason}</p>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/> Enviado {formatDistanceToNow(parseISO(ticket.submission_date), { addSuffix: true, locale: ptBR })}</span>
+                    {ticket.responsible && (
+                        <span className="flex items-center gap-1.5"><User className="h-4 w-4"/> Responsável: {ticket.responsible}</span>
+                    )}
                     <Badge variant={ticket.status === 'Concluído' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'} className={`${statusColors[ticket.status]} text-white`}>
                         {ticket.status}
                     </Badge>

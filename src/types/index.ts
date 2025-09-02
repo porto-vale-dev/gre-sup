@@ -11,7 +11,7 @@ export interface SolutionFile {
 
 export interface Ticket {
   id: string; 
-  protocol: number; 
+  protocol: number | string; 
   name: string;
   phone: string;
   copy_email?: string | null;
@@ -32,6 +32,8 @@ export interface Ticket {
 
   solution?: string | null;
   solution_files?: SolutionFile[] | null;
+
+  cobranca?: boolean;
 }
 
 // Type for the new "Apoio ao Comercial" tickets
@@ -47,10 +49,11 @@ export interface CobrancaTicket {
   // Responsáveis
   diretor: string;
   gerente: string;
+  gerente_email?: string | null;
   data_atend: string; // ISO String
   // Detalhes
   motivo: string;
-  observacoes_atend?: string | null;
+  observacoes?: string | null;
   // Retorno
   retorno_comercial_status?: RetornoComercialStatus | null;
   observacoes_retorno?: string | null;
@@ -58,6 +61,8 @@ export interface CobrancaTicket {
   status: CobrancaTicketStatus;
   user_id?: string | null; // Who created the ticket
 }
+
+export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'retorno_comercial_status' | 'observacoes_retorno'>;
 
 
 // Represents one row in the reason_assignments table for Suporte GRE
