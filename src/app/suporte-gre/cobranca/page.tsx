@@ -129,9 +129,8 @@ export default function CobrancaPage() {
                 p_diretor: data.diretor,
                 p_gerente: data.gerente,
                 p_motivo: data.motivo,
-                p_data_atend: new Date().toISOString(), // Passa a data atual
-                p_observacoes: data.observacoes || '',
-                // p_status é definido por padrão na função SQL
+                p_data_atend: new Date().toISOString(),
+                p_observacoes: data.observacoes || null,
             });
 
 
@@ -391,3 +390,4 @@ export default function CobrancaPage() {
     </div>
   );
 }
+    
