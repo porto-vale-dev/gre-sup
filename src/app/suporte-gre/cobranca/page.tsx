@@ -24,6 +24,7 @@ import { diretores, gerentesPorDiretor, motivosCobranca, Gerente } from '@/lib/c
 import { FileText, Send, Loader2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useAuth } from '@/contexts/AuthContext'; // Importar useAuth
 
 const cobrancaTicketSchema = z.object({
     nome_cliente: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
@@ -42,6 +43,7 @@ type CobrancaTicketFormData = z.infer<typeof cobrancaTicketSchema>;
 
 export default function CobrancaPage() {
   const { toast } = useToast();
+  const { user } = useAuth(); // Obter o usuário logado
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableGerentes, setAvailableGerentes] = useState<Gerente[]>([]);
   const [currentDate, setCurrentDate] = useState('');
@@ -116,6 +118,15 @@ export default function CobrancaPage() {
 
 
   async function onSubmit(data: CobrancaTicketFormData) {
+    if (!user) {
+        toast({
+            title: "Erro de Autenticação",
+            description: "Você precisa estar logado para criar um ticket.",
+            variant: "destructive",
+        });
+        return;
+    }
+      
     setIsSubmitting(true);
     try {
         const { error } = await supabase
@@ -129,8 +140,8 @@ export default function CobrancaPage() {
                 p_diretor: data.diretor,
                 p_gerente: data.gerente,
                 p_motivo: data.motivo,
-                p_data_atend: new Date().toISOString(),
                 p_observacoes: data.observacoes || null,
+                p_user_id: user.id // Enviar o ID do usuário
             });
 
 
@@ -390,4 +401,3 @@ export default function CobrancaPage() {
     </div>
   );
 }
-    
