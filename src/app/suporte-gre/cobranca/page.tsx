@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -45,6 +45,7 @@ export default function CobrancaPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableGerentes, setAvailableGerentes] = useState<Gerente[]>([]);
   const [currentDate, setCurrentDate] = useState('');
+  const previousEmailValue = useRef('');
 
   useEffect(() => {
     setCurrentDate(format(new Date(), "dd/MM/yyyy HH:mm:ss", { locale: ptBR }));
@@ -65,6 +66,10 @@ export default function CobrancaPage() {
       observacoes: "",
     },
   });
+
+  useEffect(() => {
+    previousEmailValue.current = form.getValues('email') ?? '';
+  }, [form]);
   
   const handleDiretorChange = (diretorName: string) => {
     setAvailableGerentes(gerentesPorDiretor[diretorName] || []);
@@ -112,6 +117,19 @@ export default function CobrancaPage() {
     }
 
     return formatted + `${cleanedValue.substring(2, 7)}-${cleanedValue.substring(7, 11)}`;
+  };
+
+  const handleEmailChange = (e: ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string) => void) => {
+    const currentValue = e.target.value;
+    const previousValue = previousEmailValue.current;
+    
+    if (currentValue.endsWith('@') && !previousValue.includes('@')) {
+        const prefix = currentValue.slice(0, -1);
+        fieldOnChange(`${prefix}@portovaleconsorcios.com.br`);
+    } else {
+        fieldOnChange(currentValue);
+    }
+    previousEmailValue.current = currentValue;
   };
 
 
@@ -257,7 +275,12 @@ export default function CobrancaPage() {
                                     <FormItem>
                                     <FormLabel>E-mail</FormLabel>
                                     <FormControl>
-                                        <Input type="email" placeholder="cliente@email.com" {...field} />
+                                        <Input 
+                                          type="email" 
+                                          placeholder="cliente@email.com" 
+                                          {...field}
+                                          onChange={(e) => handleEmailChange(e, field.onChange)}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
