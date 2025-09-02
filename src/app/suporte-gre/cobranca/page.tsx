@@ -30,7 +30,7 @@ const cobrancaTicketSchema = z.object({
     cpf: z.string().min(1, { message: "CPF ou CNPJ é obrigatório." }),
     cota: z.string().min(1, { message: "Número da cota é obrigatório." }),
     producao: z.string().min(1, { message: "Produção é obrigatória." }),
-    telefone: z.string().min(1, { message: "Telefone é obrigatório." }),
+    telefone: z.string().min(14, { message: "Telefone inválido. Preencha o DDD e o número." }),
     email: z.string().email({ message: "Formato de e-mail inválido." }),
     diretor: z.string().min(1, { message: "Selecione um diretor." }),
     gerente: z.string().min(1, { message: "Selecione um gerente." }),
@@ -382,3 +382,5 @@ export default function CobrancaPage() {
     </div>
   );
 }
+
+    
