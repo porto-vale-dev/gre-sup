@@ -121,7 +121,18 @@ export default function CobrancaPage() {
                 <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div className="space-y-4 p-4 border rounded-md">
-                        <h3 className="font-semibold text-lg text-primary">Identificação do Atendimento</h3>
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="font-semibold text-lg text-primary">Identificação do Atendimento</h3>
+                            <div className="space-y-2 text-right">
+                                <Label htmlFor="data_atend" className="flex items-center gap-1.5 text-xs text-muted-foreground justify-end"><Calendar className="h-4 w-4" /> Data do Atendimento</Label>
+                                <Input
+                                    id="data_atend"
+                                    value={currentDate}
+                                    disabled
+                                    className="cursor-not-allowed bg-muted/50 h-8 w-[150px] text-center text-xs"
+                                />
+                            </div>
+                        </div>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
@@ -201,15 +212,6 @@ export default function CobrancaPage() {
                                     </FormItem>
                                 )}
                             />
-                            <div className="space-y-2">
-                                <Label htmlFor="data_atend" className="flex items-center gap-1.5"><Calendar className="h-4 w-4 text-muted-foreground" /> Data do Atendimento</Label>
-                                <Input
-                                    id="data_atend"
-                                    value={currentDate}
-                                    disabled
-                                    className="cursor-not-allowed bg-muted/50"
-                                />
-                            </div>
                         </div>
                     </div>
                      <div className="space-y-4 p-4 border rounded-md">
