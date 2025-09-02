@@ -68,7 +68,7 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetai
                 </div>
             </div>
             <div className="mt-4 md:mt-0 md:ml-4">
-                 <Button variant="outline" size="icon" onClick={() => onOpenDetails(ticket)}>
+                 <Button variant="outline" size="icon" onClick={() => onOpenDetails(ticket)} disabled={ticket.cobranca}>
                     <Eye className="h-5 w-5" />
                     <span className="sr-only">Ver detalhes</span>
                 </Button>
@@ -80,7 +80,7 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetai
 
 export function MyTicketsClient() {
   const { tickets, isLoadingTickets, error } = useTickets();
-  const { user } = useAuth();
+  const { user, email: userEmail } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<FilterType>('all');
@@ -89,7 +89,21 @@ export function MyTicketsClient() {
 
   const myTickets = useMemo(() => {
     if (!user) return [];
-    return tickets.filter(ticket => ticket.user_id === user.id);
+    
+    // Filtra os tickets onde o user_id é o do usuário logado OU
+    // onde o email do gerente é o do usuário logado
+    // (A busca principal já faz isso, mas refiltramos por segurança e para o contador)
+    return tickets.filter(ticket => {
+        if(ticket.cobranca) {
+            // Para tickets de cobrança, verifica se o usuário é o criador OU o gerente
+            const isCreator = ticket.user_id === user.id;
+            const isManager = ticket.responsible === user.username; // Assumindo que o nome do gerente é o username
+            return isCreator || isManager;
+        }
+        // Para tickets de suporte, verifica apenas se o usuário é o criador
+        return ticket.user_id === user.id;
+    });
+
   }, [tickets, user]);
 
   const filteredTickets = useMemo(() => {

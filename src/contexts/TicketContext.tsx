@@ -74,7 +74,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
         setIsLoadingTickets(false);
         return;
     }
@@ -88,10 +88,14 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         .order('submission_date', { ascending: false });
 
       // 2. Fetch billing tickets from 'tickets_cobranca' table
+      // A gerente verá os tickets para os quais ela foi designada no email_gerente,
+      // e também os que ela mesma abriu (se for o caso) via user_id
       const cobrancaPromise = supabase
         .from('tickets_cobranca')
         .select('*')
+        .or(`user_id.eq.${user.id},email_gerente.eq.${user.email}`)
         .order('data_atend', { ascending: false });
+        
 
       // Execute both promises in parallel
       const [ticketResult, cobrancaResult] = await Promise.all([ticketPromise, cobrancaPromise]);
@@ -123,7 +127,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoadingTickets(false);
     }
-  }, [toast, isAuthenticated]);
+  }, [toast, isAuthenticated, user]);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
