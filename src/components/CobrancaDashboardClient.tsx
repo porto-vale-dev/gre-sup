@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 import type { CobrancaTicket, CobrancaTicketStatus } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,6 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
-import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
 import { COBRANCA_TICKET_STATUSES } from '@/lib/cobrancaData';
 
 
@@ -72,7 +72,9 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: CobrancaTicket;
 
 
 export function CobrancaDashboardClient() {
-  const { tickets, isLoading, error, fetchTickets } = useCobrancaTickets();
+  const [tickets, setTickets] = useState<CobrancaTicket[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   const [selectedTicket, setSelectedTicket] = useState<CobrancaTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -90,6 +92,24 @@ export function CobrancaDashboardClient() {
       setTempDate(date);
     }
   }, [isDatePopoverOpen, date]);
+  
+  const fetchTickets = async () => {
+    setIsLoading(true);
+    setError(null);
+    const { data, error } = await supabase.from('tickets_cobranca').select('*').order('data_atend', { ascending: false });
+    
+    if (error) {
+        setError(error.message);
+        console.error("Error fetching cobranca tickets:", error);
+    } else {
+        setTickets(data || []);
+    }
+    setIsLoading(false);
+  };
+  
+  useEffect(() => {
+    fetchTickets();
+  }, []);
 
 
   const filteredAndSortedTickets = useMemo(() => {
@@ -160,7 +180,7 @@ export function CobrancaDashboardClient() {
         <AlertDescription>
           <p>Não foi possível buscar os dados do banco de dados.</p>
           <p className="mt-2 text-xs"><strong>Detalhes do erro:</strong> {error}</p>
-          <Button onClick={() => fetchTickets()} className="mt-4">Tentar Novamente</Button>
+          <Button onClick={fetchTickets} className="mt-4">Tentar Novamente</Button>
         </AlertDescription>
       </Alert>
     );
