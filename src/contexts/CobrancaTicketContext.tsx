@@ -71,12 +71,9 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     try {
       if (!user) throw new Error("Usuário não autenticado.");
 
-      const allGerentes = Object.values(gerentesPorDiretor).flat();
-      const selectedGerente = allGerentes.find(g => g.name === ticketData.gerente);
-
       const payload = {
         ...ticketData,
-        gerente_email: selectedGerente?.email,
+        user_id: user.id,
         data_atend: new Date().toISOString(),
         status: 'Aberta' as CobrancaTicketStatus,
       };

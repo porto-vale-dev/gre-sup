@@ -49,7 +49,6 @@ export interface CobrancaTicket {
   // Responsáveis
   diretor: string;
   gerente: string;
-  gerente_email?: string | null;
   data_atend: string; // ISO String
   // Detalhes
   motivo: string;
@@ -62,7 +61,7 @@ export interface CobrancaTicket {
   user_id?: string | null; // Who created the ticket
 }
 
-export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'retorno_comercial_status' | 'observacoes_retorno' | 'gerente_email'>;
+export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'retorno_comercial_status' | 'observacoes_retorno' | 'user_id'> & { user_id: string };
 
 
 // Represents one row in the reason_assignments table for Suporte GRE
