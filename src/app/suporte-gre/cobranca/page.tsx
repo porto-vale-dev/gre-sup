@@ -119,12 +119,19 @@ export default function CobrancaPage() {
     setIsSubmitting(true);
     try {
         const { error } = await supabase
-            .from('tickets_cobranca')
-            .insert([{ 
-                ...data,
-                status: 'Aberta', // Default status on creation
-                data_atend: new Date().toISOString(),
-            }]);
+            .rpc('create_cobranca_ticket', {
+                p_nome_cliente: data.nome_cliente,
+                p_cpf: data.cpf,
+                p_cota: data.cota,
+                p_producao: data.producao,
+                p_telefone: data.telefone,
+                p_email: data.email,
+                p_diretor: data.diretor,
+                p_gerente: data.gerente,
+                p_motivo: data.motivo,
+                p_observacoes: data.observacoes || '',
+            });
+
 
         if (error) {
             throw error;
@@ -381,6 +388,5 @@ export default function CobrancaPage() {
         </Card>
     </div>
   );
-}
 
     
