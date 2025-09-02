@@ -5,7 +5,7 @@ import { DashboardClient } from "@/components/DashboardClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function DashboardPage() {
@@ -42,7 +42,15 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold font-headline mb-6 text-primary">Painel de Tickets</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold font-headline text-primary">Painel de Tickets</h1>
+        <Button asChild>
+          <Link href="/suporte-gre/cobranca">
+            <DollarSign className="mr-2 h-4 w-4" />
+            Cobrança
+          </Link>
+        </Button>
+      </div>
       <DashboardClient />
     </div>
   );
