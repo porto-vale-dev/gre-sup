@@ -45,6 +45,28 @@ interface TicketContextType {
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
 
+// Função para mapear um ticket de cobrança para o formato de ticket padrão
+const mapCobrancaTicketToTicket = (cobrancaTicket: any): Ticket => {
+    return {
+        id: cobrancaTicket.id,
+        protocol: cobrancaTicket.id, // Usando o ID como protocolo para cobrança
+        name: cobrancaTicket.diretor, // Usando diretor como solicitante
+        phone: cobrancaTicket.telefone,
+        client_name: cobrancaTicket.nome_cliente,
+        cpf: cobrancaTicket.cpf,
+        grupo: 'N/A', // Cobrança não tem grupo
+        cota: cobrancaTicket.cota,
+        reason: cobrancaTicket.motivo,
+        estimated_response_time: 'N/A',
+        observations: cobrancaTicket.observacoes,
+        submission_date: cobrancaTicket.data_atend,
+        status: cobrancaTicket.status === 'Aberta' ? 'Novo' : 'Concluído',
+        responsible: 'Cobrança', // Atribuído estaticamente
+        user_id: cobrancaTicket.user_id,
+        cobranca: true,
+    };
+};
+
 export function TicketProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
@@ -60,15 +82,37 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     setIsLoadingTickets(true);
     setError(null);
     try {
-      const { data, error: fetchError } = await supabase
+      // 1. Fetch standard support tickets
+      const ticketPromise = supabase
         .from('tickets')
         .select('*')
         .order('submission_date', { ascending: false });
 
-      if (fetchError) {
-        throw new Error(fetchError.message);
+      // 2. Fetch billing tickets
+      const cobrancaPromise = supabase
+        .from('tickets_cobranca')
+        .select('*')
+        .order('data_atend', { ascending: false });
+
+      // Execute both promises in parallel
+      const [ticketResult, cobrancaResult] = await Promise.all([ticketPromise, cobrancaPromise]);
+
+      if (ticketResult.error) {
+        throw new Error(`Erro ao buscar tickets de suporte: ${ticketResult.error.message}`);
       }
-      setTickets(data || []);
+      if (cobrancaResult.error) {
+        throw new Error(`Erro ao buscar tickets de cobrança: ${cobrancaResult.error.message}`);
+      }
+
+      const standardTickets = ticketResult.data || [];
+      const cobrancaTickets = (cobrancaResult.data || []).map(mapCobrancaTicketToTicket);
+      
+      // 3. Combine and sort the tickets
+      const combinedTickets = [...standardTickets, ...cobrancaTickets];
+      combinedTickets.sort((a, b) => new Date(b.submission_date).getTime() - new Date(a.submission_date).getTime());
+      
+      setTickets(combinedTickets);
+
     } catch (err: any) {
         const errorMessage = err.message || 'Ocorreu um erro desconhecido ao buscar os tickets.';
         setError(errorMessage);
@@ -156,19 +200,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erro ao salvar ticket: ${rpcError.message}`);
       }
       
-      // If the ticket is a "cobranca" ticket, update the row after creation.
-      // This avoids changing the public RPC function signature.
-      if (ticketData.cobranca && newTicket.id) {
-          const { error: updateError } = await supabase
-            .from('tickets')
-            .update({ cobranca: true })
-            .eq('id', newTicket.id);
-
-          if (updateError) {
-            // Log the error but don't fail the whole process, as the ticket was already created.
-            console.error('Could not set cobranca flag:', updateError.message);
-          }
-      }
+      // This part is no longer necessary as cobranca tickets are created via a different form/logic
+      // if (ticketData.cobranca && newTicket.id) { ... }
 
       const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
       fetch(webhookUrl, {

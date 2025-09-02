@@ -45,11 +45,13 @@ const StatCard = ({ title, value }: { title: string; value: number }) => (
 
 const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetails: (ticket: Ticket) => void }) => {
     const StatusIcon = statusIcons[ticket.status] || TicketIcon;
+    const protocolDisplay = ticket.cobranca ? ticket.id.substring(0, 8) : String(ticket.protocol).padStart(4, '0');
+
     return (
         <Card className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 hover:bg-muted/50 transition-colors">
             <div className="flex-grow space-y-2">
                 <div className="flex items-center gap-2">
-                    <p className="text-sm text-muted-foreground">#{String(ticket.protocol).padStart(4, '0')}</p>
+                    <p className="text-sm text-muted-foreground">#{protocolDisplay}</p>
                     <Badge variant="outline" className={cn(ticket.cobranca ? "border-red-500 text-red-500" : "border-blue-500 text-blue-500")}>
                       {ticket.cobranca ? 'Cobrança' : 'Suporte GRE'}
                     </Badge>
@@ -97,7 +99,10 @@ export function MyTicketsClient() {
     }
 
     const searchFiltered = typeFiltered.filter(ticket => 
-        String(ticket.protocol).includes(searchTerm.toLowerCase()) ||
+        (ticket.cobranca 
+          ? ticket.id.toLowerCase().includes(searchTerm.toLowerCase())
+          : String(ticket.protocol).toLowerCase().includes(searchTerm.toLowerCase())
+        ) ||
         ticket.reason.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -111,6 +116,11 @@ export function MyTicketsClient() {
   }), [myTickets]);
 
   const handleOpenDetails = (ticket: Ticket) => {
+    if (ticket.cobranca) {
+        // Para tickets de cobrança, não há modal de detalhes por enquanto.
+        // Pode-se adicionar uma lógica aqui no futuro se necessário.
+        return;
+    }
     setSelectedTicket(ticket);
     setIsModalOpen(true);
   };
