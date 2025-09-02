@@ -27,7 +27,7 @@ import { ptBR } from 'date-fns/locale';
 
 const cobrancaTicketSchema = z.object({
     nome_cliente: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
-    cpf: z.string().min(1, { message: "CPF ou CNPJ é obrigatório." }),
+    cpf: z.string().min(14, { message: "CPF ou CNPJ inválido." }),
     cota: z.string().min(1, { message: "Número da cota é obrigatório." }),
     producao: z.string().min(1, { message: "Produção é obrigatória." }),
     telefone: z.string().min(14, { message: "Telefone inválido. Preencha o DDD e o número." }),
