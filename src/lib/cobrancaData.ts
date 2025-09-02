@@ -10,7 +10,7 @@ export interface Gerente {
 }
 
 export const diretores: Diretor[] = [
-  { name: 'Atenas - Denise', email: 'denise@portovaleconsorcios.com.br' },
+  { name: 'ATENAS - Denise', email: 'denise@portovaleconsorcios.com.br' },
   { name: 'FÊNIX - ERICA MACEDO', email: 'erica@portovaleconsorcios.com.br' },
   { name: 'EAGLES - SIMONE LAGO', email: 'simone@portovaleconsorcios.com.br' },
   { name: 'DIAMANTES - VÂNIA MONTEIRO', email: 'vania@portovaleconsorcios.com.br' },
@@ -20,7 +20,7 @@ export const diretores: Diretor[] = [
 ];
 
 export const gerentesPorDiretor: Record<string, Gerente[]> = {
-  'Atenas - Denise': [
+  'ATENAS - Denise': [
     { name: 'ANA DIAS', email: 'anadias@portovaleconsorcios.com.br' },
     { name: 'MARCUS PATTO', email: 'marcus.patto@portovaleconsorcios.com.br' },
     { name: 'MONICA BORGES', email: 'monica.borges@portovaleconsorcios.com.br' },
