@@ -1,9 +1,311 @@
-import { CobrancaTicketForm } from "@/components/CobrancaTicketForm";
+
+"use client";
+
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { supabase } from '@/lib/supabaseClient';
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { diretores, gerentesPorDiretor, motivosCobranca, Gerente } from '@/lib/cobrancaData';
+import { FileText, Send, Loader2 } from 'lucide-react';
+
+const cobrancaTicketSchema = z.object({
+    nome_cliente: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
+    cpf: z.string().min(1, { message: "CPF ou CNPJ é obrigatório." }),
+    cota: z.string().min(1, { message: "Número da cota é obrigatório." }),
+    producao: z.string().min(1, { message: "Produção é obrigatória." }),
+    telefone: z.string().min(1, { message: "Telefone é obrigatório." }),
+    email: z.string().email({ message: "Formato de e-mail inválido." }),
+    diretor: z.string().min(1, { message: "Selecione um diretor." }),
+    gerente: z.string().min(1, { message: "Selecione um gerente." }),
+    motivo: z.string().min(1, { message: "Selecione um motivo." }),
+    observacoes: z.string().optional(),
+});
+
+type CobrancaTicketFormData = z.infer<typeof cobrancaTicketSchema>;
 
 export default function CobrancaPage() {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableGerentes, setAvailableGerentes] = useState<Gerente[]>([]);
+
+  const form = useForm<CobrancaTicketFormData>({
+    resolver: zodResolver(cobrancaTicketSchema),
+    defaultValues: {
+      nome_cliente: "",
+      cpf: "",
+      cota: "",
+      producao: "",
+      telefone: "",
+      email: "",
+      diretor: "",
+      gerente: "",
+      motivo: "",
+      observacoes: "",
+    },
+  });
+  
+  const handleDiretorChange = (diretorName: string) => {
+    setAvailableGerentes(gerentesPorDiretor[diretorName] || []);
+    form.setValue('gerente', ''); // Reset manager selection
+    form.setValue("diretor", diretorName, { shouldValidate: true });
+  };
+
+
+  async function onSubmit(data: CobrancaTicketFormData) {
+    setIsSubmitting(true);
+    try {
+        const { error } = await supabase
+            .from('tickets_cobranca')
+            .insert([{ 
+                ...data,
+                status: 'Aberta', // Default status on creation
+                data_atend: new Date().toISOString(),
+            }]);
+
+        if (error) {
+            throw error;
+        }
+
+        toast({
+            title: "Ticket de Cobrança Criado!",
+            description: "A solicitação foi registrada com sucesso.",
+        });
+        form.reset();
+        setAvailableGerentes([]);
+    } catch (error: any) {
+        toast({
+            title: "Erro ao criar ticket",
+            description: `Não foi possível salvar o ticket. Detalhes: ${error.message}`,
+            variant: "destructive",
+        });
+        console.error("Error creating cobranca ticket:", error);
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="py-8">
-      <CobrancaTicketForm />
+       <Card className="w-full max-w-4xl mx-auto shadow-xl">
+            <CardHeader>
+                <CardTitle className="font-headline text-3xl text-primary flex items-center gap-2">
+                <FileText className="h-8 w-8" /> Ticket de Cobrança - Retenção
+                </CardTitle>
+                <CardDescription>
+                Preencha os campos abaixo para abrir uma nova solicitação de cobrança e retenção.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="space-y-4 p-4 border rounded-md">
+                        <h3 className="font-semibold text-lg text-primary">Identificação do Atendimento</h3>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="nome_cliente"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Nome Completo do Cliente</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Nome do cliente" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="cpf"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>CPF ou CNPJ</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="000.000.000-00" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="cota"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Número da Cota</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Cota" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="producao"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Produção</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Produção" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="telefone"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Telefone</FormLabel>
+                                    <FormControl>
+                                        <Input type="tel" placeholder="(00) 00000-0000" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>E-mail</FormLabel>
+                                    <FormControl>
+                                        <Input type="email" placeholder="cliente@email.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
+                     <div className="space-y-4 p-4 border rounded-md">
+                        <h3 className="font-semibold text-lg text-primary">Responsáveis pelo Cliente</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <FormField
+                                control={form.control}
+                                name="diretor"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Diretor Responsável</FormLabel>
+                                    <Select onValueChange={handleDiretorChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                        <SelectValue placeholder="Selecione o diretor" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {diretores.map(d => (
+                                        <SelectItem key={d.name} value={d.name}>
+                                            {d.name}
+                                        </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="gerente"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Gerente Responsável</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value} disabled={availableGerentes.length === 0}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                        <SelectValue placeholder="Selecione o gerente" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {availableGerentes.map(g => (
+                                        <SelectItem key={g.name} value={g.name}>
+                                            {g.name}
+                                        </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
+                     <div className="space-y-4 p-4 border rounded-md">
+                        <h3 className="font-semibold text-lg text-primary">Detalhes da Solicitação</h3>
+                         <FormField
+                            control={form.control}
+                            name="motivo"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Motivo da Solicitação</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                    <SelectValue placeholder="Selecione o motivo" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {motivosCobranca.map(m => (
+                                    <SelectItem key={m} value={m}>
+                                        {m}
+                                    </SelectItem>
+                                    ))}
+                                </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="observacoes"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Observações do Atendimento</FormLabel>
+                                <FormControl>
+                                    <Textarea
+                                    placeholder="Detalhes do atendimento, histórico do cliente, informações adicionais..."
+                                    className="min-h-[120px] resize-y"
+                                    {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        {isSubmitting ? "Enviando..." : "Enviar Solicitação"}
+                    </Button>
+                </form>
+                </Form>
+            </CardContent>
+             <CardFooter>
+                <p className="text-xs text-muted-foreground">
+                As informações registradas serão usadas para a análise e retenção do cliente.
+                </p>
+            </CardFooter>
+        </Card>
     </div>
   );
 }
