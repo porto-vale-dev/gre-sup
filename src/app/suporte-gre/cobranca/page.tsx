@@ -73,6 +73,48 @@ export default function CobrancaPage() {
   };
 
 
+  const formatCpfCnpj = (value: string) => {
+    const cleanedValue = value.replace(/\D/g, ''); // Remove non-digit characters
+  
+    if (cleanedValue.length <= 11) {
+      // CPF format
+      return cleanedValue
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    } else {
+      // CNPJ format
+      return cleanedValue
+        .substring(0, 14) // Limit to 14 digits for CNPJ
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2')
+        .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+    }
+  };
+  
+  const formatPhone = (value: string) => {
+    const cleanedValue = value.replace(/\D/g, '');
+    const length = cleanedValue.length;
+
+    if (length <= 2) {
+      return `(${cleanedValue}`;
+    } 
+    
+    let formatted = `(${cleanedValue.substring(0, 2)}) `;
+
+    if (length <= 6) {
+        return formatted + cleanedValue.substring(2);
+    }
+    
+    if (length <= 10) {
+        return formatted + `${cleanedValue.substring(2, 6)}-${cleanedValue.substring(6)}`;
+    }
+
+    return formatted + `${cleanedValue.substring(2, 7)}-${cleanedValue.substring(7, 11)}`;
+  };
+
+
   async function onSubmit(data: CobrancaTicketFormData) {
     setIsSubmitting(true);
     try {
@@ -154,7 +196,11 @@ export default function CobrancaPage() {
                                     <FormItem>
                                     <FormLabel>CPF ou CNPJ</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="000.000.000-00" {...field} />
+                                        <Input 
+                                          placeholder="000.000.000-00" 
+                                          {...field}
+                                          onChange={(e) => field.onChange(formatCpfCnpj(e.target.value))}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
@@ -193,7 +239,12 @@ export default function CobrancaPage() {
                                     <FormItem>
                                     <FormLabel>Telefone</FormLabel>
                                     <FormControl>
-                                        <Input type="tel" placeholder="(00) 00000-0000" {...field} />
+                                        <Input 
+                                          type="tel" 
+                                          placeholder="(00) 00000-0000" 
+                                          {...field}
+                                          onChange={(e) => field.onChange(formatPhone(e.target.value))}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
