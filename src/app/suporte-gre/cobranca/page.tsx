@@ -1,5 +1,5 @@
 
-"use client";
+'use client';
 
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
@@ -388,5 +388,4 @@ export default function CobrancaPage() {
         </Card>
     </div>
   );
-
-    
+}
