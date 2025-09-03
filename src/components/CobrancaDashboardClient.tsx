@@ -32,7 +32,7 @@ const statusColors: Record<CobrancaTicketStatus, string> = {
   "Fora do prazo": "bg-red-500",
 };
 
-const CobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: CobrancaTicket; onOpenDetails: (ticket: CobrancaTicket) => void; }) => {
+const CobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket: CobrancaTicket; onOpenDetails: (ticket: CobrancaTicket) => void; onStatusChange: (ticketId: string, status: CobrancaTicketStatus) => void; }) => {
     const protocolDisplay = ticket.id.substring(0, 8); 
 
     return (
@@ -64,6 +64,20 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: CobrancaTicket;
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span>Cliente: {ticket.nome_cliente}</span>
                 </div>
+                <div className="flex items-center gap-2 pt-2">
+                    <Select value={ticket.status} onValueChange={(newStatus) => onStatusChange(ticket.id, newStatus as CobrancaTicketStatus)}>
+                        <SelectTrigger className="h-9 text-xs w-full" aria-label="Mudar status do ticket">
+                            <SelectValue placeholder="Mudar status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {COBRANCA_TICKET_STATUSES.map(s => (
+                            <SelectItem key={s} value={s} className="text-xs">
+                            {s}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </CardContent>
             <CardFooter>
                  <Button variant="outline" size="sm" className="w-full" onClick={() => onOpenDetails(ticket)}>
@@ -77,7 +91,7 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: CobrancaTicket;
 
 
 export function CobrancaDashboardClient() {
-  const { tickets, isLoading, error, fetchTickets } = useCobrancaTickets();
+  const { tickets, isLoading, error, fetchTickets, updateTicket } = useCobrancaTickets();
   
   const [selectedTicket, setSelectedTicket] = useState<CobrancaTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -123,7 +137,7 @@ export function CobrancaDashboardClient() {
       .sort((a, b) => {
         const dateA = new Date(a.data_atend).getTime();
         const dateB = new Date(b.data_atend).getTime();
-        return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+        return sortOrder === "asc" ? dateA - dateB : dateB - a.data_atend;
       });
   }, [tickets, searchTerm, statusFilter, sortOrder, date]);
 
@@ -135,6 +149,10 @@ export function CobrancaDashboardClient() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedTicket(null);
+  };
+  
+  const handleStatusChange = (ticketId: string, status: CobrancaTicketStatus) => {
+    updateTicket(ticketId, { status });
   };
 
   const ticketStatusesForFilter = useMemo(() => {
@@ -284,7 +302,12 @@ export function CobrancaDashboardClient() {
       ) : (
         <div className={`gap-6 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'space-y-4'}`}>
           {filteredAndSortedTickets.map(ticket => (
-            <CobrancaTicketCard key={ticket.id} ticket={ticket} onOpenDetails={handleOpenDetails} />
+            <CobrancaTicketCard 
+              key={ticket.id} 
+              ticket={ticket} 
+              onOpenDetails={handleOpenDetails}
+              onStatusChange={handleStatusChange}
+            />
           ))}
         </div>
       )}
