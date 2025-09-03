@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { CobrancaTicket, CobrancaTicketStatus, CreateCobrancaTicket } from '@/types';
+import type { CobrancaTicket, CobrancaTicketStatus, CreateCobrancaTicket, RetornoComercialStatus } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
@@ -15,6 +15,12 @@ interface CobrancaTicketContextType {
   error: string | null;
   addTicket: (ticketData: CreateCobrancaTicket) => Promise<boolean>;
   updateTicket: (ticketId: string, updates: Partial<CobrancaTicket>) => Promise<void>;
+  updateRetornoComercial: (
+    ticketId: string, 
+    status: RetornoComercialStatus, 
+    observacoes: string
+  ) => Promise<boolean>;
+  getTicketById: (ticketId: string) => CobrancaTicket | undefined;
   fetchTickets: () => void;
 }
 
@@ -35,7 +41,6 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      // Chama a função RPC segura para buscar os tickets
       const { data, error: rpcError } = await supabase
         .rpc('get_cobranca_tickets_for_user');
 
@@ -116,6 +121,38 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     await fetchTickets();
   };
 
+  const updateRetornoComercial = async (ticketId: string, status: RetornoComercialStatus, observacoes: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.from('tickets_cobranca')
+        .update({
+          retorno_comercial_status: status,
+          observacoes_retorno: observacoes,
+        })
+        .eq('id', ticketId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso!",
+        description: "O retorno do comercial foi salvo.",
+      });
+      await fetchTickets();
+      return true;
+    } catch (err: any) {
+       toast({
+        title: "Erro ao Salvar",
+        description: err.message || "Não foi possível salvar o retorno.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const getTicketById = (ticketId: string): CobrancaTicket | undefined => {
+    return tickets.find(ticket => ticket.id === ticketId);
+  };
+
+
   return (
     <CobrancaTicketContext.Provider value={{ 
         tickets, 
@@ -123,6 +160,8 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
         error, 
         addTicket, 
         updateTicket,
+        updateRetornoComercial,
+        getTicketById,
         fetchTickets, 
     }}>
       {children}

@@ -20,6 +20,7 @@ import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { COBRANCA_TICKET_STATUSES } from '@/lib/cobrancaData';
+import { CobrancaTicketDetailsModal } from './CobrancaTicketDetailsModal';
 
 
 const statusColors: Record<CobrancaTicketStatus, string> = {
@@ -67,7 +68,7 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: CobrancaTicket;
             <CardFooter>
                  <Button variant="outline" size="sm" className="w-full" onClick={() => onOpenDetails(ticket)}>
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    Ver Detalhes (Em breve)
+                    Ver Detalhes
                 </Button>
             </CardFooter>
         </Card>
@@ -127,9 +128,13 @@ export function CobrancaDashboardClient() {
   }, [tickets, searchTerm, statusFilter, sortOrder, date]);
 
   const handleOpenDetails = (ticket: CobrancaTicket) => {
-    // Modal for details is not yet implemented for cobranca tickets
-    // setSelectedTicket(ticket);
-    // setIsModalOpen(true);
+    setSelectedTicket(ticket);
+    setIsModalOpen(true);
+  };
+  
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTicket(null);
   };
 
   const ticketStatusesForFilter = useMemo(() => {
@@ -282,6 +287,13 @@ export function CobrancaDashboardClient() {
             <CobrancaTicketCard key={ticket.id} ticket={ticket} onOpenDetails={handleOpenDetails} />
           ))}
         </div>
+      )}
+       {selectedTicket && (
+        <CobrancaTicketDetailsModal
+          ticket={selectedTicket}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
       )}
     </div>
   );
