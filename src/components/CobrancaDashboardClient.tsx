@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
 import type { CobrancaTicket, CobrancaTicketStatus } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -72,9 +72,7 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: CobrancaTicket;
 
 
 export function CobrancaDashboardClient() {
-  const [tickets, setTickets] = useState<CobrancaTicket[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { tickets, isLoading, error, fetchTickets } = useCobrancaTickets();
   
   const [selectedTicket, setSelectedTicket] = useState<CobrancaTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -93,25 +91,6 @@ export function CobrancaDashboardClient() {
     }
   }, [isDatePopoverOpen, date]);
   
-  const fetchTickets = async () => {
-    setIsLoading(true);
-    setError(null);
-    const { data, error } = await supabase.from('tickets_cobranca').select('*').order('data_atend', { ascending: false });
-    
-    if (error) {
-        setError(error.message);
-        console.error("Error fetching cobranca tickets:", error);
-    } else {
-        setTickets(data || []);
-    }
-    setIsLoading(false);
-  };
-  
-  useEffect(() => {
-    fetchTickets();
-  }, []);
-
-
   const filteredAndSortedTickets = useMemo(() => {
     return tickets
       .filter(ticket => {
