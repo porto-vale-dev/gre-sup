@@ -82,6 +82,7 @@ export function MyTicketsClient() {
 
   const myTickets = useMemo(() => {
     if (!user) return [];
+    // Filtra apenas tickets de suporte (aqueles criados pelo usuário logado)
     return tickets.filter(ticket => ticket.user_id === user.id);
   }, [tickets, user]);
 

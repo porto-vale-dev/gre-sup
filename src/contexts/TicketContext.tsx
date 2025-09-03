@@ -60,6 +60,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     setIsLoadingTickets(true);
     setError(null);
     try {
+      // Simplificado para buscar apenas da tabela 'tickets' de suporte
       const { data, error: fetchError } = await supabase
         .from('tickets')
         .select('*')
