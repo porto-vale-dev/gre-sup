@@ -4,18 +4,21 @@
 import { useState, useMemo } from 'react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Ticket, TicketStatus } from '@/types';
+import type { Ticket, TicketStatus, CobrancaTicket } from '@/types';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, User } from 'lucide-react';
+import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, User, Filter, Briefcase } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDetailsModal } from './TicketDetailsModal';
+import { CobrancaTicketDetailsModal } from './CobrancaTicketDetailsModal';
 import Link from 'next/link';
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
 
 const statusColors: Record<TicketStatus, string> = {
   "Novo": "bg-blue-500 hover:bg-blue-500",
@@ -23,6 +26,13 @@ const statusColors: Record<TicketStatus, string> = {
   "Ativo": "bg-orange-500 hover:bg-orange-500",
   "Atrasado": "bg-red-500 hover:bg-red-500",
   "Concluído": "bg-green-500 hover:bg-green-500",
+  // Cobrança statuses need to be handled, we can map them
+  "Aberta": "bg-blue-500 hover:bg-blue-500",
+  "Em análise": "bg-yellow-500 hover:bg-yellow-500",
+  "Encaminhada": "bg-orange-500 hover:bg-orange-500",
+  "Resolvida": "bg-green-500 hover:bg-green-500",
+  "Dentro do prazo": "bg-teal-500 hover:bg-teal-500",
+  "Fora do prazo": "bg-red-500 hover:bg-red-500",
 };
 
 const statusIcons: Record<TicketStatus, React.ElementType> = {
@@ -31,6 +41,13 @@ const statusIcons: Record<TicketStatus, React.ElementType> = {
   "Ativo": Hourglass,
   "Atrasado": AlertCircle,
   "Concluído": CheckCircle2,
+  // Cobrança
+  "Aberta": FileText,
+  "Em análise": Hourglass,
+  "Encaminhada": Hourglass,
+  "Resolvida": CheckCircle2,
+  "Dentro do prazo": CheckCircle2,
+  "Fora do prazo": AlertCircle,
 };
 
 const StatCard = ({ title, value }: { title: string; value: number }) => (
@@ -40,15 +57,27 @@ const StatCard = ({ title, value }: { title: string; value: number }) => (
     </Card>
 );
 
+const isCobrancaTicket = (ticket: Ticket): ticket is Ticket & { diretor: string } => {
+    return 'diretor' in ticket && ticket.diretor !== null;
+};
+
 const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetails: (ticket: Ticket) => void }) => {
     const StatusIcon = statusIcons[ticket.status] || TicketIcon;
     const protocolDisplay = String(ticket.protocol).padStart(4, '0');
+    const isCobrança = isCobrancaTicket(ticket);
+    const ticketProtocolDisplay = isCobrança ? ticket.id.substring(0,8) : protocolDisplay;
 
     return (
         <Card className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 hover:bg-muted/50 transition-colors">
             <div className="flex-grow space-y-2">
                 <div className="flex items-center gap-2">
-                    <p className="text-sm text-muted-foreground">#{protocolDisplay}</p>
+                     <p className="text-sm text-muted-foreground">#{ticketProtocolDisplay}</p>
+                    {isCobrança && (
+                        <Badge variant="outline" className="border-amber-500/50 text-amber-600 flex items-center gap-1">
+                            <Briefcase className="h-3 w-3"/>
+                            Apoio ao Comercial
+                        </Badge>
+                    )}
                 </div>
                 <p className="font-semibold text-lg">{ticket.reason}</p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
@@ -56,7 +85,7 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetai
                     {ticket.responsible && (
                         <span className="flex items-center gap-1.5"><User className="h-4 w-4"/> Responsável: {ticket.responsible}</span>
                     )}
-                    <Badge variant={ticket.status === 'Concluído' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'} className={`${statusColors[ticket.status]} text-white`}>
+                    <Badge variant={ticket.status === 'Concluído' || ticket.status === 'Resolvida' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'} className={`${statusColors[ticket.status as TicketStatus]} text-white`}>
                         {ticket.status}
                     </Badge>
                 </div>
@@ -75,6 +104,9 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetai
 export function MyTicketsClient() {
   const { tickets, isLoadingTickets, error } = useTickets();
   const { user } = useAuth();
+  
+  type FilterType = 'Todos' | 'Suporte' | 'Cobrança';
+  const [filterType, setFilterType] = useState<FilterType>('Todos');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -82,22 +114,42 @@ export function MyTicketsClient() {
 
   const myTickets = useMemo(() => {
     if (!user) return [];
-    // Filtra apenas tickets de suporte (aqueles criados pelo usuário logado)
-    return tickets.filter(ticket => ticket.user_id === user.id);
+    
+    // Suporte: tickets where user_id matches logged in user.
+    const supportTickets = tickets.filter(t => t.user_id === user.id && !isCobrancaTicket(t));
+    
+    // Cobrança: tickets where email_gerente matches logged in user's email.
+    // The context already handles this filtering. We just need to identify them.
+    const cobrançaTickets = tickets.filter(t => isCobrancaTicket(t));
+    
+    return [...supportTickets, ...cobrançaTickets];
   }, [tickets, user]);
 
   const filteredTickets = useMemo(() => {
-    return myTickets.filter(ticket => 
-        String(ticket.protocol).toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.reason.toLowerCase().includes(searchTerm.toLowerCase())
-    ).sort((a, b) => parseISO(b.submission_date).getTime() - parseISO(a.submission_date).getTime());
-  }, [myTickets, searchTerm]);
+    return myTickets.filter(ticket => {
+        const typeMatch = 
+            filterType === 'Todos' ||
+            (filterType === 'Suporte' && !isCobrancaTicket(ticket)) ||
+            (filterType === 'Cobrança' && isCobrancaTicket(ticket));
 
-  const stats = useMemo(() => ({
-    total: myTickets.length,
-    pending: myTickets.filter(t => t.status !== 'Concluído').length,
-    completed: myTickets.filter(t => t.status === 'Concluído').length
-  }), [myTickets]);
+        const protocolMatch = isCobrancaTicket(ticket) 
+            ? ticket.id.toLowerCase().includes(searchTerm.toLowerCase())
+            : String(ticket.protocol).toLowerCase().includes(searchTerm.toLowerCase());
+
+        const searchMatch = protocolMatch || ticket.reason.toLowerCase().includes(searchTerm.toLowerCase());
+
+        return typeMatch && searchMatch;
+    }).sort((a, b) => parseISO(b.submission_date).getTime() - parseISO(a.submission_date).getTime());
+  }, [myTickets, searchTerm, filterType]);
+
+  const stats = useMemo(() => {
+    const relevantTickets = myTickets; // Base stats on all user-related tickets
+    return {
+        total: relevantTickets.length,
+        pending: relevantTickets.filter(t => t.status !== 'Concluído' && t.status !== 'Resolvida').length,
+        completed: relevantTickets.filter(t => t.status === 'Concluído' || t.status === 'Resolvida').length
+    };
+  }, [myTickets]);
 
   const handleOpenDetails = (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -152,11 +204,25 @@ export function MyTicketsClient() {
         </div>
         
         <Card className="p-6">
-            <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-                <TicketIcon className="w-24 h-24 text-primary/20 hidden md:block shrink-0" />
-                <div className="text-center md:text-left">
-                    <h2 className="text-2xl font-bold">Acompanhe o andamento das suas solicitações</h2>
-                    <p className="text-muted-foreground mt-1">Veja abaixo suas solicitações e acompanhe a resposta do nosso time especializado.</p>
+             <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                <div className="flex items-start gap-6">
+                    <TicketIcon className="w-24 h-24 text-primary/20 hidden md:block shrink-0" />
+                    <div className="text-center md:text-left">
+                        <h2 className="text-2xl font-bold">Acompanhe o andamento das suas solicitações</h2>
+                        <p className="text-muted-foreground mt-1">Veja abaixo suas solicitações e acompanhe a resposta do nosso time especializado.</p>
+                    </div>
+                </div>
+
+                <div className="border rounded-lg p-3 w-full md:w-auto shrink-0">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Filter className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Filtrar por tipo</span>
+                    </div>
+                     <ToggleGroup type="single" value={filterType} onValueChange={(value: FilterType) => {if(value) setFilterType(value)}} className="justify-start">
+                        <ToggleGroupItem value="Todos" aria-label="Ver todos">Todos</ToggleGroupItem>
+                        <ToggleGroupItem value="Suporte" aria-label="Ver Suporte GRE">Suporte GRE</ToggleGroupItem>
+                        <ToggleGroupItem value="Cobrança" aria-label="Ver Cobrança">Cobrança</ToggleGroupItem>
+                    </ToggleGroup>
                 </div>
             </div>
         </Card>
@@ -186,19 +252,26 @@ export function MyTicketsClient() {
                 <Card className="flex flex-col items-center justify-center text-center p-12 space-y-4">
                     <FileText className="h-16 w-16 text-muted-foreground" />
                     <h3 className="text-xl font-semibold">Nenhum ticket encontrado</h3>
-                    <p className="text-muted-foreground">Você ainda não abriu nenhum ticket de suporte. <br />Que tal abrir um novo?</p>
+                    <p className="text-muted-foreground">Você ainda não abriu ou não possui tickets que correspondam ao filtro selecionado.</p>
                     <Button asChild>
-                        <Link href="/suporte-gre">Abrir Novo Ticket</Link>
+                        <Link href="/suporte-gre">Abrir Novo Ticket de Suporte</Link>
                     </Button>
                 </Card>
             )}
         </div>
-        {selectedTicket && (
+        {selectedTicket && !isCobrancaTicket(selectedTicket) && (
             <TicketDetailsModal 
                 ticket={selectedTicket} 
                 isOpen={isModalOpen} 
                 onClose={handleCloseModal}
                 isReadOnlyView={true} 
+            />
+        )}
+        {selectedTicket && isCobrancaTicket(selectedTicket) && (
+             <CobrancaTicketDetailsModal
+                ticket={selectedTicket as CobrancaTicket}
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
             />
         )}
     </div>
