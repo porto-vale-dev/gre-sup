@@ -21,7 +21,7 @@ import { ticketSchema, type TicketFormData } from '@/lib/schemas';
 import { TICKET_REASONS, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_COUNT } from '@/lib/constants';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Info, Send, Paperclip, UploadCloud, AlertTriangle, X } from 'lucide-react';
+import { FileText, Info, Send, Paperclip, UploadCloud, AlertTriangle, X, CalendarClock } from 'lucide-react';
 
 export function TicketForm() {
   const [selectedReasonInfo, setSelectedReasonInfo] = useState<(typeof TICKET_REASONS)[0] | null>(null);
@@ -202,9 +202,15 @@ export function TicketForm() {
             </div>
           </div>
         </div>
-        <CardDescription>
-          Preencha o formulário abaixo para registrar seu chamado.
-        </CardDescription>
+        <div className="flex justify-between items-center pt-2">
+            <CardDescription>
+                Preencha o formulário abaixo para registrar seu chamado.
+            </CardDescription>
+            <div className="flex items-center gap-2 text-xs text-orange-600 font-semibold p-2 rounded-md bg-orange-100 border border-orange-200">
+                <CalendarClock className="h-4 w-4"/>
+                <span>Os prazos dos tickets enviados agora serão contados a partir de 08/07 (segunda-feira).</span>
+            </div>
+        </div>
       </CardHeader>
       <CardContent>
         <Form {...form}>
