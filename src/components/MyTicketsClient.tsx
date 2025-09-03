@@ -218,7 +218,7 @@ export function MyTicketsClient() {
                         <Filter className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm font-medium">Filtrar por tipo</span>
                     </div>
-                     <ToggleGroup type="single" value={filterType} onValueChange={(value: FilterType) => {if(value) setFilterType(value)}} className="justify-start">
+                     <ToggleGroup variant="outline" type="single" value={filterType} onValueChange={(value: FilterType) => {if(value) setFilterType(value)}} className="justify-start">
                         <ToggleGroupItem value="Todos" aria-label="Ver todos">Todos</ToggleGroupItem>
                         <ToggleGroupItem
                           value="Suporte"
