@@ -18,6 +18,7 @@ import { TicketDetailsModal } from './TicketDetailsModal';
 import { CobrancaTicketDetailsModal } from './CobrancaTicketDetailsModal';
 import Link from 'next/link';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from '@/lib/utils';
 
 
 const statusColors: Record<TicketStatus, string> = {
@@ -58,20 +59,19 @@ const StatCard = ({ title, value }: { title: string; value: number }) => (
 );
 
 const isCobrancaTicket = (ticket: Ticket): ticket is Ticket & { diretor: string } => {
-    return 'diretor' in ticket && ticket.diretor !== null;
+    return 'diretor' in ticket && ticket.diretor !== null && ticket.diretor !== undefined;
 };
 
 const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetails: (ticket: Ticket) => void }) => {
     const StatusIcon = statusIcons[ticket.status] || TicketIcon;
-    const protocolDisplay = String(ticket.protocol).padStart(4, '0');
     const isCobrança = isCobrancaTicket(ticket);
-    const ticketProtocolDisplay = isCobrança ? ticket.id.substring(0,8) : protocolDisplay;
+    const protocolDisplay = isCobrança ? ticket.id.substring(0,8) : String(ticket.protocol).padStart(4, '0');
 
     return (
         <Card className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 hover:bg-muted/50 transition-colors">
             <div className="flex-grow space-y-2">
                 <div className="flex items-center gap-2">
-                     <p className="text-sm text-muted-foreground">#{ticketProtocolDisplay}</p>
+                     <p className="text-sm text-muted-foreground">#{protocolDisplay}</p>
                     {isCobrança && (
                         <Badge variant="outline" className="border-amber-500/50 text-amber-600 flex items-center gap-1">
                             <Briefcase className="h-3 w-3"/>
@@ -220,8 +220,20 @@ export function MyTicketsClient() {
                     </div>
                      <ToggleGroup type="single" value={filterType} onValueChange={(value: FilterType) => {if(value) setFilterType(value)}} className="justify-start">
                         <ToggleGroupItem value="Todos" aria-label="Ver todos">Todos</ToggleGroupItem>
-                        <ToggleGroupItem value="Suporte" aria-label="Ver Suporte GRE">Suporte GRE</ToggleGroupItem>
-                        <ToggleGroupItem value="Cobrança" aria-label="Ver Cobrança">Cobrança</ToggleGroupItem>
+                        <ToggleGroupItem
+                          value="Suporte"
+                          aria-label="Ver Suporte GRE"
+                          className="data-[state=on]:bg-blue-500 data-[state=on]:text-white"
+                        >
+                          Suporte GRE
+                        </ToggleGroupItem>
+                        <ToggleGroupItem
+                          value="Cobrança"
+                          aria-label="Ver Cobrança"
+                          className="data-[state=on]:bg-red-500 data-[state=on]:text-white"
+                        >
+                          Cobrança
+                        </ToggleGroupItem>
                     </ToggleGroup>
                 </div>
             </div>
