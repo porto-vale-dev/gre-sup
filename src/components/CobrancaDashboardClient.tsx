@@ -55,6 +55,10 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: CobrancaTicket;
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span>Diretor: {ticket.diretor}</span>
                 </div>
+                <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span>Gerente: {ticket.gerente}</span>
+                </div>
                  <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span>Cliente: {ticket.nome_cliente}</span>
