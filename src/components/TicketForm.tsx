@@ -202,10 +202,10 @@ export function TicketForm() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-red-600 font-semibold p-2 rounded-md bg-red-100 border border-red-200 mt-4">
-                <CalendarClock className="h-4 w-4"/>
-                <span>Os prazos dos tickets enviados agora serão contados a partir de 08/09 (segunda-feira).</span>
-            </div>
+        <div className="flex items-center gap-2 text-xs text-red-600 font-semibold mt-4">
+            <CalendarClock className="h-4 w-4"/>
+            <span>Os prazos dos tickets enviados agora serão contados a partir de 08/09 (segunda-feira).</span>
+        </div>
         <div className="flex justify-between items-center pt-2">
             <CardDescription>
                 Preencha o formulário abaixo para registrar seu chamado.
