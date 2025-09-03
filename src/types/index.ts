@@ -11,7 +11,7 @@ export interface SolutionFile {
 
 export interface Ticket {
   id: string; 
-  protocol: number | string; 
+  protocol: number; 
   name: string;
   phone: string;
   copy_email?: string | null;
@@ -32,8 +32,6 @@ export interface Ticket {
 
   solution?: string | null;
   solution_files?: SolutionFile[] | null;
-
-  cobranca?: boolean;
 }
 
 // Type for the new "Apoio ao Comercial" tickets

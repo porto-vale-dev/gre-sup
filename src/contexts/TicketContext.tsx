@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Ticket, TicketStatus, SolutionFile, ReasonAssignment, CobrancaTicket } from '@/types';
+import type { Ticket, TicketStatus, SolutionFile, ReasonAssignment } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { supabaseAnon } from '@/lib/supabaseAnonClient';
 import { useToast } from "@/hooks/use-toast";
@@ -44,27 +44,6 @@ interface TicketContextType {
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
 
-// Função para mapear um ticket de cobrança para o formato de ticket padrão
-const mapCobrancaTicketToTicket = (cobrancaTicket: CobrancaTicket): Ticket => {
-    return {
-        id: cobrancaTicket.id,
-        protocol: cobrancaTicket.id, // Usando o ID como protocolo para cobrança
-        name: cobrancaTicket.diretor, // Usando diretor como solicitante
-        phone: cobrancaTicket.telefone,
-        client_name: cobrancaTicket.nome_cliente,
-        cpf: cobrancaTicket.cpf,
-        grupo: 'N/A', // Cobrança não tem grupo
-        cota: cobrancaTicket.cota,
-        reason: cobrancaTicket.motivo,
-        estimated_response_time: 'N/A',
-        observations: cobrancaTicket.observacoes,
-        submission_date: cobrancaTicket.data_atend,
-        status: cobrancaTicket.status === 'Resolvida' ? 'Concluído' : 'Em Andamento',
-        responsible: cobrancaTicket.gerente || 'Cobrança',
-        user_id: cobrancaTicket.user_id,
-        cobranca: true,
-    };
-};
 
 export function TicketProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -74,50 +53,23 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated) {
         setIsLoadingTickets(false);
         return;
     }
     setIsLoadingTickets(true);
     setError(null);
     try {
-      // 1. Fetch standard support tickets from 'tickets' table
-      const ticketPromise = supabase
+      const { data, error: fetchError } = await supabase
         .from('tickets')
         .select('*')
         .order('submission_date', { ascending: false });
 
-      // 2. Fetch billing tickets from 'tickets_cobranca' table
-      // A gerente verá os tickets para os quais ela foi designada no email_gerente,
-      // e também os que ela mesma abriu (se for o caso) via user_id
-      const cobrancaPromise = supabase
-        .from('tickets_cobranca')
-        .select('*')
-        .or(`user_id.eq.${user.id},email_gerente.eq.${user.email}`)
-        .order('data_atend', { ascending: false });
-        
-
-      // Execute both promises in parallel
-      const [ticketResult, cobrancaResult] = await Promise.all([ticketPromise, cobrancaPromise]);
-
-      if (ticketResult.error) {
-        throw new Error(`Erro ao buscar tickets de suporte: ${ticketResult.error.message}`);
+      if (fetchError) {
+        throw new Error(`Erro ao buscar tickets de suporte: ${fetchError.message}`);
       }
-      if (cobrancaResult.error) {
-        throw new Error(`Erro ao buscar tickets de cobrança: ${cobrancaResult.error.message}`);
-      }
-
-      // Map support tickets and mark them as not billing tickets
-      const standardTickets = (ticketResult.data || []).map(t => ({...t, cobranca: false}));
-
-      // Map billing tickets and mark them as billing tickets
-      const cobrancaTickets = (cobrancaResult.data || []).map(mapCobrancaTicketToTicket);
       
-      // 3. Combine and sort the tickets
-      const combinedTickets = [...standardTickets, ...cobrancaTickets];
-      combinedTickets.sort((a, b) => new Date(b.submission_date).getTime() - new Date(a.submission_date).getTime());
-      
-      setTickets(combinedTickets);
+      setTickets(data || []);
 
     } catch (err: any) {
         const errorMessage = err.message || 'Ocorreu um erro desconhecido ao buscar os tickets.';
@@ -127,7 +79,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoadingTickets(false);
     }
-  }, [toast, isAuthenticated, user]);
+  }, [toast, isAuthenticated]);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
