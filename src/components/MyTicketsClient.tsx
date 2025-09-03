@@ -197,7 +197,8 @@ export function MyTicketsClient() {
             <TicketDetailsModal 
                 ticket={selectedTicket} 
                 isOpen={isModalOpen} 
-                onClose={handleCloseModal} 
+                onClose={handleCloseModal}
+                isReadOnlyView={true} 
             />
         )}
     </div>

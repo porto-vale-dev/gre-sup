@@ -46,6 +46,7 @@ interface TicketDetailsModalProps {
   ticket: Ticket | null;
   isOpen: boolean;
   onClose: () => void;
+  isReadOnlyView?: boolean;
 }
 
 const FilePreviewItem: React.FC<{
@@ -93,7 +94,7 @@ const FilePreviewItem: React.FC<{
   );
 };
 
-export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: TicketDetailsModalProps) {
+export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isReadOnlyView = false }: TicketDetailsModalProps) {
   const { downloadFile, createPreviewUrl, updateTicketSolution, getTicketById, updateAndCompleteTicket } = useTickets();
   const { toast } = useToast();
   
@@ -336,7 +337,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
                   className="min-h-[120px] resize-y mt-1"
                   value={solutionText}
                   onChange={(e) => setSolutionText(e.target.value)}
-                  disabled={isSaving}
+                  disabled={isSaving || isReadOnlyView}
                 />
               </div>
 
@@ -351,7 +352,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     onChange={handleFileChange}
                     accept={ALLOWED_FILE_TYPES.join(',')}
-                    disabled={isSaving}
+                    disabled={isSaving || isReadOnlyView}
                   />
                   <Label
                     htmlFor="solution-files-upload"
@@ -392,7 +393,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
         
         <DialogFooter className="px-6 pb-6 pt-4 border-t flex-wrap sm:flex-nowrap justify-center sm:justify-end items-center gap-2 shrink-0">
             <div className="w-full sm:w-auto">
-              <Button variant="secondary" onClick={handleWhatsAppClick} className="w-full">
+              <Button variant="secondary" onClick={handleWhatsAppClick} className="w-full" disabled={isReadOnlyView}>
                 <WhatsAppIcon className="mr-2 h-4 w-4"/>
                 Continuar no WhatsApp
               </Button>
@@ -400,11 +401,11 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
             <div className="flex-grow hidden sm:block" />
             <div className="flex gap-2 w-full sm:w-auto">
               <Button variant="outline" onClick={onClose} className="w-full">Fechar</Button>
-              <Button onClick={handleSaveSolution} disabled={isSaving} className="w-full">
+              <Button onClick={handleSaveSolution} disabled={isSaving || isReadOnlyView} className="w-full">
                 <Save className="mr-2 h-4 w-4" />
                 {isSaving ? 'Salvando...' : 'Salvar'}
               </Button>
-               <Button onClick={handleSaveAndComplete} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700">
+               <Button onClick={handleSaveAndComplete} disabled={isSaving || isReadOnlyView} className="w-full bg-green-600 hover:bg-green-700">
                 <CheckCircle className="mr-2 h-4 w-4" />
                 {isSaving ? 'Concluindo...' : 'Salvar e Concluir'}
               </Button>
