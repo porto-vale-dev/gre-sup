@@ -58,8 +58,8 @@ const StatCard = ({ title, value }: { title: string; value: number }) => (
     </Card>
 );
 
-const isCobrancaTicket = (ticket: Ticket): ticket is Ticket & { diretor: string } => {
-    return 'diretor' in ticket && ticket.diretor !== null && ticket.diretor !== undefined;
+const isCobrancaTicket = (ticket: Ticket): ticket is CobrancaTicket => {
+    return 'diretor' in ticket;
 };
 
 const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetails: (ticket: Ticket) => void }) => {
@@ -204,8 +204,8 @@ export function MyTicketsClient() {
         </div>
         
         <Card className="p-6">
-             <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-                <div className="flex items-start gap-6">
+             <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
+                <div className="flex items-center gap-6">
                     <TicketIcon className="w-24 h-24 text-primary/20 hidden md:block shrink-0" />
                     <div className="text-center md:text-left">
                         <h2 className="text-2xl font-bold">Acompanhe o andamento das suas solicitações</h2>
@@ -289,3 +289,5 @@ export function MyTicketsClient() {
     </div>
   );
 }
+
+    
