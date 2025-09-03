@@ -25,23 +25,24 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) { // Garante que o usuário está autenticado
         setIsLoading(false);
         return;
     }
     setIsLoading(true);
     setError(null);
     try {
+      // A consulta agora será filtrada pelas políticas de RLS no Supabase.
       const { data, error: fetchError } = await supabase
         .from('tickets_cobranca')
         .select('*')
         .order('data_atend', { ascending: false });
 
       if (fetchError) {
-        throw new Error(`Erro ao buscar tickets de apoio: ${fetchError.message}`);
+        throw new Error(`Erro ao buscar tickets de apoio: ${fetchError.message}. Verifique as políticas de RLS.`);
       }
       
       setTickets(data || []);
@@ -54,16 +55,18 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, isAuthenticated]);
+  }, [toast, isAuthenticated, user]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    // Aguarda o fim do loading da autenticação E a confirmação de que o usuário está autenticado
+    if (!isAuthLoading && isAuthenticated) {
       fetchTickets();
-    } else {
+    } else if (!isAuthLoading && !isAuthenticated) {
+      // Se não está logado, limpa os tickets e para o loading
       setTickets([]);
       setIsLoading(false);
     }
-  }, [isAuthenticated, fetchTickets]);
+  }, [isAuthenticated, isAuthLoading, fetchTickets]);
 
 
   const addTicket = async (ticketData: CreateCobrancaTicket): Promise<boolean> => {
