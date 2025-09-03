@@ -3,6 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { useTickets } from '@/contexts/TicketContext';
+import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Ticket, TicketStatus, CobrancaTicket } from '@/types';
 import { Card } from "@/components/ui/card";
@@ -58,14 +59,17 @@ const StatCard = ({ title, value }: { title: string; value: number }) => (
     </Card>
 );
 
-const isCobrancaTicket = (ticket: Ticket): ticket is CobrancaTicket => {
+const isCobrancaTicket = (ticket: Ticket | CobrancaTicket): ticket is CobrancaTicket => {
     return 'diretor' in ticket;
 };
 
-const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetails: (ticket: Ticket) => void }) => {
-    const StatusIcon = statusIcons[ticket.status] || TicketIcon;
+const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTicket; onOpenDetails: (ticket: Ticket | CobrancaTicket) => void }) => {
+    const StatusIcon = statusIcons[ticket.status as TicketStatus] || TicketIcon;
     const isCobrança = isCobrancaTicket(ticket);
+    const submissionDate = isCobrança ? ticket.data_atend : ticket.submission_date;
+    const reason = isCobrança ? ticket.motivo : ticket.reason;
     const protocolDisplay = isCobrança ? ticket.id.substring(0,8) : String(ticket.protocol).padStart(4, '0');
+    const responsible = isCobrança ? 'Comercial' : ticket.responsible;
 
     return (
         <Card className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 hover:bg-muted/50 transition-colors">
@@ -79,11 +83,11 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetai
                         </Badge>
                     )}
                 </div>
-                <p className="font-semibold text-lg">{ticket.reason}</p>
+                <p className="font-semibold text-lg">{reason}</p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/> Enviado {formatDistanceToNow(parseISO(ticket.submission_date), { addSuffix: true, locale: ptBR })}</span>
-                    {ticket.responsible && (
-                        <span className="flex items-center gap-1.5"><User className="h-4 w-4"/> Responsável: {ticket.responsible}</span>
+                    <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/> Enviado {formatDistanceToNow(parseISO(submissionDate), { addSuffix: true, locale: ptBR })}</span>
+                    {responsible && (
+                        <span className="flex items-center gap-1.5"><User className="h-4 w-4"/> Responsável: {responsible}</span>
                     )}
                     <Badge variant={ticket.status === 'Concluído' || ticket.status === 'Resolvida' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'} className={`${statusColors[ticket.status as TicketStatus]} text-white`}>
                         {ticket.status}
@@ -102,28 +106,27 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket; onOpenDetai
 
 
 export function MyTicketsClient() {
-  const { tickets, isLoadingTickets, error } = useTickets();
+  const { tickets: supportTickets, isLoadingTickets: isLoadingSupport, error: supportError } = useTickets();
+  const { tickets: cobrancaTickets, isLoading: isLoadingCobranca, error: cobrancaError } = useCobrancaTickets();
   const { user } = useAuth();
   
   type FilterType = 'Todos' | 'Suporte' | 'Cobrança';
   const [filterType, setFilterType] = useState<FilterType>('Todos');
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | CobrancaTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const myTickets = useMemo(() => {
     if (!user) return [];
     
-    // Suporte: tickets where user_id matches logged in user.
-    const supportTickets = tickets.filter(t => t.user_id === user.id && !isCobrancaTicket(t));
+    const allTickets: (Ticket | CobrancaTicket)[] = [
+      ...supportTickets.filter(t => t.user_id === user.id),
+      ...cobrancaTickets
+    ];
     
-    // Cobrança: tickets where email_gerente matches logged in user's email.
-    // The context already handles this filtering. We just need to identify them.
-    const cobrançaTickets = tickets.filter(t => isCobrancaTicket(t));
-    
-    return [...supportTickets, ...cobrançaTickets];
-  }, [tickets, user]);
+    return allTickets;
+  }, [supportTickets, cobrancaTickets, user]);
 
   const filteredTickets = useMemo(() => {
     return myTickets.filter(ticket => {
@@ -132,14 +135,20 @@ export function MyTicketsClient() {
             (filterType === 'Suporte' && !isCobrancaTicket(ticket)) ||
             (filterType === 'Cobrança' && isCobrancaTicket(ticket));
 
-        const protocolMatch = isCobrancaTicket(ticket) 
+        const isCobrança = isCobrancaTicket(ticket);
+        const protocolMatch = isCobrança 
             ? ticket.id.toLowerCase().includes(searchTerm.toLowerCase())
             : String(ticket.protocol).toLowerCase().includes(searchTerm.toLowerCase());
+        const reason = isCobrança ? ticket.motivo : ticket.reason;
 
-        const searchMatch = protocolMatch || ticket.reason.toLowerCase().includes(searchTerm.toLowerCase());
+        const searchMatch = protocolMatch || reason.toLowerCase().includes(searchTerm.toLowerCase());
 
         return typeMatch && searchMatch;
-    }).sort((a, b) => parseISO(b.submission_date).getTime() - parseISO(a.submission_date).getTime());
+    }).sort((a, b) => {
+        const dateA = isCobrancaTicket(a) ? a.data_atend : a.submission_date;
+        const dateB = isCobrancaTicket(b) ? b.data_atend : b.submission_date;
+        return parseISO(dateB).getTime() - parseISO(dateA).getTime()
+    });
   }, [myTickets, searchTerm, filterType]);
 
   const stats = useMemo(() => {
@@ -151,7 +160,7 @@ export function MyTicketsClient() {
     };
   }, [myTickets]);
 
-  const handleOpenDetails = (ticket: Ticket) => {
+  const handleOpenDetails = (ticket: Ticket | CobrancaTicket) => {
     setSelectedTicket(ticket);
     setIsModalOpen(true);
   };
@@ -161,7 +170,10 @@ export function MyTicketsClient() {
     setSelectedTicket(null);
   };
 
-  if (isLoadingTickets) {
+  const isLoading = isLoadingSupport || isLoadingCobranca;
+  const error = supportError || cobrancaError;
+
+  if (isLoading) {
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -273,7 +285,7 @@ export function MyTicketsClient() {
         </div>
         {selectedTicket && !isCobrancaTicket(selectedTicket) && (
             <TicketDetailsModal 
-                ticket={selectedTicket} 
+                ticket={selectedTicket as Ticket} 
                 isOpen={isModalOpen} 
                 onClose={handleCloseModal}
                 isReadOnlyView={true} 
@@ -289,5 +301,3 @@ export function MyTicketsClient() {
     </div>
   );
 }
-
-    
