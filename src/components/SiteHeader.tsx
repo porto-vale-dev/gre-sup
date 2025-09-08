@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Home, LayoutDashboard, Settings, UserCircle } from 'lucide-react';
+import { LogOut, Home, LayoutDashboard, Settings, UserCircle, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import React from 'react';
@@ -66,7 +66,8 @@ export function SiteHeader() {
 
   if (isTicketSystemArea) {
     const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
-    const isCobrancaArea = pathname.startsWith('/suporte-gre/cobranca/dashboard') || pathname.startsWith('/suporte-gre/cobranca/archived');
+    const isCobrancaDashboardArea = pathname.startsWith('/suporte-gre/cobranca/dashboard');
+    const isCobrancaArchivedArea = pathname.startsWith('/suporte-gre/cobranca/archived');
     const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
     const isGestaoPage = pathname === '/suporte-gre/gestao';
     const isConfiguracoesPage = pathname === '/suporte-gre/configuracoes';
@@ -96,11 +97,27 @@ export function SiteHeader() {
 
           {!isLoading && isAuthenticated && (
             <nav className="flex items-center gap-1 sm:gap-2">
-              {(isGestaoPage || isConfiguracoesPage || isArchivedPage || isCobrancaArea) && (
+              {(isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
                 <Link href="/suporte-gre/painel" passHref>
                   <Button variant="ghost" size="sm" aria-label="Painel Principal">
                     <TicketIcon className="h-4 w-4 sm:mr-2" />
                     <span className="hidden sm:inline">Painel de Tickets</span>
+                  </Button>
+                </Link>
+              )}
+               {(isCobrancaDashboardArea || isCobrancaArchivedArea) && (
+                <Link href="/suporte-gre/painel" passHref>
+                  <Button variant="ghost" size="sm" aria-label="Painel Principal">
+                    <TicketIcon className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Painel de Tickets</span>
+                  </Button>
+                </Link>
+              )}
+               {isCobrancaArchivedArea && (
+                 <Link href="/suporte-gre/cobranca/dashboard" passHref>
+                  <Button variant="ghost" size="sm" aria-label="Painel de Cobrança">
+                    <Receipt className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Painel de Cobrança</span>
                   </Button>
                 </Link>
               )}
