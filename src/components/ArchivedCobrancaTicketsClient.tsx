@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, Info, LayoutGrid, List, User, AlertCircle, Calendar as CalendarIcon, ExternalLink, Ticket as TicketIcon } from 'lucide-react';
+import { Search, Info, LayoutGrid, List, User, AlertCircle, Calendar as CalendarIcon, ExternalLink, Ticket as TicketIcon, ListFilter } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -20,6 +20,7 @@ import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { CobrancaTicketDetailsModal } from './CobrancaTicketDetailsModal';
+import { COBRANCA_TICKET_STATUSES } from '@/lib/cobrancaData';
 
 const statusColors: Record<CobrancaTicketStatus, string> = {
   "Aberta": "bg-blue-500",
@@ -31,7 +32,7 @@ const statusColors: Record<CobrancaTicketStatus, string> = {
 };
 
 
-const ArchivedCobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: CobrancaTicket; onOpenDetails: (ticket: CobrancaTicket) => void; }) => {
+const ArchivedCobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket: CobrancaTicket; onOpenDetails: (ticket: CobrancaTicket) => void; onStatusChange: (ticketId: string, status: CobrancaTicketStatus) => void; }) => {
     const protocolDisplay = ticket.id.substring(0, 8); 
 
     return (
@@ -63,6 +64,20 @@ const ArchivedCobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: Cobranc
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span>Cliente: {ticket.nome_cliente}</span>
                 </div>
+                <div className="flex items-center gap-2 pt-2">
+                    <Select value={ticket.status} onValueChange={(newStatus) => onStatusChange(ticket.id, newStatus as CobrancaTicketStatus)}>
+                        <SelectTrigger className="h-9 text-xs w-full" aria-label="Mudar status do ticket">
+                            <SelectValue placeholder="Mudar status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {COBRANCA_TICKET_STATUSES.map(s => (
+                            <SelectItem key={s} value={s} className="text-xs">
+                            {s}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </CardContent>
             <CardFooter>
                  <Button variant="outline" size="sm" className="w-full" onClick={() => onOpenDetails(ticket)}>
@@ -76,11 +91,12 @@ const ArchivedCobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: Cobranc
 
 
 export function ArchivedCobrancaTicketsClient() {
-  const { tickets, isLoading, error, fetchTickets } = useCobrancaTickets();
+  const { tickets, isLoading, error, fetchTickets, updateTicket } = useCobrancaTickets();
   
   const [selectedTicket, setSelectedTicket] = useState<CobrancaTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("Resolvida");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -95,6 +111,7 @@ export function ArchivedCobrancaTicketsClient() {
   }, [isDatePopoverOpen, date]);
   
   const archivedTickets = useMemo(() => {
+    // Start with only "Resolved" tickets as the base for this page
     return tickets.filter(ticket => ticket.status === "Resolvida");
   }, [tickets]);
 
@@ -108,6 +125,8 @@ export function ArchivedCobrancaTicketsClient() {
                             protocolDisplay.toLowerCase().includes(cleanedSearchTerm) ||
                             ticket.motivo.toLowerCase().includes(cleanedSearchTerm);
         
+        const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
+
         let dateMatch = true;
         if (date?.from) {
             const fromDate = new Date(date.from);
@@ -118,14 +137,14 @@ export function ArchivedCobrancaTicketsClient() {
             dateMatch = submissionDate >= fromDate && submissionDate <= toDate;
         }
 
-        return searchMatch && dateMatch;
+        return searchMatch && dateMatch && statusMatch;
       })
       .sort((a, b) => {
         const dateA = new Date(a.data_atend).getTime();
         const dateB = new Date(b.data_atend).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
-  }, [archivedTickets, searchTerm, sortOrder, date]);
+  }, [archivedTickets, searchTerm, sortOrder, date, statusFilter]);
 
   const handleOpenDetails = (ticket: CobrancaTicket) => {
     setSelectedTicket(ticket);
@@ -135,6 +154,10 @@ export function ArchivedCobrancaTicketsClient() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedTicket(null);
+  };
+
+   const handleStatusChange = (ticketId: string, status: CobrancaTicketStatus) => {
+    updateTicket(ticketId, { status });
   };
 
   if (isLoading) {
@@ -234,6 +257,19 @@ export function ArchivedCobrancaTicketsClient() {
                   </PopoverContent>
                 </Popover>
 
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por status">
+                        <ListFilter className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Filtrar por status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Todos">Todos</SelectItem>
+                        {COBRANCA_TICKET_STATUSES.map(status => (
+                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
                 <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
                     <SelectTrigger className="w-full sm:w-[150px]" aria-label="Ordenar por data">
                          <SelectValue placeholder="Ordenar por data" />
@@ -270,6 +306,7 @@ export function ArchivedCobrancaTicketsClient() {
               key={ticket.id} 
               ticket={ticket} 
               onOpenDetails={handleOpenDetails}
+              onStatusChange={handleStatusChange}
             />
           ))}
         </div>
