@@ -77,7 +77,7 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTi
                 <div className="flex items-center gap-2">
                      <p className="text-sm text-muted-foreground">#{protocolDisplay}</p>
                     {isCobrança && (
-                        <Badge variant="outline" className="border-red-500/50 text-red-600 flex items-center gap-1">
+                        <Badge variant="outline" className="border-red-500 text-red-600 flex items-center gap-1">
                             <Briefcase className="h-3 w-3"/>
                             Cobrança
                         </Badge>
@@ -122,7 +122,7 @@ export function MyTicketsClient() {
     
     const allTickets: (Ticket | CobrancaTicket)[] = [
       ...supportTickets.filter(t => t.user_id === user.id),
-      ...cobrancaTickets
+      ...cobrancaTickets.filter(t => t.user_id === user.id)
     ];
     
     return allTickets;
