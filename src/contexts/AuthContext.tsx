@@ -21,7 +21,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  email: string | null; // Adicionado para expor o e-mail do usuário
+  email: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

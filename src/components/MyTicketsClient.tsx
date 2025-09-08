@@ -113,7 +113,7 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTi
 export function MyTicketsClient() {
   const { tickets: supportTickets, isLoadingTickets: isLoadingSupport, error: supportError } = useTickets();
   const { tickets: cobrancaTickets, isLoading: isLoadingCobranca, error: cobrancaError } = useCobrancaTickets();
-  const { user } = useAuth();
+  const { user, email } = useAuth();
   
   type FilterType = 'Todos' | 'Suporte' | 'Cobrança';
   const [filterType, setFilterType] = useState<FilterType>('Todos');
@@ -125,13 +125,19 @@ export function MyTicketsClient() {
   const myTickets = useMemo(() => {
     if (!user) return [];
     
+    // Suporte tickets are filtered by who created them (user_id)
+    const mySupportTickets = supportTickets.filter(t => t.user_id === user.id);
+
+    // Cobrança tickets are filtered by who is the responsible manager (email_gerente)
+    const myCobrancaTickets = cobrancaTickets.filter(t => t.email_gerente === email);
+    
     const allTickets: (Ticket | CobrancaTicket)[] = [
-      ...supportTickets.filter(t => t.user_id === user.id),
-      ...cobrancaTickets.filter(t => t.user_id === user.id)
+      ...mySupportTickets,
+      ...myCobrancaTickets
     ];
     
     return allTickets;
-  }, [supportTickets, cobrancaTickets, user]);
+  }, [supportTickets, cobrancaTickets, user, email]);
 
   const filteredTickets = useMemo(() => {
     return myTickets.filter(ticket => {
