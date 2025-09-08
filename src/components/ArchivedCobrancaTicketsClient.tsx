@@ -20,7 +20,7 @@ import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { CobrancaTicketDetailsModal } from './CobrancaTicketDetailsModal';
-import { COBRANCA_TICKET_STATUSES } from '@/lib/cobrancaData';
+import { COBRANCA_TICKET_STATUSES, diretores, gerentesPorDiretor } from '@/lib/cobrancaData';
 
 const statusColors: Record<CobrancaTicketStatus, string> = {
   "Aberta": "bg-blue-500",
@@ -96,13 +96,28 @@ export function ArchivedCobrancaTicketsClient() {
   const [selectedTicket, setSelectedTicket] = useState<CobrancaTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("Resolvida");
+  const [diretorFilter, setDiretorFilter] = useState<string>("Todos");
+  const [gerenteFilter, setGerenteFilter] = useState<string>("Todos");
+  const [availableGerentes, setAvailableGerentes] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [date, setDate] = useState<DateRange | undefined>(undefined);
   const [tempDate, setTempDate] = useState<DateRange | undefined>(undefined);
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+  
+    useEffect(() => {
+        const allGerentes = Object.values(gerentesPorDiretor).flat().map(g => g.name);
+        const uniqueGerentes = ["Todos", ...Array.from(new Set(allGerentes))];
+        if (diretorFilter === 'Todos') {
+            setAvailableGerentes(uniqueGerentes);
+        } else {
+            const gerentes = gerentesPorDiretor[diretorFilter]?.map(g => g.name) || [];
+            setAvailableGerentes(["Todos", ...gerentes]);
+        }
+        setGerenteFilter("Todos");
+    }, [diretorFilter]);
+
 
   useEffect(() => {
     if(isDatePopoverOpen) {
@@ -125,7 +140,8 @@ export function ArchivedCobrancaTicketsClient() {
                             protocolDisplay.toLowerCase().includes(cleanedSearchTerm) ||
                             ticket.motivo.toLowerCase().includes(cleanedSearchTerm);
         
-        const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
+        const diretorMatch = diretorFilter === "Todos" || ticket.diretor === diretorFilter;
+        const gerenteMatch = gerenteFilter === "Todos" || ticket.gerente === gerenteFilter;
 
         let dateMatch = true;
         if (date?.from) {
@@ -137,14 +153,14 @@ export function ArchivedCobrancaTicketsClient() {
             dateMatch = submissionDate >= fromDate && submissionDate <= toDate;
         }
 
-        return searchMatch && dateMatch && statusMatch;
+        return searchMatch && dateMatch && diretorMatch && gerenteMatch;
       })
       .sort((a, b) => {
         const dateA = new Date(a.data_atend).getTime();
         const dateB = new Date(b.data_atend).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
-  }, [archivedTickets, searchTerm, sortOrder, date, statusFilter]);
+  }, [archivedTickets, searchTerm, sortOrder, date, diretorFilter, gerenteFilter]);
 
   const handleOpenDetails = (ticket: CobrancaTicket) => {
     setSelectedTicket(ticket);
@@ -257,15 +273,27 @@ export function ArchivedCobrancaTicketsClient() {
                   </PopoverContent>
                 </Popover>
 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por status">
-                        <ListFilter className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <SelectValue placeholder="Filtrar por status" />
+                <Select value={diretorFilter} onValueChange={setDiretorFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por diretor">
+                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Filtrar por diretor" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="Todos">Todos</SelectItem>
-                        {COBRANCA_TICKET_STATUSES.map(status => (
-                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                        <SelectItem value="Todos">Todos os Diretores</SelectItem>
+                        {diretores.map(diretor => (
+                            <SelectItem key={diretor.name} value={diretor.name}>{diretor.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select value={gerenteFilter} onValueChange={setGerenteFilter} disabled={availableGerentes.length <= 1}>
+                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por gerente">
+                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Filtrar por gerente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {availableGerentes.map(gerente => (
+                            <SelectItem key={gerente} value={gerente}>{gerente}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
