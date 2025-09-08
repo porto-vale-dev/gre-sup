@@ -51,7 +51,7 @@ export default function TrimestralPage() {
       <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden">
         <iframe
           title="Ranking Trimestral"
-          src="https://app.powerbi.com/view?r=eyJrIjoiZWEyN2RlZDAtNWMwMC00ZmI4LWJjZmItNTBiY2M1NzQyMTI4IiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
+          src="https://app.powerbi.com/view?r=eyJrIjoiNGI0Yzg4YmUtN2I2OS00ZjkwLWEwMWUtZWFhNWRjNGM4ZWQ3IiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
           allowFullScreen
           className="absolute top-0 left-0 w-full h-full border-0"
         ></iframe>

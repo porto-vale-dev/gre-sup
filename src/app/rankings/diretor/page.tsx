@@ -53,7 +53,7 @@ export default function DiretorPage() {
       <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden">
         <iframe
           title="Porto Vale - Geral"
-          src="https://app.powerbi.com/view?r=eyJrIjoiNzliODE0OTUtY2YyZC00NjYzLWFlMTQtY2E5YjlmZjYwMzhjIiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
+          src="https://app.powerbi.com/view?r=eyJrIjoiNzQzZTE0MGMtMzkzMC00ODIzLWFlYTQtYjEyZTZjMWQ1ODFhIiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
           allowFullScreen
           className="absolute top-0 left-0 w-full h-full border-0"
         ></iframe>
