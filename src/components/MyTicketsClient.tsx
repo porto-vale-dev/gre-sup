@@ -69,7 +69,7 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTi
     const submissionDate = isCobrança ? ticket.data_atend : ticket.submission_date;
     const reason = isCobrança ? ticket.motivo : ticket.reason;
     const protocolDisplay = isCobrança ? ticket.id.substring(0,8) : String(ticket.protocol).padStart(4, '0');
-    const responsible = isCobrança ? 'Comercial' : ticket.responsible;
+    const responsible = isCobrança ? ticket.gerente : ticket.responsible;
 
     return (
         <Card className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 hover:bg-muted/50 transition-colors">
