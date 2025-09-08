@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
@@ -128,14 +127,16 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
 
   const updateRetornoComercial = async (ticketId: string, status: RetornoComercialStatus, observacoes: string): Promise<boolean> => {
     try {
-      const { error } = await supabase.from('tickets_cobranca')
-        .update({
-          status_retorno: status,
-          obs_retorno: observacoes,
-        })
-        .eq('id', ticketId);
-      
-      if (error) throw error;
+      const { error } = await supabase.rpc('update_retorno_comercial', {
+        p_ticket_id: ticketId,
+        p_status_retorno: status,
+        p_obs_retorno: observacoes,
+      });
+
+      if (error) {
+        // This error will now be more meaningful if it comes from the RPC function.
+        throw new Error(`Não foi possível salvar o retorno: ${error.message}`);
+      }
       
       toast({
         title: "Sucesso!",
@@ -143,10 +144,11 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       });
       await fetchTickets();
       return true;
+
     } catch (err: any) {
        toast({
         title: "Erro ao Salvar",
-        description: err.message || "Não foi possível salvar o retorno.",
+        description: err.message || "Ocorreu uma falha desconhecida.",
         variant: "destructive",
       });
       return false;
