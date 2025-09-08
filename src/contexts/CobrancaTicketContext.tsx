@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -47,6 +48,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erro ao buscar tickets de apoio: ${rpcError.message}. Verifique a função 'get_cobranca_tickets_for_user' no Supabase.`);
       }
       
+      // A RPC agora deve retornar a coluna 'protocolo'
       setTickets(data || []);
 
     } catch (err: any) {
@@ -77,6 +79,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       const gerenteEmail = 
         gerentesPorDiretor[ticketData.diretor]?.find(g => g.name === ticketData.gerente)?.email || null;
 
+      // O campo 'protocolo' é gerado pelo banco de dados agora, então não o enviamos.
       const payload = {
         ...ticketData,
         email_gerente: gerenteEmail,

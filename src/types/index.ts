@@ -37,6 +37,7 @@ export interface Ticket {
 // Type for the new "Apoio ao Comercial" tickets
 export interface CobrancaTicket {
   id: string;
+  protocolo?: number;
   // Identificação
   nome_cliente: string;
   cpf: string;
@@ -60,7 +61,7 @@ export interface CobrancaTicket {
   user_id?: string | null; // Who created the ticket
 }
 
-export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'status_retorno' | 'obs_retorno' | 'user_id' | 'email_gerente'> & { user_id: string };
+export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'status_retorno' | 'obs_retorno' | 'user_id' | 'email_gerente' | 'protocolo'> & { user_id: string };
 
 
 // Represents one row in the reason_assignments table for Suporte GRE

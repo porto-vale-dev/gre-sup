@@ -48,7 +48,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
 
   if (!ticket) return null;
 
-  const protocolDisplay = ticket.id.substring(0, 8); 
+  const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
 
   const handleSave = async () => {
     if (!retornoStatus) {

@@ -33,7 +33,7 @@ const statusColors: Record<CobrancaTicketStatus, string> = {
 
 
 const ArchivedCobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket: CobrancaTicket; onOpenDetails: (ticket: CobrancaTicket) => void; onStatusChange: (ticketId: string, status: CobrancaTicketStatus) => void; }) => {
-    const protocolDisplay = ticket.id.substring(0, 8); 
+    const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
 
     return (
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
@@ -133,7 +133,7 @@ export function ArchivedCobrancaTicketsClient() {
   const filteredAndSortedTickets = useMemo(() => {
     return archivedTickets
       .filter(ticket => {
-        const protocolDisplay = ticket.id.substring(0, 8);
+        const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
         const cleanedSearchTerm = searchTerm.toLowerCase();
         
         const searchMatch = ticket.nome_cliente.toLowerCase().includes(cleanedSearchTerm) ||
