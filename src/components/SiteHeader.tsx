@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -65,6 +66,7 @@ export function SiteHeader() {
 
   if (isTicketSystemArea) {
     const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
+    const isCobrancaArea = pathname.startsWith('/suporte-gre/cobranca/dashboard') || pathname.startsWith('/suporte-gre/cobranca/archived');
     const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
     const isGestaoPage = pathname === '/suporte-gre/gestao';
     const isConfiguracoesPage = pathname === '/suporte-gre/configuracoes';
@@ -94,7 +96,7 @@ export function SiteHeader() {
 
           {!isLoading && isAuthenticated && (
             <nav className="flex items-center gap-1 sm:gap-2">
-              {(isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
+              {(isGestaoPage || isConfiguracoesPage || isArchivedPage || isCobrancaArea) && (
                 <Link href="/suporte-gre/painel" passHref>
                   <Button variant="ghost" size="sm" aria-label="Painel Principal">
                     <TicketIcon className="h-4 w-4 sm:mr-2" />
