@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_COUNT } from './constants';
 

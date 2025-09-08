@@ -1,82 +1,61 @@
 
-"use client";
+'use client';
 
-import { useMemo } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent } from '@/components/ui/card';
-import { Crown, Users, Target, Award, ArrowRight, ArrowLeft, Shield } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft, ShieldAlert } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface Service {
-  title: string;
-  href: string;
-  Icon: LucideIcon;
-  description: string;
-  allowedRoles: string[]; 
-}
+export default function TrimestralPage() {
+  const { cargo } = useAuth();
+  const allowedRoles = ['adm', 'diretor', 'greadmin'];
 
-// Definição das permissões para cada card de acordo com a nova lógica
-const allRankingServices: Service[] = [
-  { title: "Ranking Diretor", href: "/rankings/diretor", Icon: Crown, description: "Visualize o ranking de diretores.", allowedRoles: ["adm", "diretor", "greadmin"] },
-  { title: "Ranking Gerente", href: "/rankings/gerente", Icon: Users, description: "Acompanhe o desempenho dos gerentes.", allowedRoles: ["adm", "diretor", "gerente", "greadmin"] },
-  { title: "Ranking Campanha", href: "/rankings/campanha", Icon: Target, description: "Confira os resultados da campanha atual.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre"] },
-  { title: "Ranking Campanha - Seguros", href: "/rankings/campanha-seguros", Icon: Shield, description: "Resultados da campanha de seguros.", allowedRoles: ["adm", "greadmin", "diretorseg"] },
-  { title: "Ranking Trimestral", href: "/rankings/trimestral", Icon: Award, description: "Veja o balanço do trimestre.", allowedRoles: ["adm", "diretor", "greadmin"] },
-];
-
-const ServiceCard = ({ service }: { service: Service }) => (
-  <Link href={service.href} className="group block">
-    <Card className="h-full hover:border-primary hover:shadow-lg transition-all duration-300 flex flex-col">
-      <CardContent className="p-6 flex flex-col items-start gap-4 flex-grow">
-        <div className="flex justify-between items-center w-full">
-            <div className="bg-primary/10 text-primary p-3 rounded-lg">
-                <service.Icon className="h-6 w-6" />
-            </div>
-            <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-transform" />
-        </div>
-        <div className="flex-grow">
-          <h3 className="text-lg font-semibold text-card-foreground">{service.title}</h3>
-          <p className="text-sm text-muted-foreground mt-1">{service.description}</p>
-        </div>
-      </CardContent>
-    </Card>
-  </Link>
-);
-
-export default function RankingsPage() {
-    const { cargo } = useAuth(); 
-    
-    // Filtra a lista de serviços com base no cargo do usuário
-    const accessibleServices = useMemo(() => {
-      // Trata usuários com cargo nulo, vazio ou indefinido como "colaborador"
-      const userRole = cargo || 'colaborador';
-      return allRankingServices.filter(service => service.allowedRoles.includes(userRole));
-    }, [cargo]);
-    
+  if (!cargo || !allowedRoles.includes(cargo)) {
     return (
-        <div className="space-y-8">
-            <Link href="/hub" passHref>
-                <Button variant="outline">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Hub
-                </Button>
-            </Link>
-
-            <div>
-                <h1 className="text-3xl font-bold font-headline text-primary">Rankings</h1>
-                <p className="text-muted-foreground mt-1">Selecione um ranking para visualizar.</p>
+      <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
+        <Card className="w-full max-w-md text-center shadow-xl">
+          <CardHeader>
+            <div className="mx-auto bg-destructive/10 text-destructive p-4 rounded-full w-fit">
+              <ShieldAlert className="h-12 w-12" />
             </div>
+            <CardTitle className="font-headline text-2xl text-destructive mt-4">
+              Acesso Negado
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="text-muted-foreground">
+              Você não tem permissão para visualizar este ranking.
+            </p>
+            <Button asChild>
+              <Link href="/rankings">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar aos Rankings
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-            {accessibleServices.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {accessibleServices.map(service => (
-                        <ServiceCard key={service.href} service={service} />
-                    ))}
-                </div>
-            ) : (
-                <p className="text-muted-foreground">Você não tem acesso a nenhum ranking no momento.</p>
-            )}
-        </div>
-    )
+  return (
+    <div className="flex flex-col gap-4 h-[calc(100vh-10rem)]">
+      <div>
+        <Link href="/rankings" passHref>
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar aos Rankings
+          </Button>
+        </Link>
+      </div>
+      <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden">
+        <iframe
+          title="Ranking Trimestral"
+          src="https://app.powerbi.com/view?r=eyJrIjoiNGI0Yzg4YmUtN2I2OS00ZjkwLWEwMWUtZWFhNWRjNGM4ZWQ3IiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
+          allowFullScreen
+          className="absolute top-0 left-0 w-full h-full border-0"
+        ></iframe>
+      </div>
+    </div>
+  );
 }
