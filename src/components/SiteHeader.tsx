@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -99,7 +98,7 @@ export function SiteHeader() {
                 <Link href="/suporte-gre/painel" passHref>
                   <Button variant="ghost" size="sm" aria-label="Painel Principal">
                     <TicketIcon className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Painel</span>
+                    <span className="hidden sm:inline">Painel de Tickets</span>
                   </Button>
                 </Link>
               )}
