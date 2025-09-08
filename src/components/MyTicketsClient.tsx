@@ -294,9 +294,6 @@ export function MyTicketsClient() {
                     <FileText className="h-16 w-16 text-muted-foreground" />
                     <h3 className="text-xl font-semibold">Nenhum ticket encontrado</h3>
                     <p className="text-muted-foreground">Você ainda não abriu ou não possui tickets que correspondam ao filtro selecionado.</p>
-                    <Button asChild>
-                        <Link href="/suporte-gre">Abrir Novo Ticket de Suporte</Link>
-                    </Button>
                 </Card>
             )}
         </div>
