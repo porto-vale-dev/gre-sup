@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Ticket, TicketStatus, CobrancaTicket } from '@/types';
+import type { Ticket, TicketStatus, CobrancaTicket, CobrancaTicketStatus } from '@/types';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,27 +17,27 @@ import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDetailsModal } from './TicketDetailsModal';
 import { CobrancaTicketDetailsModal } from './CobrancaTicketDetailsModal';
-import Link from 'next/link';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { cn } from '@/lib/utils';
 
-
-const statusColors: Record<TicketStatus, string> = {
+const statusColors: Record<TicketStatus | CobrancaTicketStatus, string> = {
+  // Suporte
   "Novo": "bg-blue-500 hover:bg-blue-500",
   "Em Andamento": "bg-yellow-500 hover:bg-yellow-500",
   "Ativo": "bg-orange-500 hover:bg-orange-500",
   "Atrasado": "bg-red-500 hover:bg-red-500",
   "Concluído": "bg-green-500 hover:bg-green-500",
-  // Cobrança statuses need to be handled, we can map them
+  // Cobrança
   "Aberta": "bg-blue-500 hover:bg-blue-500",
   "Em análise": "bg-yellow-500 hover:bg-yellow-500",
   "Encaminhada": "bg-orange-500 hover:bg-orange-500",
+  "Reabertura": "bg-purple-500 hover:bg-purple-500",
   "Resolvida": "bg-green-500 hover:bg-green-500",
   "Dentro do prazo": "bg-teal-500 hover:bg-teal-500",
   "Fora do prazo": "bg-red-500 hover:bg-red-500",
 };
 
-const statusIcons: Record<TicketStatus, React.ElementType> = {
+const statusIcons: Record<TicketStatus | CobrancaTicketStatus, React.ElementType> = {
+  // Suporte
   "Novo": FileText,
   "Em Andamento": Hourglass,
   "Ativo": Hourglass,
@@ -47,6 +47,7 @@ const statusIcons: Record<TicketStatus, React.ElementType> = {
   "Aberta": FileText,
   "Em análise": Hourglass,
   "Encaminhada": Hourglass,
+  "Reabertura": FileText,
   "Resolvida": CheckCircle2,
   "Dentro do prazo": CheckCircle2,
   "Fora do prazo": AlertCircle,
@@ -64,12 +65,12 @@ const isCobrancaTicket = (ticket: Ticket | CobrancaTicket): ticket is CobrancaTi
 };
 
 const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTicket; onOpenDetails: (ticket: Ticket | CobrancaTicket) => void }) => {
-    const StatusIcon = statusIcons[ticket.status as TicketStatus] || TicketIcon;
+    const StatusIcon = statusIcons[ticket.status as TicketStatus | CobrancaTicketStatus] || TicketIcon;
     const isCobrança = isCobrancaTicket(ticket);
     const submissionDate = isCobrança ? ticket.data_atend : ticket.submission_date;
     const reason = isCobrança ? ticket.motivo : ticket.reason;
     const protocolDisplay = isCobrança 
-        ? String(ticket.protocolo ?? ticket.id.substring(0,8)).padStart(4, '0') 
+        ? String(ticket.protocolo ?? '').padStart(4, '0') 
         : String(ticket.protocol).padStart(4, '0');
     const responsible = isCobrança ? ticket.gerente : ticket.responsible;
 
@@ -96,7 +97,7 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTi
                     {responsible && (
                         <span className="flex items-center gap-1.5"><User className="h-4 w-4"/> Responsável: {responsible}</span>
                     )}
-                    <Badge variant={ticket.status === 'Concluído' || ticket.status === 'Resolvida' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'} className={`${statusColors[ticket.status as TicketStatus]} text-white`}>
+                    <Badge variant={ticket.status === 'Concluído' || ticket.status === 'Resolvida' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'} className={`${statusColors[ticket.status as TicketStatus | CobrancaTicketStatus]} text-white`}>
                         {ticket.status}
                     </Badge>
                 </div>
