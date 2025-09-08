@@ -68,7 +68,9 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTi
     const isCobrança = isCobrancaTicket(ticket);
     const submissionDate = isCobrança ? ticket.data_atend : ticket.submission_date;
     const reason = isCobrança ? ticket.motivo : ticket.reason;
-    const protocolDisplay = isCobrança ? ticket.id.substring(0,8) : String(ticket.protocol).padStart(4, '0');
+    const protocolDisplay = isCobrança 
+        ? String(ticket.protocolo ?? ticket.id.substring(0,8)).padStart(4, '0') 
+        : String(ticket.protocol).padStart(4, '0');
     const responsible = isCobrança ? ticket.gerente : ticket.responsible;
 
     return (
@@ -147,9 +149,13 @@ export function MyTicketsClient() {
             (filterType === 'Cobrança' && isCobrancaTicket(ticket));
 
         const isCobrança = isCobrancaTicket(ticket);
-        const protocolMatch = isCobrança 
-            ? ticket.id.toLowerCase().includes(searchTerm.toLowerCase())
-            : String(ticket.protocol).toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const protocolValue = isCobrança 
+            ? String(ticket.protocolo ?? '') 
+            : String(ticket.protocol);
+            
+        const protocolMatch = protocolValue.toLowerCase().includes(searchTerm.toLowerCase());
+
         const reason = isCobrança ? ticket.motivo : ticket.reason;
 
         const searchMatch = protocolMatch || reason.toLowerCase().includes(searchTerm.toLowerCase());
