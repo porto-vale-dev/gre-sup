@@ -68,6 +68,7 @@ export function SiteHeader() {
     const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
     const isCobrancaDashboardArea = pathname.startsWith('/suporte-gre/cobranca/dashboard');
     const isCobrancaArchivedArea = pathname.startsWith('/suporte-gre/cobranca/archived');
+    const isCobrancaNovoArea = pathname === '/suporte-gre/cobranca/novo';
     const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
     const isGestaoPage = pathname === '/suporte-gre/gestao';
     const isConfiguracoesPage = pathname === '/suporte-gre/configuracoes';
@@ -113,7 +114,7 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               )}
-               {isCobrancaArchivedArea && (
+               {(isCobrancaArchivedArea || isCobrancaNovoArea) && (
                  <Link href="/suporte-gre/cobranca/dashboard" passHref>
                   <Button variant="ghost" size="sm" aria-label="Painel de Cobrança">
                     <Receipt className="h-4 w-4 sm:mr-2" />
