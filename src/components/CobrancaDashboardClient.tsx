@@ -28,6 +28,7 @@ const statusColors: Record<CobrancaTicketStatus, string> = {
   "Aberta": "bg-blue-500",
   "Em análise": "bg-yellow-500",
   "Encaminhada": "bg-orange-500",
+  "Reabertura": "bg-purple-500",
   "Resolvida": "bg-green-500",
   "Dentro do prazo": "bg-teal-500",
   "Fora do prazo": "bg-red-500",

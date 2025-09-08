@@ -1,6 +1,6 @@
 
 export type TicketStatus = "Novo" | "Em Andamento" | "Ativo" | "Atrasado" | "Concluído";
-export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Resolvida" | "Dentro do prazo" | "Fora do prazo";
+export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Resolvida" | "Dentro do prazo" | "Fora do prazo" | "Reabertura";
 export type RetornoComercialStatus = 'Tirou dúvidas' | 'Tentando contato' | 'Em andamento' | 'Revertido' | 'Não Revertido' | 'Sem retorno';
 
 

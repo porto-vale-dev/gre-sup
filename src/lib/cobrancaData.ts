@@ -107,6 +107,7 @@ export const COBRANCA_TICKET_STATUSES: CobrancaTicketStatus[] = [
     "Aberta",
     "Em análise",
     "Encaminhada",
+    "Reabertura",
     "Resolvida",
     "Dentro do prazo",
     "Fora do prazo"
