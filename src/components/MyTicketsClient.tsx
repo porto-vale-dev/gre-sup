@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, User, Filter, Briefcase } from 'lucide-react';
+import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, User, Filter, Briefcase, Headset } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDetailsModal } from './TicketDetailsModal';
@@ -76,10 +76,15 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTi
             <div className="flex-grow space-y-2">
                 <div className="flex items-center gap-2">
                      <p className="text-sm text-muted-foreground">#{protocolDisplay}</p>
-                    {isCobrança && (
+                    {isCobrança ? (
                         <Badge variant="outline" className="border-red-500 text-red-600 flex items-center gap-1">
                             <Briefcase className="h-3 w-3"/>
                             Cobrança
+                        </Badge>
+                    ) : (
+                         <Badge variant="outline" className="border-blue-500 text-blue-600 flex items-center gap-1">
+                            <Headset className="h-3 w-3"/>
+                            Suporte GRE
                         </Badge>
                     )}
                 </div>
