@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle, Calendar as CalendarIcon, ExternalLink, Ticket as TicketIcon, Archive } from 'lucide-react';
+import { Search, Info, LayoutGrid, List, User, AlertCircle, Calendar as CalendarIcon, ExternalLink, Ticket as TicketIcon } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -19,10 +19,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
-import { COBRANCA_TICKET_STATUSES } from '@/lib/cobrancaData';
 import { CobrancaTicketDetailsModal } from './CobrancaTicketDetailsModal';
-import Link from 'next/link';
-
 
 const statusColors: Record<CobrancaTicketStatus, string> = {
   "Aberta": "bg-blue-500",
@@ -33,7 +30,8 @@ const statusColors: Record<CobrancaTicketStatus, string> = {
   "Fora do prazo": "bg-red-500",
 };
 
-const CobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket: CobrancaTicket; onOpenDetails: (ticket: CobrancaTicket) => void; onStatusChange: (ticketId: string, status: CobrancaTicketStatus) => void; }) => {
+
+const ArchivedCobrancaTicketCard = ({ ticket, onOpenDetails }: { ticket: CobrancaTicket; onOpenDetails: (ticket: CobrancaTicket) => void; }) => {
     const protocolDisplay = ticket.id.substring(0, 8); 
 
     return (
@@ -43,7 +41,7 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket:
                     <CardTitle className="text-lg font-headline text-primary flex items-center gap-2">
                         {ticket.motivo.length > 30 ? `${ticket.motivo.substring(0,27)}...` : ticket.motivo}
                     </CardTitle>
-                    <Badge variant={ticket.status === 'Resolvida' ? 'default' : ticket.status === 'Fora do prazo' ? 'destructive' : 'secondary'} className={`whitespace-nowrap ${statusColors[ticket.status]} text-white`}>
+                    <Badge variant='default' className={`whitespace-nowrap ${statusColors[ticket.status]} text-white`}>
                         {ticket.status}
                     </Badge>
                 </div>
@@ -65,20 +63,6 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket:
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span>Cliente: {ticket.nome_cliente}</span>
                 </div>
-                <div className="flex items-center gap-2 pt-2">
-                    <Select value={ticket.status} onValueChange={(newStatus) => onStatusChange(ticket.id, newStatus as CobrancaTicketStatus)}>
-                        <SelectTrigger className="h-9 text-xs w-full" aria-label="Mudar status do ticket">
-                            <SelectValue placeholder="Mudar status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {COBRANCA_TICKET_STATUSES.map(s => (
-                            <SelectItem key={s} value={s} className="text-xs">
-                            {s}
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                </div>
             </CardContent>
             <CardFooter>
                  <Button variant="outline" size="sm" className="w-full" onClick={() => onOpenDetails(ticket)}>
@@ -91,16 +75,15 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket:
 };
 
 
-export function CobrancaDashboardClient() {
-  const { tickets, isLoading, error, fetchTickets, updateTicket } = useCobrancaTickets();
+export function ArchivedCobrancaTicketsClient() {
+  const { tickets, isLoading, error, fetchTickets } = useCobrancaTickets();
   
   const [selectedTicket, setSelectedTicket] = useState<CobrancaTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("Todos");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc"); 
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  
+
   const [date, setDate] = useState<DateRange | undefined>(undefined);
   const [tempDate, setTempDate] = useState<DateRange | undefined>(undefined);
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
@@ -111,12 +94,12 @@ export function CobrancaDashboardClient() {
     }
   }, [isDatePopoverOpen, date]);
   
-  const activeTickets = useMemo(() => {
-    return tickets.filter(ticket => ticket.status !== "Resolvida");
+  const archivedTickets = useMemo(() => {
+    return tickets.filter(ticket => ticket.status === "Resolvida");
   }, [tickets]);
 
   const filteredAndSortedTickets = useMemo(() => {
-    return activeTickets
+    return archivedTickets
       .filter(ticket => {
         const protocolDisplay = ticket.id.substring(0, 8);
         const cleanedSearchTerm = searchTerm.toLowerCase();
@@ -124,27 +107,25 @@ export function CobrancaDashboardClient() {
         const searchMatch = ticket.nome_cliente.toLowerCase().includes(cleanedSearchTerm) ||
                             protocolDisplay.toLowerCase().includes(cleanedSearchTerm) ||
                             ticket.motivo.toLowerCase().includes(cleanedSearchTerm);
-
-        const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
         
         let dateMatch = true;
         if (date?.from) {
             const fromDate = new Date(date.from);
-            fromDate.setHours(0, 0, 0, 0); 
+            fromDate.setHours(0, 0, 0, 0);
             const toDate = date.to ? new Date(date.to) : new Date(date.from);
-            toDate.setHours(23, 59, 59, 999); 
+            toDate.setHours(23, 59, 59, 999);
             const submissionDate = new Date(ticket.data_atend);
             dateMatch = submissionDate >= fromDate && submissionDate <= toDate;
         }
 
-        return searchMatch && statusMatch && dateMatch;
+        return searchMatch && dateMatch;
       })
       .sort((a, b) => {
         const dateA = new Date(a.data_atend).getTime();
         const dateB = new Date(b.data_atend).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
-  }, [activeTickets, searchTerm, statusFilter, sortOrder, date]);
+  }, [archivedTickets, searchTerm, sortOrder, date]);
 
   const handleOpenDetails = (ticket: CobrancaTicket) => {
     setSelectedTicket(ticket);
@@ -155,16 +136,6 @@ export function CobrancaDashboardClient() {
     setIsModalOpen(false);
     setSelectedTicket(null);
   };
-  
-  const handleStatusChange = (ticketId: string, status: CobrancaTicketStatus) => {
-    updateTicket(ticketId, { status });
-  };
-
-  const ticketStatusesForFilter = useMemo(() => {
-    const activeStatuses = COBRANCA_TICKET_STATUSES.filter(s => s !== "Resolvida");
-    return ["Todos", ...activeStatuses];
-  }, []);
-
 
   if (isLoading) {
     return (
@@ -172,7 +143,6 @@ export function CobrancaDashboardClient() {
          <div className="flex flex-col lg:flex-row gap-2 items-center w-full p-4 bg-card border rounded-lg shadow">
           <Skeleton className="h-10 w-full lg:flex-grow" />
           <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto items-center shrink-0">
-            <Skeleton className="h-10 w-full sm:w-[150px]" />
             <Skeleton className="h-10 w-full sm:w-[150px]" />
             <Skeleton className="h-10 w-20 hidden sm:block" />
           </div>
@@ -210,7 +180,7 @@ export function CobrancaDashboardClient() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 w-full"
-                    aria-label="Buscar tickets de cobrança"
+                    aria-label="Buscar tickets de cobrança arquivados"
                 />
             </div>
 
@@ -264,18 +234,6 @@ export function CobrancaDashboardClient() {
                   </PopoverContent>
                 </Popover>
 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por status">
-                        <ListFilter className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <SelectValue placeholder="Filtrar por status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {ticketStatusesForFilter.map(status => (
-                            <SelectItem key={status} value={status}>{status}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
                 <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
                     <SelectTrigger className="w-full sm:w-[150px]" aria-label="Ordenar por data">
                          <SelectValue placeholder="Ordenar por data" />
@@ -285,12 +243,6 @@ export function CobrancaDashboardClient() {
                         <SelectItem value="asc">Mais Antigos</SelectItem>
                     </SelectContent>
                 </Select>
-                <Button asChild variant="outline" className="w-full sm:w-auto">
-                  <Link href="/suporte-gre/cobranca/archived">
-                    <Archive className="mr-2 h-4 w-4" />
-                    Ver Arquivados
-                  </Link>
-                </Button>
                 <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {if(value) setViewMode(value as "grid" | "list")}} className="hidden sm:flex">
                     <ToggleGroupItem value="grid" aria-label="Visualização em grade">
                         <LayoutGrid className="h-4 w-4" />
@@ -306,19 +258,18 @@ export function CobrancaDashboardClient() {
       {filteredAndSortedTickets.length === 0 ? (
         <Alert variant="default" className="mt-6 border-primary/50 bg-primary/5">
           <Info className="h-5 w-5 text-primary" />
-          <AlertTitle className="text-primary">Nenhum Ticket de Apoio Encontrado</AlertTitle>
+          <AlertTitle className="text-primary">Nenhum Ticket Arquivado</AlertTitle>
           <AlertDescription>
-            Não há tickets de Apoio ao Comercial que correspondam aos seus filtros.
+            Não há tickets de Apoio ao Comercial resolvidos para exibir aqui.
           </AlertDescription>
         </Alert>
       ) : (
         <div className={`gap-6 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'space-y-4'}`}>
           {filteredAndSortedTickets.map(ticket => (
-            <CobrancaTicketCard 
+            <ArchivedCobrancaTicketCard 
               key={ticket.id} 
               ticket={ticket} 
               onOpenDetails={handleOpenDetails}
-              onStatusChange={handleStatusChange}
             />
           ))}
         </div>
