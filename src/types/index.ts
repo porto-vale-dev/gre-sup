@@ -53,14 +53,14 @@ export interface CobrancaTicket {
   motivo: string;
   observacoes?: string | null;
   // Retorno
-  retorno_comercial_status?: RetornoComercialStatus | null;
-  observacoes_retorno?: string | null;
+  status_retorno?: RetornoComercialStatus | null;
+  obs_retorno?: string | null;
   // Controle
   status: CobrancaTicketStatus;
   user_id?: string | null; // Who created the ticket
 }
 
-export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'retorno_comercial_status' | 'observacoes_retorno' | 'user_id' | 'email_gerente'> & { user_id: string };
+export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'status_retorno' | 'obs_retorno' | 'user_id' | 'email_gerente'> & { user_id: string };
 
 
 // Represents one row in the reason_assignments table for Suporte GRE

@@ -130,8 +130,8 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     try {
       const { error } = await supabase.from('tickets_cobranca')
         .update({
-          retorno_comercial_status: status,
-          observacoes_retorno: observacoes,
+          status_retorno: status,
+          obs_retorno: observacoes,
         })
         .eq('id', ticketId);
       

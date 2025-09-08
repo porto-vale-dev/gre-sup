@@ -35,14 +35,14 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
   
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
 
-  const [retornoStatus, setRetornoStatus] = useState<RetornoComercialStatus | undefined>(ticket?.retorno_comercial_status || undefined);
-  const [retornoObs, setRetornoObs] = useState(ticket?.observacoes_retorno || "");
+  const [retornoStatus, setRetornoStatus] = useState<RetornoComercialStatus | undefined>(ticket?.status_retorno || undefined);
+  const [retornoObs, setRetornoObs] = useState(ticket?.obs_retorno || "");
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (ticket) {
-      setRetornoStatus(ticket.retorno_comercial_status || undefined);
-      setRetornoObs(ticket.observacoes_retorno || "");
+      setRetornoStatus(ticket.status_retorno || undefined);
+      setRetornoObs(ticket.obs_retorno || "");
     }
   }, [ticket?.id, isOpen]); 
 
