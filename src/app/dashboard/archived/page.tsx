@@ -5,7 +5,7 @@ import { ArchivedTicketsClient } from "@/components/ArchivedTicketsClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, Ticket } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function ArchivedTicketsPage() {
@@ -42,8 +42,10 @@ export default function ArchivedTicketsPage() {
     
     return (
         <div>
-        <h1 className="text-3xl font-bold font-headline mb-6 text-primary">Tickets Arquivados</h1>
-        <ArchivedTicketsClient />
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold font-headline text-primary">Tickets Arquivados</h1>
+          </div>
+          <ArchivedTicketsClient />
         </div>
     );
 }

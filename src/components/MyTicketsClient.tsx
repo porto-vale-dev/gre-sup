@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -13,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, User, Filter, Briefcase, Headset } from 'lucide-react';
-import { formatDistanceToNow, parseISO } from 'date-fns';
+import { formatDistanceToNow, parseISO, addDays, getDay, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDetailsModal } from './TicketDetailsModal';
 import { CobrancaTicketDetailsModal } from './CobrancaTicketDetailsModal';
@@ -29,8 +30,9 @@ const statusColors: Record<TicketStatus | CobrancaTicketStatus, string> = {
   // Cobrança
   "Aberta": "bg-blue-500 hover:bg-blue-500",
   "Em análise": "bg-yellow-500 hover:bg-yellow-500",
+  "Respondida": "bg-purple-600 hover:bg-purple-600",
   "Encaminhada": "bg-orange-500 hover:bg-orange-500",
-  "Reabertura": "bg-purple-500 hover:bg-purple-500",
+  "Reabertura": "bg-pink-500 hover:bg-pink-500",
   "Resolvida": "bg-green-500 hover:bg-green-500",
   "Dentro do prazo": "bg-teal-500 hover:bg-teal-500",
   "Fora do prazo": "bg-red-500 hover:bg-red-500",
@@ -46,12 +48,58 @@ const statusIcons: Record<TicketStatus | CobrancaTicketStatus, React.ElementType
   // Cobrança
   "Aberta": FileText,
   "Em análise": Hourglass,
+  "Respondida": Hourglass,
   "Encaminhada": Hourglass,
   "Reabertura": FileText,
   "Resolvida": CheckCircle2,
   "Dentro do prazo": CheckCircle2,
   "Fora do prazo": AlertCircle,
 };
+
+const getBusinessHours = (startDate: Date): number => {
+    let currentDate = new Date();
+    let businessHours = 0;
+    let tempDate = new Date(startDate);
+
+    while (tempDate < currentDate) {
+        const dayOfWeek = getDay(tempDate);
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) { // 1=Seg, 5=Sex
+            const endOfDay = new Date(tempDate);
+            endOfDay.setHours(23, 59, 59, 999);
+            const effectiveEndDate = currentDate < endOfDay ? currentDate : endOfDay;
+            
+            businessHours += (effectiveEndDate.getTime() - tempDate.getTime());
+        }
+        tempDate = addDays(tempDate, 1);
+        tempDate.setHours(0, 0, 0, 0);
+    }
+    return businessHours / (1000 * 60 * 60); // Converte de ms para horas
+};
+
+const getCobrancaTicketDisplayStatus = (ticket: CobrancaTicket): CobrancaTicketStatus => {
+    const ticketDateString = ticket.created_at || ticket.data_atend;
+    
+    // Se o status não for 'Aberta', retorna o status atual.
+    if (ticket.status !== 'Aberta' || !ticketDateString || !isValid(parseISO(ticketDateString))) {
+        return ticket.status; 
+    }
+    
+    let ticketDate = parseISO(ticketDateString);
+    const dayOfWeek = getDay(ticketDate);
+
+    if (dayOfWeek === 6) { ticketDate = addDays(ticketDate, 2); ticketDate.setHours(8, 0, 0, 0); } 
+    else if (dayOfWeek === 0) { ticketDate = addDays(ticketDate, 1); ticketDate.setHours(8, 0, 0, 0); }
+
+    const hoursSinceCreation = getBusinessHours(ticketDate);
+    
+    // Se o ticket tiver mais de 24h úteis E AINDA estiver como "Aberta", está fora do prazo
+    if (hoursSinceCreation > 24) {
+        return "Fora do prazo";
+    }
+
+    return ticket.status; // Retorna 'Aberta' se estiver dentro do prazo
+};
+
 
 const StatCard = ({ title, value }: { title: string; value: number }) => (
     <Card className="text-center p-4">
@@ -65,9 +113,12 @@ const isCobrancaTicket = (ticket: Ticket | CobrancaTicket): ticket is CobrancaTi
 };
 
 const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTicket; onOpenDetails: (ticket: Ticket | CobrancaTicket) => void }) => {
-    const StatusIcon = statusIcons[ticket.status as TicketStatus | CobrancaTicketStatus] || TicketIcon;
+    
     const isCobrança = isCobrancaTicket(ticket);
-    const submissionDate = isCobrança ? ticket.data_atend : ticket.submission_date;
+    const displayStatus = isCobrança ? getCobrancaTicketDisplayStatus(ticket) : ticket.status;
+    
+    const StatusIcon = statusIcons[displayStatus as TicketStatus | CobrancaTicketStatus] || TicketIcon;
+    const submissionDate = isCobrança ? (ticket.created_at || ticket.data_atend) : ticket.submission_date;
     const reason = isCobrança ? ticket.motivo : ticket.reason;
     const protocolDisplay = isCobrança 
         ? String(ticket.protocolo ?? '').padStart(4, '0') 
@@ -82,7 +133,7 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTi
                     {isCobrança ? (
                         <Badge variant="outline" className="border-red-500 text-red-600 flex items-center gap-1">
                             <Briefcase className="h-3 w-3"/>
-                            Cobrança
+                            Apoio Jacareí
                         </Badge>
                     ) : (
                          <Badge variant="outline" className="border-blue-500 text-blue-600 flex items-center gap-1">
@@ -93,12 +144,17 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTi
                 </div>
                 <p className="font-semibold text-lg">{reason}</p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/> Enviado {formatDistanceToNow(parseISO(submissionDate), { addSuffix: true, locale: ptBR })}</span>
+                    <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4"/> 
+                        {submissionDate && isValid(parseISO(submissionDate))
+                            ? `Enviado ${formatDistanceToNow(parseISO(submissionDate), { addSuffix: true, locale: ptBR })}`
+                            : 'Data de envio indisponível'
+                        }
+                    </span>
                     {responsible && (
                         <span className="flex items-center gap-1.5"><User className="h-4 w-4"/> Responsável: {responsible}</span>
                     )}
-                    <Badge variant={ticket.status === 'Concluído' || ticket.status === 'Resolvida' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'} className={`${statusColors[ticket.status as TicketStatus | CobrancaTicketStatus]} text-white`}>
-                        {ticket.status}
+                    <Badge variant={displayStatus === 'Concluído' || displayStatus === 'Resolvida' ? 'default' : displayStatus === 'Atrasado' || displayStatus === 'Fora do prazo' ? 'destructive' : 'secondary'} className={`${statusColors[displayStatus as TicketStatus | CobrancaTicketStatus]} text-white`}>
+                        {displayStatus}
                     </Badge>
                 </div>
             </div>
@@ -126,21 +182,23 @@ export function MyTicketsClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const myTickets = useMemo(() => {
-    if (!user) return [];
+    if (!user || !email) return [];
     
     // Suporte tickets are filtered by who created them (user_id)
     const mySupportTickets = supportTickets.filter(t => t.user_id === user.id);
 
-    // Cobrança tickets are filtered by who is the responsible manager (email_gerente)
-    const myCobrancaTickets = cobrancaTickets.filter(t => t.email_gerente === email);
+    // Cobrança tickets are filtered if the user is the responsible manager OR director
+    const myCobrancaTickets = cobrancaTickets.filter(t => t.email_gerente === email || t.email_diretor === email);
     
     const allTickets: (Ticket | CobrancaTicket)[] = [
       ...mySupportTickets,
       ...myCobrancaTickets
     ];
     
-    return allTickets;
+    // Remove duplicates in case a user is both creator and responsible for a ticket in some way
+    return Array.from(new Map(allTickets.map(item => [item.id, item])).values());
   }, [supportTickets, cobrancaTickets, user, email]);
+
 
   const filteredTickets = useMemo(() => {
     return myTickets.filter(ticket => {
@@ -163,9 +221,13 @@ export function MyTicketsClient() {
 
         return typeMatch && searchMatch;
     }).sort((a, b) => {
-        const dateA = isCobrancaTicket(a) ? a.data_atend : a.submission_date;
-        const dateB = isCobrancaTicket(b) ? b.data_atend : b.submission_date;
-        return parseISO(dateB).getTime() - parseISO(dateA).getTime()
+        const dateAString = isCobrancaTicket(a) ? (a.created_at || a.data_atend) : a.submission_date;
+        const dateBString = isCobrancaTicket(b) ? (b.created_at || b.data_atend) : b.submission_date;
+
+        if (!dateAString || !isValid(parseISO(dateAString))) return 1;
+        if (!dateBString || !isValid(parseISO(dateBString))) return -1;
+
+        return parseISO(dateBString).getTime() - parseISO(dateAString).getTime();
     });
   }, [myTickets, searchTerm, filterType]);
 
@@ -259,10 +321,10 @@ export function MyTicketsClient() {
                         </ToggleGroupItem>
                         <ToggleGroupItem
                           value="Cobrança"
-                          aria-label="Ver Cobrança"
+                          aria-label="Ver Apoio Jacareí"
                           className="data-[state=on]:bg-red-500 data-[state=on]:text-white"
                         >
-                          Cobrança
+                          Apoio Jacareí
                         </ToggleGroupItem>
                     </ToggleGroup>
                 </div>
@@ -311,6 +373,7 @@ export function MyTicketsClient() {
                 ticket={selectedTicket as CobrancaTicket}
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
+                isUserResponseView={true}
             />
         )}
     </div>

@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Home, LayoutDashboard, Settings, UserCircle, Receipt } from 'lucide-react';
+import { LogOut, Home, LayoutDashboard, Settings, UserCircle, Handshake, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import React from 'react';
@@ -67,14 +67,18 @@ export function SiteHeader() {
   if (isTicketSystemArea) {
     const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
     const isCobrancaDashboardArea = pathname.startsWith('/suporte-gre/cobranca/dashboard');
+    const isCobrancaGestaoArea = pathname === '/suporte-gre/cobranca/gestao';
     const isCobrancaArchivedArea = pathname.startsWith('/suporte-gre/cobranca/archived');
     const isCobrancaNovoArea = pathname === '/suporte-gre/cobranca/novo';
     const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
     const isGestaoPage = pathname === '/suporte-gre/gestao';
     const isConfiguracoesPage = pathname === '/suporte-gre/configuracoes';
-    const allowedManagementRoles = ['adm', 'greadmin', 'gre'];
+    const allowedManagementRoles = ['adm', 'greadmin', 'gre', 'grejac', 'greadminjac'];
     const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
-    const canViewSettings = cargo === 'adm' || cargo === 'greadmin';
+    const canViewSettings = cargo === 'adm' || cargo === 'greadmin' || cargo === 'gre';
+
+    const isCobrancaArea = pathname.includes('/cobranca/');
+    const logoLink = isCobrancaArea ? '/suporte-gre/cobranca/dashboard' : '/suporte-gre/painel';
 
 
     // Header for Ticket System (Dashboard, Form)
@@ -82,7 +86,7 @@ export function SiteHeader() {
       <header className="bg-card border-b sticky top-0 z-40 shadow-sm">
         <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
           <Link
-            href={isAuthenticated ? "/suporte-gre/painel" : "/suporte-gre"}
+            href={logoLink}
             className="flex items-center gap-3 transition-colors"
             aria-label="TicketFlow Home"
           >
@@ -98,27 +102,27 @@ export function SiteHeader() {
 
           {!isLoading && isAuthenticated && (
             <nav className="flex items-center gap-1 sm:gap-2">
-              {(isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
-                <Link href="/suporte-gre/painel" passHref>
-                  <Button variant="ghost" size="sm" aria-label="Painel Principal">
+               {(isArchivedPage) && (
+                 <Link href="/dashboard" passHref>
+                  <Button variant="ghost" size="sm" aria-label="Painel de Tickets">
                     <TicketIcon className="h-4 w-4 sm:mr-2" />
                     <span className="hidden sm:inline">Painel de Tickets</span>
                   </Button>
                 </Link>
               )}
-               {(isCobrancaDashboardArea || isCobrancaArchivedArea) && (
-                <Link href="/suporte-gre/painel" passHref>
-                  <Button variant="ghost" size="sm" aria-label="Painel Principal">
-                    <TicketIcon className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Painel de Tickets</span>
-                  </Button>
-                </Link>
-              )}
-               {(isCobrancaArchivedArea || isCobrancaNovoArea) && (
+               {(isCobrancaArchivedArea || isCobrancaNovoArea || isCobrancaGestaoArea) && (
                  <Link href="/suporte-gre/cobranca/dashboard" passHref>
-                  <Button variant="ghost" size="sm" aria-label="Painel de Cobrança">
-                    <Receipt className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Painel de Cobrança</span>
+                  <Button variant="ghost" size="sm" aria-label="Painel Apoio Jacareí">
+                    <Handshake className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Painel Apoio Jacareí</span>
+                  </Button>
+                </Link>
+              )}
+               {isCobrancaDashboardArea && canViewManagement && (
+                 <Link href="/suporte-gre/cobranca/gestao" passHref>
+                  <Button variant="ghost" size="sm" aria-label="Gestão de Apoio">
+                    <BarChart2 className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Gestão de Apoio</span>
                   </Button>
                 </Link>
               )}

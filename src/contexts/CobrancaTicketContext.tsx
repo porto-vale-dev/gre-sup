@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -7,7 +8,7 @@ import type { CobrancaTicket, CobrancaTicketStatus, CreateCobrancaTicket, Retorn
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
-import { gerentesPorDiretor } from '@/lib/cobrancaData';
+import { gerentesPorDiretor, diretores } from '@/lib/cobrancaData';
 
 interface CobrancaTicketContextType {
   tickets: CobrancaTicket[];
@@ -15,7 +16,11 @@ interface CobrancaTicketContextType {
   error: string | null;
   addTicket: (ticketData: CreateCobrancaTicket) => Promise<boolean>;
   updateTicket: (ticketId: string, updates: Partial<CobrancaTicket>) => Promise<void>;
-  updateRetornoComercial: (
+  updateTicketDetailsAndRetorno: (
+    ticketId: string,
+    details: { diretor: string; gerente: string; observacoes: string },
+  ) => Promise<boolean>;
+  saveUserResponse: (
     ticketId: string, 
     status: RetornoComercialStatus, 
     observacoes: string
@@ -34,7 +39,9 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
-    if (!isAuthenticated || !user) {
+    // This function will now fetch tickets for ANY authenticated user.
+    // The responsibility for filtering WHO can see WHAT is now on the page components themselves.
+    if (!isAuthenticated) {
         setIsLoading(false);
         return;
     }
@@ -42,13 +49,14 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const { data, error: rpcError } = await supabase
-        .rpc('get_cobranca_tickets_for_user');
+        .from('tickets_cobranca')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (rpcError) {
-        throw new Error(`Erro ao buscar tickets de apoio: ${rpcError.message}. Verifique a função 'get_cobranca_tickets_for_user' no Supabase.`);
+        throw new Error(`Erro ao buscar tickets de apoio: ${rpcError.message}. Verifique a tabela 'tickets_cobranca' no Supabase.`);
       }
       
-      // A RPC agora deve retornar a coluna 'protocolo'
       setTickets(data || []);
 
     } catch (err: any) {
@@ -59,7 +67,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, isAuthenticated, user]);
+  }, [toast, isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthLoading && isAuthenticated) {
@@ -76,22 +84,70 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     try {
       if (!user) throw new Error("Usuário não autenticado.");
 
-      const gerenteEmail = 
-        gerentesPorDiretor[ticketData.diretor]?.find(g => g.name === ticketData.gerente)?.email || null;
+      const diretorData = diretores.find(
+        d => d.name.trim().toLowerCase() === ticketData.diretor.trim().toLowerCase()
+      );
+      const diretorEmail = diretorData?.email || null;
 
-      // O campo 'protocolo' é gerado pelo banco de dados agora, então não o enviamos.
+      const gerenteData = gerentesPorDiretor[ticketData.diretor]?.find(
+        g => g.name.trim().toLowerCase() === ticketData.gerente.trim().toLowerCase()
+      );
+      
+      if (!gerenteData) {
+        throw new Error(`Gerente "${ticketData.gerente}" não encontrado ou não pertence ao diretor "${ticketData.diretor}". Verifique os dados em \`src/lib/cobrancaData.ts\``);
+      }
+
+      const gerenteEmail = gerenteData.email;
+      const celularGerente = gerenteData.celular;
+      
       const payload = {
-        ...ticketData,
-        email_gerente: gerenteEmail,
+        nome_cliente: ticketData.nome_cliente,
+        cpf: ticketData.cpf,
+        cota: ticketData.cota,
+        producao: ticketData.producao,
+        telefone: ticketData.telefone,
+        email: ticketData.email,
+        diretor: ticketData.diretor,
+        gerente: ticketData.gerente,
+        motivo: ticketData.motivo,
+        observacoes: ticketData.observacoes,
         user_id: user.id,
-        data_atend: new Date().toISOString(),
+        email_gerente: gerenteEmail,
+        email_diretor: diretorEmail,
         status: 'Aberta' as CobrancaTicketStatus,
       };
-      
-      const { error: insertError } = await supabase.from('tickets_cobranca').insert(payload);
+
+      const { data: newTicketData, error: insertError } = await supabase
+        .from('tickets_cobranca')
+        .insert(payload)
+        .select()
+        .single();
         
       if (insertError) {
         throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
+      }
+
+      if (newTicketData) {
+        // Disparar o webhook para N8N para novo ticket
+        const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/213124asd144das";
+        fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tipo_evento: 'novo_ticket',
+                protocolo: String(newTicketData.protocolo).padStart(4, '0'),
+                motivo: newTicketData.motivo,
+                nome_gerente: ticketData.gerente,
+                celular_gerente: celularGerente,
+            }),
+        }).catch(webhookError => {
+            console.error("Webhook para N8N falhou:", webhookError);
+             toast({
+                title: "Aviso de Webhook",
+                description: "O ticket foi criado, mas a notificação pode não ter sido enviada.",
+                variant: "default",
+            });
+        });
       }
 
       toast({ title: "Ticket de Apoio Criado", description: "Sua solicitação foi registrada com sucesso." });
@@ -127,36 +183,101 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     toast({ title: "Status Atualizado!", description: `O status do ticket foi alterado para ${updates.status}.` });
     await fetchTickets();
   };
-
-  const updateRetornoComercial = async (ticketId: string, status: RetornoComercialStatus, observacoes: string): Promise<boolean> => {
+  
+  const updateTicketDetailsAndRetorno = async (
+    ticketId: string,
+    details: { diretor: string; gerente: string; observacoes: string },
+  ): Promise<boolean> => {
     try {
-      const { error } = await supabase.rpc('update_retorno_comercial', {
-        p_ticket_id: ticketId,
-        p_status_retorno: status,
-        p_obs_retorno: observacoes,
-      });
+      const { data: currentTicket, error: fetchError } = await supabase
+        .from('tickets_cobranca')
+        .select('protocolo, motivo, status')
+        .eq('id', ticketId)
+        .single();
+      
+      if (fetchError || !currentTicket) {
+        throw new Error("Não foi possível encontrar o ticket para atualização.");
+      }
+
+      const gerenteData = gerentesPorDiretor[details.diretor]?.find(g => g.name === details.gerente);
+      const gerenteEmail = gerenteData?.email || null;
+      const celularGerente = gerenteData?.celular || null;
+
+      const diretorData = diretores.find(d => d.name === details.diretor);
+      const diretorEmail = diretorData?.email || null;
+
+      const updates: { [key: string]: any } = {
+        diretor: details.diretor,
+        gerente: details.gerente,
+        email_gerente: gerenteEmail,
+        email_diretor: diretorEmail,
+        observacoes: details.observacoes,
+        status: 'Reabertura', // Altera o status para 'Reabertura' sempre
+      };
+      
+      const { error } = await supabase
+        .from('tickets_cobranca')
+        .update(updates)
+        .eq('id', ticketId);
 
       if (error) {
-        // This error will now be more meaningful if it comes from the RPC function.
-        throw new Error(`Não foi possível salvar o retorno: ${error.message}`);
+        throw new Error(`Erro ao atualizar o ticket: ${error.message}`);
       }
-      
-      toast({
-        title: "Sucesso!",
-        description: "O retorno do comercial foi salvo.",
-      });
+
+      // Webhook é disparado ao salvar detalhes, notificando como reabertura
+      const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/213124asd144das";
+      fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              tipo_evento: 'reabertura', // Diferencia o evento como 'reabertura'
+              protocolo: String(currentTicket.protocolo).padStart(4, '0'),
+              motivo: currentTicket.motivo,
+              nome_gerente: details.gerente,
+              celular_gerente: celularGerente,
+          }),
+      }).catch(webhookError => console.error("Webhook de reabertura falhou:", webhookError));
+
+
+      toast({ title: "Sucesso!", description: "As informações do ticket foram salvas e o status atualizado para 'Reabertura'." });
       await fetchTickets();
       return true;
 
     } catch (err: any) {
-       toast({
-        title: "Erro ao Salvar",
-        description: err.message || "Ocorreu uma falha desconhecida.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao Salvar", description: err.message, variant: "destructive" });
       return false;
     }
   };
+
+  const saveUserResponse = async (
+      ticketId: string,
+      statusRetorno: RetornoComercialStatus,
+      obsRetorno: string
+  ): Promise<boolean> => {
+      try {
+          const { error } = await supabase
+              .from('tickets_cobranca')
+              .update({
+                  status_retorno: statusRetorno,
+                  obs_retorno: obsRetorno,
+                  status: 'Respondida'
+              })
+              .eq('id', ticketId);
+
+          if (error) {
+            throw new Error(`Não foi possível salvar o retorno: ${error.message}`);
+          }
+
+          toast({ title: "Resposta Enviada", description: "Sua resposta foi salva e o status do ticket foi atualizado para 'Respondida'." });
+          await fetchTickets();
+          return true;
+
+      } catch(err: any) {
+          toast({ title: "Erro ao Salvar Resposta", description: err.message, variant: "destructive" });
+          return false;
+      }
+  };
+
 
   const getTicketById = (ticketId: string): CobrancaTicket | undefined => {
     return tickets.find(ticket => ticket.id === ticketId);
@@ -170,7 +291,8 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
         error, 
         addTicket, 
         updateTicket,
-        updateRetornoComercial,
+        updateTicketDetailsAndRetorno,
+        saveUserResponse,
         getTicketById,
         fetchTickets, 
     }}>

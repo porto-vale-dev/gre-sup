@@ -1,4 +1,3 @@
-
 'use client';
 
 import { CobrancaDashboardClient } from "@/components/CobrancaDashboardClient";
@@ -42,14 +41,16 @@ export default function CobrancaDashboardPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold font-headline text-primary">Painel de Cobrança</h1>
-        <Button asChild>
-          <Link href="/suporte-gre/cobranca/novo">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Abrir Ticket de Cobrança
-          </Link>
-        </Button>
+      <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold font-headline text-primary">Painel Apoio Jacareí</h1>
+        <div className="flex gap-2">
+          <Button asChild>
+            <Link href="/suporte-gre/cobranca/novo">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Abrir Ticket de Apoio
+            </Link>
+          </Button>
+        </div>
       </div>
       <CobrancaDashboardClient />
     </div>

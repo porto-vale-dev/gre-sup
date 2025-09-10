@@ -1,14 +1,13 @@
-
 'use client';
 
-import { DashboardClient } from "@/components/DashboardClient";
-import { useAuth } from "@/contexts/AuthContext";
 import Link from 'next/link';
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, ArrowLeft, Handshake } from 'lucide-react';
+import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CobrancaGestaoClient } from '@/components/CobrancaGestaoClient';
 
-export default function DashboardPage() {
+export default function GestaoApoioCobrancaPage() {
   const { cargo } = useAuth();
   const allowedRoles = ['adm', 'greadmin', 'gre'];
 
@@ -42,10 +41,8 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold font-headline text-primary">Painel de Tickets</h1>
-      </div>
-      <DashboardClient />
+      <h1 className="text-3xl font-bold font-headline mb-6 text-primary">Gestão de Apoio Jacareí</h1>
+      <CobrancaGestaoClient />
     </div>
   );
 }

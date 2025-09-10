@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -15,27 +16,86 @@ import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle, Calendar
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addDays, getDay, isValid } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { COBRANCA_TICKET_STATUSES } from '@/lib/cobrancaData';
 import { CobrancaTicketDetailsModal } from './CobrancaTicketDetailsModal';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 const statusColors: Record<CobrancaTicketStatus, string> = {
   "Aberta": "bg-blue-500",
   "Em análise": "bg-yellow-500",
+  "Respondida": "bg-purple-600",
   "Encaminhada": "bg-orange-500",
-  "Reabertura": "bg-purple-500",
+  "Reabertura": "bg-pink-500",
   "Resolvida": "bg-green-500",
   "Dentro do prazo": "bg-teal-500",
   "Fora do prazo": "bg-red-500",
 };
 
+// Função para calcular horas úteis (seg-sex)
+const getBusinessHours = (startDate: Date): number => {
+    let currentDate = new Date();
+    let businessHours = 0;
+    let tempDate = new Date(startDate);
+
+    while (tempDate < currentDate) {
+        const dayOfWeek = getDay(tempDate);
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) { // 1=Seg, 5=Sex
+            // Calcula o fim do dia atual ou a data final, o que vier primeiro
+            const endOfDay = new Date(tempDate);
+            endOfDay.setHours(23, 59, 59, 999);
+            const effectiveEndDate = currentDate < endOfDay ? currentDate : endOfDay;
+            
+            businessHours += (effectiveEndDate.getTime() - tempDate.getTime());
+        }
+        // Avança para o próximo dia
+        tempDate = addDays(tempDate, 1);
+        tempDate.setHours(0, 0, 0, 0);
+    }
+    return businessHours / (1000 * 60 * 60); // Converte de ms para horas
+};
+
+
+const getTicketDisplayStatus = (ticket: CobrancaTicket): CobrancaTicketStatus => {
+    const ticketDateString = ticket.created_at || ticket.data_atend;
+    
+    // Se não há data ou o status não é 'Aberta', retorna o status atual.
+    if (ticket.status !== 'Aberta' || !ticketDateString || !isValid(parseISO(ticketDateString))) {
+        return ticket.status; 
+    }
+    
+    let ticketDate = parseISO(ticketDateString);
+    const dayOfWeek = getDay(ticketDate);
+
+    // Se o ticket foi criado no sábado (6) ou domingo (0), ajusta a data de início para a próxima segunda-feira às 8h
+    if (dayOfWeek === 6) { // Sábado
+        ticketDate = addDays(ticketDate, 2);
+        ticketDate.setHours(8, 0, 0, 0);
+    } else if (dayOfWeek === 0) { // Domingo
+        ticketDate = addDays(ticketDate, 1);
+        ticketDate.setHours(8, 0, 0, 0);
+    }
+
+    const hoursSinceCreation = getBusinessHours(ticketDate);
+    
+    // Se o ticket tiver mais de 24h úteis E AINDA estiver como "Aberta", está fora do prazo
+    if (hoursSinceCreation > 24) {
+        return "Fora do prazo";
+    }
+
+    return ticket.status; // Retorna 'Aberta' se estiver dentro do prazo
+};
+
+
 const CobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket: CobrancaTicket; onOpenDetails: (ticket: CobrancaTicket) => void; onStatusChange: (ticketId: string, status: CobrancaTicketStatus) => void; }) => {
     const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
+    const displayStatus = getTicketDisplayStatus(ticket);
+    const displayDate = ticket.created_at || ticket.data_atend;
 
     return (
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
@@ -44,13 +104,13 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket:
                     <CardTitle className="text-lg font-headline text-primary flex items-center gap-2">
                         {ticket.motivo.length > 30 ? `${ticket.motivo.substring(0,27)}...` : ticket.motivo}
                     </CardTitle>
-                    <Badge variant={ticket.status === 'Resolvida' ? 'default' : ticket.status === 'Fora do prazo' ? 'destructive' : 'secondary'} className={`whitespace-nowrap ${statusColors[ticket.status]} text-white`}>
-                        {ticket.status}
+                    <Badge variant={displayStatus === 'Resolvida' ? 'default' : displayStatus === 'Fora do prazo' ? 'destructive' : 'secondary'} className={`whitespace-nowrap ${statusColors[displayStatus]} text-white`}>
+                        {displayStatus}
                     </Badge>
                 </div>
                 <CardDescription className="text-xs text-muted-foreground flex items-center gap-4 pt-1">
                     <span className="flex items-center gap-1.5"><TicketIcon className="h-3.5 w-3.5" /> Protocolo #{protocolDisplay}</span>
-                    <span className="flex items-center gap-1.5"><CalendarIcon className="h-3.5 w-3.5" /> {format(parseISO(ticket.data_atend), "dd/MM/yyyy", { locale: ptBR })}</span>
+                    <span className="flex items-center gap-1.5"><CalendarIcon className="h-3.5 w-3.5" /> {displayDate ? format(parseISO(displayDate), "dd/MM/yyyy", { locale: ptBR }) : 'Data N/A'}</span>
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm flex-grow">
@@ -94,6 +154,7 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket:
 
 export function CobrancaDashboardClient() {
   const { tickets, isLoading, error, fetchTickets, updateTicket } = useCobrancaTickets();
+  const { user, cargo } = useAuth();
   
   const [selectedTicket, setSelectedTicket] = useState<CobrancaTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -112,13 +173,21 @@ export function CobrancaDashboardClient() {
     }
   }, [isDatePopoverOpen, date]);
   
-  const activeTickets = useMemo(() => {
-    return tickets.filter(ticket => ticket.status !== "Resolvida");
-  }, [tickets]);
+  const visibleTickets = useMemo(() => {
+    const baseTickets = tickets.filter(ticket => ticket.status !== "Resolvida");
+
+    if (cargo === 'gre' && user) {
+        return baseTickets.filter(ticket => ticket.user_id === user.id);
+    }
+    
+    return baseTickets;
+  }, [tickets, cargo, user]);
+
 
   const filteredAndSortedTickets = useMemo(() => {
-    return activeTickets
+    return visibleTickets
       .filter(ticket => {
+        const displayStatus = getTicketDisplayStatus(ticket);
         const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
         const cleanedSearchTerm = searchTerm.toLowerCase();
         
@@ -126,26 +195,34 @@ export function CobrancaDashboardClient() {
                             protocolDisplay.toLowerCase().includes(cleanedSearchTerm) ||
                             ticket.motivo.toLowerCase().includes(cleanedSearchTerm);
 
-        const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
+        const statusMatch = statusFilter === "Todos" || displayStatus === statusFilter;
         
         let dateMatch = true;
         if (date?.from) {
-            const fromDate = new Date(date.from);
-            fromDate.setHours(0, 0, 0, 0); 
-            const toDate = date.to ? new Date(date.to) : new Date(date.from);
-            toDate.setHours(23, 59, 59, 999); 
-            const submissionDate = new Date(ticket.data_atend);
-            dateMatch = submissionDate >= fromDate && submissionDate <= toDate;
+            const ticketDate = ticket.created_at || ticket.data_atend;
+            if (ticketDate) {
+                const fromDate = new Date(date.from);
+                fromDate.setHours(0, 0, 0, 0); 
+                const toDate = date.to ? new Date(date.to) : new Date(date.from);
+                toDate.setHours(23, 59, 59, 999); 
+                const submissionDate = new Date(ticketDate);
+                dateMatch = submissionDate >= fromDate && submissionDate <= toDate;
+            } else {
+                dateMatch = false; // If there's a date filter but the ticket has no date
+            }
         }
 
         return searchMatch && statusMatch && dateMatch;
       })
       .sort((a, b) => {
-        const dateA = new Date(a.data_atend).getTime();
-        const dateB = new Date(b.data_atend).getTime();
-        return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+        const dateA = a.created_at || a.data_atend;
+        const dateB = b.created_at || b.data_atend;
+        if (!dateA || !dateB) return 0;
+        const timeA = new Date(dateA).getTime();
+        const timeB = new Date(dateB).getTime();
+        return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
       });
-  }, [activeTickets, searchTerm, statusFilter, sortOrder, date]);
+  }, [visibleTickets, searchTerm, statusFilter, sortOrder, date]);
 
   const handleOpenDetails = (ticket: CobrancaTicket) => {
     setSelectedTicket(ticket);
@@ -162,9 +239,9 @@ export function CobrancaDashboardClient() {
   };
 
   const ticketStatusesForFilter = useMemo(() => {
-    const activeStatuses = COBRANCA_TICKET_STATUSES.filter(s => s !== "Resolvida");
-    return ["Todos", ...activeStatuses];
-  }, []);
+    const statuses = new Set(visibleTickets.map(getTicketDisplayStatus));
+    return ["Todos", ...Array.from(statuses)];
+  }, [visibleTickets]);
 
 
   if (isLoading) {
@@ -286,7 +363,7 @@ export function CobrancaDashboardClient() {
                         <SelectItem value="asc">Mais Antigos</SelectItem>
                     </SelectContent>
                 </Select>
-                <Button asChild variant="outline" className="w-full sm:w-auto">
+                 <Button asChild variant="outline" className="w-full sm:w-auto">
                   <Link href="/suporte-gre/cobranca/archived">
                     <Archive className="mr-2 h-4 w-4" />
                     Ver Arquivados
@@ -309,7 +386,10 @@ export function CobrancaDashboardClient() {
           <Info className="h-5 w-5 text-primary" />
           <AlertTitle className="text-primary">Nenhum Ticket de Apoio Encontrado</AlertTitle>
           <AlertDescription>
-            Não há tickets de Apoio ao Comercial que correspondam aos seus filtros.
+            {cargo === 'gre' 
+              ? "Não há tickets de apoio criados por você que correspondam aos filtros."
+              : "Não há tickets de Apoio ao Comercial que correspondam aos seus filtros."
+            }
           </AlertDescription>
         </Alert>
       ) : (

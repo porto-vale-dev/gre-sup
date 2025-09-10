@@ -1,6 +1,7 @@
 
+
 export type TicketStatus = "Novo" | "Em Andamento" | "Ativo" | "Atrasado" | "Concluído";
-export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Resolvida" | "Dentro do prazo" | "Fora do prazo" | "Reabertura";
+export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Respondida" | "Resolvida" | "Dentro do prazo" | "Fora do prazo" | "Reabertura";
 export type RetornoComercialStatus = 'Tirou dúvidas' | 'Tentando contato' | 'Em andamento' | 'Revertido' | 'Não Revertido' | 'Sem retorno';
 
 
@@ -38,6 +39,7 @@ export interface Ticket {
 export interface CobrancaTicket {
   id: string;
   protocolo?: number;
+  created_at: string; // ISO String from Supabase
   // Identificação
   nome_cliente: string;
   cpf: string;
@@ -49,6 +51,7 @@ export interface CobrancaTicket {
   diretor: string;
   gerente: string;
   email_gerente?: string | null;
+  email_diretor?: string | null;
   data_atend: string; // ISO String
   // Detalhes
   motivo: string;
@@ -61,7 +64,7 @@ export interface CobrancaTicket {
   user_id?: string | null; // Who created the ticket
 }
 
-export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'status_retorno' | 'obs_retorno' | 'user_id' | 'email_gerente' | 'protocolo'> & { user_id: string };
+export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'status_retorno' | 'obs_retorno' | 'user_id' | 'email_gerente' | 'email_diretor' | 'protocolo' | 'created_at'> & { user_id: string };
 
 
 // Represents one row in the reason_assignments table for Suporte GRE
@@ -69,3 +72,4 @@ export interface ReasonAssignment {
   reason: string;
   username: string;
 }
+

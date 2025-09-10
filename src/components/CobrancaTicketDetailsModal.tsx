@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import type { CobrancaTicket, RetornoComercialStatus } from '@/types';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import React, { useState, useEffect } from 'react';
 import {
@@ -19,49 +20,115 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal } from 'lucide-react';
+import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2 } from 'lucide-react';
 import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
-import { RETORNO_COMERCIAL_STATUSES } from '@/lib/cobrancaData';
+import { useToast } from '@/hooks/use-toast';
+import { RETORNO_COMERCIAL_STATUSES, diretores, gerentesPorDiretor, type Gerente } from '@/lib/cobrancaData';
 
 
 interface CobrancaTicketDetailsModalProps {
   ticket: CobrancaTicket | null;
   isOpen: boolean;
   onClose: () => void;
+  isUserResponseView?: boolean;
 }
 
-export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: CobrancaTicketDetailsModalProps) {
-  const { getTicketById, updateRetornoComercial } = useCobrancaTickets();
+export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isUserResponseView = false }: CobrancaTicketDetailsModalProps) {
+  const { getTicketById, updateTicketDetailsAndRetorno, updateTicket, saveUserResponse } = useCobrancaTickets();
+  const { toast } = useToast();
   
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
 
+  // State for editable fields
+  const [diretor, setDiretor] = useState(ticket?.diretor || '');
+  const [gerente, setGerente] = useState(ticket?.gerente || '');
+  const [observacoes, setObservacoes] = useState(ticket?.observacoes || '');
+  const [availableGerentes, setAvailableGerentes] = useState<Gerente[]>([]);
+
+  // State for Retorno do Comercial - Populated with existing data
   const [retornoStatus, setRetornoStatus] = useState<RetornoComercialStatus | undefined>(ticket?.status_retorno || undefined);
   const [retornoObs, setRetornoObs] = useState(ticket?.obs_retorno || "");
+  
   const [isSaving, setIsSaving] = useState(false);
+  const [isResolving, setIsResolving] = useState(false);
 
   useEffect(() => {
     if (ticket) {
+      // Populate details fields from ticket
+      setDiretor(ticket.diretor);
+      setGerente(ticket.gerente);
+      setObservacoes(ticket.observacoes || '');
+
+      // Pre-fill retorno fields with existing data from the ticket
       setRetornoStatus(ticket.status_retorno || undefined);
       setRetornoObs(ticket.obs_retorno || "");
+
+      // Populate available gerentes based on initial diretor
+      if (ticket.diretor && gerentesPorDiretor[ticket.diretor]) {
+        setAvailableGerentes(gerentesPorDiretor[ticket.diretor]);
+      } else {
+        setAvailableGerentes([]);
+      }
     }
-  }, [ticket?.id, isOpen]); 
-
-  if (!ticket) return null;
-
-  const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
+  }, [ticket, isOpen]); // Rerun when modal opens or ticket changes
+  
+  const handleDiretorChange = (newDiretor: string) => {
+    setDiretor(newDiretor);
+    setAvailableGerentes(gerentesPorDiretor[newDiretor] || []);
+    setGerente(''); // Reset gerente when diretor changes
+  };
 
   const handleSave = async () => {
+    if (!ticket) return;
+
+    setIsSaving(true);
+
+    const success = await updateTicketDetailsAndRetorno(
+        ticket.id, 
+        { diretor, gerente, observacoes },
+        // Do not pass retorno data when saving from admin panel
+    );
+
+    if(success) {
+      onClose();
+    }
+    
+    setIsSaving(false);
+  };
+  
+  const handleUserResponseSave = async () => {
+    if (!ticket) return;
     if (!retornoStatus) {
-        // You might want to add a toast here to inform the user
+        toast({ title: "Campo Obrigatório", description: "Por favor, selecione um status para a sua resposta.", variant: 'destructive' });
         return;
     }
+
     setIsSaving(true);
-    const success = await updateRetornoComercial(ticket.id, retornoStatus, retornoObs);
-    if(success) {
+    const success = await saveUserResponse(ticket.id, retornoStatus, retornoObs);
+    if (success) {
       onClose();
     }
     setIsSaving(false);
   };
+
+
+  const handleMarkAsResolved = async () => {
+    if (!ticket) return;
+    setIsResolving(true);
+    await updateTicket(ticket.id, { status: 'Resolvida' });
+    setIsResolving(false);
+    onClose();
+  };
+
+  if (!ticket) return null;
+
+  const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
+  const isRetornoDisabled = isSaving || !isUserResponseView;
+  const submissionDateString = ticket.created_at || ticket.data_atend;
+  const submissionDate = submissionDateString ? parseISO(submissionDateString) : null;
+  const formattedDate = submissionDate && isValid(submissionDate) 
+    ? format(submissionDate, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })
+    : 'Data inválida';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -106,17 +173,35 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                     <p>{ticket.email}</p>
                   </div>
                 )}
-                 <div>
-                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><User className="h-4 w-4" />Diretor:</strong>
-                  <p>{ticket.diretor}</p>
+                 <div className="space-y-1">
+                  <Label htmlFor="diretor-select" className="font-medium text-muted-foreground flex items-center gap-1.5"><User className="h-4 w-4" />Diretor:</Label>
+                  <Select value={diretor} onValueChange={handleDiretorChange} disabled={isUserResponseView}>
+                    <SelectTrigger id="diretor-select">
+                      <SelectValue placeholder="Selecione o diretor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {diretores.map(d => (
+                        <SelectItem key={d.name} value={d.name}>{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                 <div>
-                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Users className="h-4 w-4" />Gerente:</strong>
-                  <p>{ticket.gerente}</p>
+                 <div className="space-y-1">
+                  <Label htmlFor="gerente-select" className="font-medium text-muted-foreground flex items-center gap-1.5"><Users className="h-4 w-4" />Gerente:</Label>
+                  <Select value={gerente} onValueChange={setGerente} disabled={availableGerentes.length === 0 || isUserResponseView}>
+                    <SelectTrigger id="gerente-select">
+                      <SelectValue placeholder="Selecione o gerente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableGerentes.map(g => (
+                        <SelectItem key={g.name} value={g.name}>{g.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />Data de Abertura:</strong>
-                  <p>{format(parseISO(ticket.data_atend), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</p>
+                  <p>{formattedDate}</p>
                 </div>
                 <div>
                   <strong className="font-medium text-muted-foreground">Status:</strong>
@@ -128,15 +213,19 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                 <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><MessageSquare className="h-4 w-4" />Motivo da Solicitação:</strong>
                 <p>{ticket.motivo}</p>
               </div>
-              {ticket.observacoes && (
-                <>
-                  <Separator />
-                  <div>
-                    <strong className="font-medium text-muted-foreground">Observações da Solicitação:</strong>
-                    <p className="whitespace-pre-wrap break-words bg-muted/50 p-3 rounded-md max-h-40 overflow-y-auto">{ticket.observacoes}</p>
-                  </div>
-                </>
-              )}
+              
+              <Separator />
+              <div className="space-y-1">
+                <Label htmlFor="observacoes-solicitacao">Observações da Solicitação:</Label>
+                <Textarea
+                  id="observacoes-solicitacao"
+                  className="whitespace-pre-wrap break-words bg-background p-3 rounded-md min-h-[100px] resize-y"
+                  value={observacoes}
+                  onChange={(e) => setObservacoes(e.target.value)}
+                  disabled={isUserResponseView}
+                />
+              </div>
+
             </div>
 
             <Separator className="my-6" />
@@ -150,9 +239,9 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div className="space-y-1.5">
                     <Label htmlFor="retorno-status">Status do Retorno</Label>
-                    <Select value={retornoStatus} onValueChange={(val) => setRetornoStatus(val as RetornoComercialStatus)}>
+                    <Select value={retornoStatus} onValueChange={(val) => setRetornoStatus(val as RetornoComercialStatus)} disabled={isRetornoDisabled}>
                         <SelectTrigger id="retorno-status">
-                            <SelectValue placeholder="Selecione o status do retorno" />
+                            <SelectValue placeholder="Selecione um status" />
                         </SelectTrigger>
                         <SelectContent>
                             {RETORNO_COMERCIAL_STATUSES.map(s => (
@@ -170,7 +259,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                   className="min-h-[120px] resize-y mt-1"
                   value={retornoObs}
                   onChange={(e) => setRetornoObs(e.target.value)}
-                  disabled={isSaving}
+                  disabled={isRetornoDisabled}
                 />
               </div>
 
@@ -179,16 +268,35 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
         </div>
         
         <DialogFooter className="px-6 pb-6 pt-4 border-t flex-wrap sm:flex-nowrap justify-between items-center gap-2 shrink-0">
-            <div className="flex-grow hidden sm:block" />
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button variant="outline" onClick={onClose} className="w-full">Fechar</Button>
-              <Button onClick={handleSave} disabled={isSaving || !retornoStatus} className="w-full">
-                <Save className="mr-2 h-4 w-4" />
-                {isSaving ? 'Salvando...' : 'Salvar Retorno'}
-              </Button>
-            </div>
+            {isUserResponseView ? (
+                <>
+                    <div className="flex-grow" />
+                    <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">Fechar</Button>
+                    <Button onClick={handleUserResponseSave} disabled={isSaving} className="w-full sm:w-auto">
+                      {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                      Salvar Resposta
+                    </Button>
+                </>
+            ) : (
+                <>
+                    <div className="flex-grow hidden sm:block" />
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <Button variant="outline" onClick={onClose} className="w-full">Fechar</Button>
+                      <Button onClick={handleSave} disabled={isSaving || isResolving} className="w-full">
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {isSaving ? 'Salvando...' : 'Salvar Detalhes'}
+                      </Button>
+                       <Button onClick={handleMarkAsResolved} disabled={isResolving || isSaving} className="w-full bg-green-600 hover:bg-green-700">
+                        {isResolving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                        {isResolving ? 'Resolvendo...' : 'Resolvida'}
+                      </Button>
+                    </div>
+                </>
+            )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+    

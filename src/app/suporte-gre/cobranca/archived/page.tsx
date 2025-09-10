@@ -42,7 +42,7 @@ export default function ArchivedCobrancaTicketsPage() {
     
     return (
         <div>
-        <h1 className="text-3xl font-bold font-headline mb-6 text-primary">Tickets de Cobrança Arquivados</h1>
+        <h1 className="text-3xl font-bold font-headline mb-6 text-primary">Tickets de Apoio Jacareí Arquivados</h1>
         <ArchivedCobrancaTicketsClient />
         </div>
     );
