@@ -230,7 +230,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-              tipo_evento: 'reabertura', // Diferencia o evento como 'reabertura'
+              tipo_evento: 'reabertura',
               protocolo: String(currentTicket.protocolo).padStart(4, '0'),
               motivo: currentTicket.motivo,
               nome_gerente: details.gerente,
@@ -255,17 +255,51 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       obsRetorno: string
   ): Promise<boolean> => {
       try {
-          const { error } = await supabase
+          const { data: updatedTicket, error } = await supabase
               .from('tickets_cobranca')
               .update({
                   status_retorno: statusRetorno,
                   obs_retorno: obsRetorno,
                   status: 'Respondida'
               })
-              .eq('id', ticketId);
+              .eq('id', ticketId)
+              .select('protocolo, motivo, user_id, gerente')
+              .single();
 
           if (error) {
             throw new Error(`Não foi possível salvar o retorno: ${error.message}`);
+          }
+          
+          if(updatedTicket && updatedTicket.user_id) {
+              const { data: profileData, error: profileError } = await supabase
+                  .from('profiles')
+                  .select('username')
+                  .eq('id', updatedTicket.user_id)
+                  .single();
+
+              if(profileError) {
+                  console.warn(`Could not fetch creator's username: ${profileError.message}`);
+              }
+              
+              const creatorUsername = profileData?.username || null;
+              
+              const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/nvrjgvnrejbgeerespostaticket";
+
+              fetch(webhookUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      tipo_evento: 'resposta_ticket',
+                      protocolo: String(updatedTicket.protocolo).padStart(4, '0'),
+                      motivo: updatedTicket.motivo,
+                      user_id: updatedTicket.user_id, // ID do criador do ticket
+                      username_criador: creatorUsername, // Nome do criador do ticket
+                      nome_gerente: updatedTicket.gerente, // Nome do gerente
+                  }),
+              }).catch(webhookError => {
+                  console.error("Webhook de resposta de ticket falhou:", webhookError);
+                  // Optional: inform user that notification might have failed
+              });
           }
 
           toast({ title: "Resposta Enviada", description: "Sua resposta foi salva e o status do ticket foi atualizado para 'Respondida'." });
