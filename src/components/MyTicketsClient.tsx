@@ -209,15 +209,21 @@ export function MyTicketsClient() {
 
         const isCobrança = isCobrancaTicket(ticket);
         
+        // Corrected Search Logic
+        const cleanedSearchTerm = searchTerm.trim().toLowerCase();
+        
         const protocolValue = isCobrança 
             ? String(ticket.protocolo ?? '') 
             : String(ticket.protocol);
-            
-        const protocolMatch = protocolValue.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const protocolPadded = protocolValue.padStart(4, '0');
+        
+        // Check if the search term matches the raw number OR the padded number
+        const protocolMatch = protocolValue.includes(cleanedSearchTerm) || protocolPadded.includes(cleanedSearchTerm);
 
         const reason = isCobrança ? ticket.motivo : ticket.reason;
 
-        const searchMatch = protocolMatch || reason.toLowerCase().includes(searchTerm.toLowerCase());
+        const searchMatch = protocolMatch || reason.toLowerCase().includes(cleanedSearchTerm);
 
         return typeMatch && searchMatch;
     }).sort((a, b) => {
