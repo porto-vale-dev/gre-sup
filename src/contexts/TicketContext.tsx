@@ -11,6 +11,7 @@ import { useAuth } from './AuthContext';
 import { MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
 
 const TICKET_FILES_BUCKET = 'ticket-files';
+const PAGE_SIZE = 1000;
 
 interface TicketContextType {
   tickets: Ticket[];
@@ -44,6 +45,7 @@ interface TicketContextType {
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
 
+
 export function TicketProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
@@ -58,16 +60,36 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
     setIsLoadingTickets(true);
     setError(null);
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('tickets')
-        .select('*')
-        .order('submission_date', { ascending: false });
 
-      if (fetchError) {
-        throw new Error(fetchError.message);
-      }
-      setTickets(data || []);
+    try {
+        let allTickets: Ticket[] = [];
+        let page = 0;
+        let hasMore = true;
+
+        while(hasMore) {
+            const { data, error: fetchError } = await supabase
+                .from('tickets')
+                .select('*')
+                .order('submission_date', { ascending: false })
+                .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+            if (fetchError) {
+                throw new Error(`Erro ao buscar tickets de suporte: ${fetchError.message}`);
+            }
+
+            if (data) {
+                allTickets = allTickets.concat(data);
+            }
+
+            if (!data || data.length < PAGE_SIZE) {
+                hasMore = false;
+            } else {
+                page++;
+            }
+        }
+        
+        setTickets(allTickets);
+
     } catch (err: any) {
         const errorMessage = err.message || 'Ocorreu um erro desconhecido ao buscar os tickets.';
         setError(errorMessage);
@@ -153,7 +175,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       if (rpcError) {
         throw new Error(`Erro ao salvar ticket: ${rpcError.message}`);
       }
-      
+
       const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/34817f2f-1b3f-4432-a139-e159248dd070";
       fetch(webhookUrl, {
         method: 'POST',
