@@ -19,10 +19,11 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, CheckCircle } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, CheckCircle, MessageCircle } from 'lucide-react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
+import { useAuth } from '@/contexts/AuthContext';
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -97,16 +98,23 @@ const FilePreviewItem: React.FC<{
 export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isReadOnlyView = false }: TicketDetailsModalProps) {
   const { downloadFile, createPreviewUrl, updateTicketSolution, getTicketById, updateAndCompleteTicket } = useTickets();
   const { toast } = useToast();
+  const { cargo } = useAuth();
   
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
 
   const [solutionText, setSolutionText] = useState('');
+  const [comentarios, setComentarios] = useState('');
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+
+  const allowedRoles = ['adm', 'greadmin', 'gre'];
+  const canViewInternalComments = !isReadOnlyView && cargo && allowedRoles.includes(cargo);
+
 
   useEffect(() => {
     if (ticket) {
       setSolutionText(ticket.solution || '');
+      setComentarios(ticket.comentarios || '');
       setStagedFiles([]);
     }
   }, [ticket?.id, isOpen]); 
@@ -178,7 +186,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
   const handleSaveSolution = async () => {
     setIsSaving(true);
     try {
-      const success = await updateTicketSolution(ticket.id, solutionText, stagedFiles);
+      const success = await updateTicketSolution(ticket.id, solutionText, stagedFiles, comentarios);
       if (success) {
         setStagedFiles([]);
         onClose();
@@ -193,7 +201,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
   const handleSaveAndComplete = async () => {
     setIsSaving(true);
     try {
-        const success = await updateAndCompleteTicket(ticket.id, solutionText, stagedFiles);
+        const success = await updateAndCompleteTicket(ticket.id, solutionText, stagedFiles, comentarios);
         if (success) {
             setStagedFiles([]);
             onClose();
@@ -325,7 +333,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
 
             {/* Solution Section */}
             <div className="space-y-4">
-               <h3 className="font-headline text-lg text-primary flex items-center gap-2">
+              <h3 className="font-headline text-lg text-primary flex items-center gap-2">
                 <Edit className="h-5 w-5" /> Solução do Atendimento
               </h3>
 
@@ -387,6 +395,25 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
                   </div>
                 )}
               </div>
+              
+              {canViewInternalComments && (
+                <>
+                  <Separator className="my-6" />
+                  <div className="space-y-2">
+                    <h3 className="font-headline text-lg text-primary flex items-center gap-2">
+                      <MessageCircle className="h-5 w-5" /> Comentários Internos
+                    </h3>
+                    <Textarea
+                      id="comentarios"
+                      placeholder="Adicione anotações internas para a equipe. Este campo não é visível para o solicitante."
+                      className="min-h-[100px] resize-y"
+                      value={comentarios}
+                      onChange={(e) => setComentarios(e.target.value)}
+                      disabled={isSaving}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -32,8 +32,8 @@ interface TicketContextType {
   }) => Promise<boolean>;
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
   updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
-  updateTicketSolution: (ticketId: string, solution: string, newFiles: File[]) => Promise<boolean>;
-  updateAndCompleteTicket: (ticketId: string, solution: string, newFiles: File[]) => Promise<boolean>;
+  updateTicketSolution: (ticketId: string, solution: string, newFiles: File[], comentarios?: string) => Promise<boolean>;
+  updateAndCompleteTicket: (ticketId: string, solution: string, newFiles: File[], comentarios?: string) => Promise<boolean>;
   getTicketById: (ticketId: string) => Ticket | undefined;
   fetchTickets: () => void;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
@@ -234,7 +234,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
   };
   
-  const updateTicketSolution = async (ticketId: string, solution: string, newFiles: File[]): Promise<boolean> => {
+  const updateTicketSolution = async (ticketId: string, solution: string, newFiles: File[], comentarios?: string): Promise<boolean> => {
     try {
       const currentTicket = getTicketById(ticketId);
       if (!currentTicket) throw new Error("Ticket não encontrado.");
@@ -266,7 +266,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
       const { error: updateError } = await supabase
         .from('tickets')
-        .update({ solution: solution, solution_files: updatedSolutionFiles })
+        .update({ 
+          solution: solution, 
+          solution_files: updatedSolutionFiles,
+          comentarios: comentarios,
+        })
         .eq('id', ticketId);
 
       if (updateError) {
@@ -284,9 +288,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateAndCompleteTicket = async (ticketId: string, solution: string, newFiles: File[]): Promise<boolean> => {
+  const updateAndCompleteTicket = async (ticketId: string, solution: string, newFiles: File[], comentarios?: string): Promise<boolean> => {
     try {
-        const solutionSaved = await updateTicketSolution(ticketId, solution, newFiles);
+        const solutionSaved = await updateTicketSolution(ticketId, solution, newFiles, comentarios);
         if (!solutionSaved) {
             // Error toast is already shown by updateTicketSolution
             return false;

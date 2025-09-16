@@ -34,6 +34,7 @@ export interface Ticket {
 
   solution?: string | null;
   solution_files?: SolutionFile[] | null;
+  comentarios?: string | null;
 }
 
 export interface RetornoComercialComment {
