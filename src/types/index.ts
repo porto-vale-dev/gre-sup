@@ -1,4 +1,5 @@
 
+
 export type TicketStatus = "Novo" | "Em Andamento" | "Ativo" | "Atrasado" | "Concluído";
 export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Respondida" | "Resolvida" | "Dentro do prazo" | "Fora do prazo" | "Reabertura";
 export type RetornoComercialStatus = 'Tirou dúvidas' | 'Tentando contato' | 'Em andamento' | 'Revertido' | 'Não Revertido' | 'Sem retorno';
@@ -35,6 +36,12 @@ export interface Ticket {
   solution_files?: SolutionFile[] | null;
 }
 
+export interface RetornoComercialComment {
+  text: string;
+  author: string;
+  timestamp: string; // ISO string
+}
+
 // Type for the new "Apoio ao Comercial" tickets
 export interface CobrancaTicket {
   id: string;
@@ -58,7 +65,7 @@ export interface CobrancaTicket {
   observacoes?: string | null;
   // Retorno
   status_retorno?: RetornoComercialStatus | null;
-  obs_retorno?: string | null;
+  obs_retorno?: RetornoComercialComment[] | string | null;
   // Controle
   status: CobrancaTicketStatus;
   user_id?: string | null; // Who created the ticket

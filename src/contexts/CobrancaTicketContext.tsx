@@ -4,7 +4,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { CobrancaTicket, CobrancaTicketStatus, CreateCobrancaTicket, RetornoComercialStatus } from '@/types';
+import type { CobrancaTicket, CobrancaTicketStatus, CreateCobrancaTicket, RetornoComercialStatus, RetornoComercialComment } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
@@ -25,7 +25,8 @@ interface CobrancaTicketContextType {
   saveUserResponse: (
     ticketId: string, 
     status: RetornoComercialStatus, 
-    observacoes: string
+    commentText: string,
+    author: string
   ) => Promise<boolean>;
   getTicketById: (ticketId: string) => CobrancaTicket | undefined;
   fetchTickets: () => void;
@@ -208,7 +209,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     try {
       const { data: currentTicket, error: fetchError } = await supabase
         .from('tickets_cobranca')
-        .select('protocolo, motivo, status')
+        .select('*')
         .eq('id', ticketId)
         .single();
       
@@ -269,29 +270,60 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
   const saveUserResponse = async (
       ticketId: string,
       statusRetorno: RetornoComercialStatus,
-      obsRetorno: string
+      commentText: string,
+      author: string
   ): Promise<boolean> => {
       try {
-          const { data: updatedTicket, error } = await supabase
+          const { data: currentTicket, error: fetchError } = await supabase
+            .from('tickets_cobranca')
+            .select('obs_retorno, protocolo, motivo, user_id, gerente')
+            .eq('id', ticketId)
+            .single();
+
+          if (fetchError) {
+              throw new Error(`Não foi possível buscar o ticket: ${fetchError.message}`);
+          }
+          
+          let existingComments: RetornoComercialComment[] = [];
+          if (currentTicket.obs_retorno) {
+              if(Array.isArray(currentTicket.obs_retorno)) {
+                  existingComments = currentTicket.obs_retorno;
+              } else if (typeof currentTicket.obs_retorno === 'string') {
+                  try {
+                      existingComments = JSON.parse(currentTicket.obs_retorno);
+                      if (!Array.isArray(existingComments)) existingComments = [];
+                  } catch(e) {
+                      existingComments = [{ text: currentTicket.obs_retorno, author: 'Sistema', timestamp: new Date().toISOString() }];
+                  }
+              }
+          }
+          
+          const newComment: RetornoComercialComment = {
+              text: commentText,
+              author: author,
+              timestamp: new Date().toISOString(),
+          };
+
+          const updatedComments = [...existingComments, newComment];
+
+          const { error } = await supabase
               .from('tickets_cobranca')
               .update({
                   status_retorno: statusRetorno,
-                  obs_retorno: obsRetorno,
+                  obs_retorno: updatedComments,
                   status: 'Respondida'
               })
-              .eq('id', ticketId)
-              .select('protocolo, motivo, user_id, gerente')
-              .single();
+              .eq('id', ticketId);
 
           if (error) {
             throw new Error(`Não foi possível salvar o retorno: ${error.message}`);
           }
           
-          if(updatedTicket && updatedTicket.user_id) {
+          if(currentTicket && currentTicket.user_id) {
               const { data: profileData, error: profileError } = await supabase
                   .from('profiles')
                   .select('username')
-                  .eq('id', updatedTicket.user_id)
+                  .eq('id', currentTicket.user_id)
                   .single();
 
               if(profileError) {
@@ -307,11 +339,11 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                       tipo_evento: 'resposta_ticket',
-                      protocolo: String(updatedTicket.protocolo).padStart(4, '0'),
-                      motivo: updatedTicket.motivo,
-                      user_id: updatedTicket.user_id, // ID do criador do ticket
+                      protocolo: String(currentTicket.protocolo).padStart(4, '0'),
+                      motivo: currentTicket.motivo,
+                      user_id: currentTicket.user_id, // ID do criador do ticket
                       username_criador: creatorUsername, // Nome do criador do ticket
-                      nome_gerente: updatedTicket.gerente, // Nome do gerente
+                      nome_gerente: currentTicket.gerente, // Nome do gerente
                   }),
               }).catch(webhookError => {
                   console.error("Webhook de resposta de ticket falhou:", webhookError);
