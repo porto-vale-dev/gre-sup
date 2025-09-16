@@ -190,7 +190,7 @@ export function ArchivedCobrancaTicketsClient() {
   const archivedTickets = useMemo(() => {
     const baseTickets = tickets.filter(ticket => ticket.status === "Resolvida");
     
-    if (cargo === 'gre') {
+    if (cargo === 'gre' && user) {
         return baseTickets.filter(ticket => ticket.user_id === user.id);
     }
     
@@ -427,3 +427,5 @@ export function ArchivedCobrancaTicketsClient() {
     </div>
   );
 }
+
+    
