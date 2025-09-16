@@ -360,7 +360,7 @@ export function CobrancaGestaoClient() {
                 <SelectValue placeholder="Filtrar por diretor" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Todos">Todos os Diretores</SelectItem>
+                <SelectItem value="Todos">Diretores</SelectItem>
                 {diretores.map(d => (
                     <SelectItem key={d.name} value={d.name}>{d.name}</SelectItem>
                 ))}

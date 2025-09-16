@@ -365,7 +365,7 @@ export function CobrancaDashboardClient() {
                         <SelectValue placeholder="Diretores" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="Todos">Todos os Diretores</SelectItem>
+                        <SelectItem value="Todos">Diretores</SelectItem>
                         {diretores.map(diretor => (
                             <SelectItem key={diretor.name} value={diretor.name}>{diretor.name}</SelectItem>
                         ))}

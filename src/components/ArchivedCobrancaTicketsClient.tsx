@@ -170,14 +170,14 @@ export function ArchivedCobrancaTicketsClient() {
   
     useEffect(() => {
         const allGerentes = Object.values(gerentesPorDiretor).flat().map(g => g.name);
-        const uniqueGerentes = ["Todos", ...Array.from(new Set(allGerentes))];
+        const uniqueGerentes = ["Gerentes", ...Array.from(new Set(allGerentes))];
         if (diretorFilter === 'Todos') {
             setAvailableGerentes(uniqueGerentes);
         } else {
             const gerentes = gerentesPorDiretor[diretorFilter]?.map(g => g.name) || [];
-            setAvailableGerentes(["Todos", ...gerentes]);
+            setAvailableGerentes(["Gerentes", ...gerentes]);
         }
-        setGerenteFilter("Todos");
+        setGerenteFilter("Gerentes");
     }, [diretorFilter]);
 
 
@@ -190,7 +190,7 @@ export function ArchivedCobrancaTicketsClient() {
   const archivedTickets = useMemo(() => {
     const baseTickets = tickets.filter(ticket => ticket.status === "Resolvida");
     
-    if (cargo === 'gre' && user) {
+    if (cargo === 'gre') {
         return baseTickets.filter(ticket => ticket.user_id === user.id);
     }
     
@@ -208,7 +208,7 @@ export function ArchivedCobrancaTicketsClient() {
                             ticket.motivo.toLowerCase().includes(cleanedSearchTerm);
         
         const diretorMatch = diretorFilter === "Todos" || ticket.diretor === diretorFilter;
-        const gerenteMatch = gerenteFilter === "Todos" || ticket.gerente === gerenteFilter;
+        const gerenteMatch = gerenteFilter === "Gerentes" || ticket.gerente === gerenteFilter;
 
         let dateMatch = true;
         if (date?.from) {
@@ -351,10 +351,10 @@ export function ArchivedCobrancaTicketsClient() {
                 <Select value={diretorFilter} onValueChange={setDiretorFilter}>
                     <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por diretor">
                         <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <SelectValue placeholder="Filtrar por diretor" />
+                        <SelectValue placeholder="Diretores" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="Todos">Todos os Diretores</SelectItem>
+                        <SelectItem value="Todos">Diretores</SelectItem>
                         {diretores.map(diretor => (
                             <SelectItem key={diretor.name} value={diretor.name}>{diretor.name}</SelectItem>
                         ))}
