@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
 import { gerentesPorDiretor, diretores } from '@/lib/cobrancaData';
 
+const PAGE_SIZE = 1000;
+
 interface CobrancaTicketContextType {
   tickets: CobrancaTicket[];
   isLoading: boolean;
@@ -39,8 +41,6 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
-    // This function will now fetch tickets for ANY authenticated user.
-    // The responsibility for filtering WHO can see WHAT is now on the page components themselves.
     if (!isAuthenticated) {
         setIsLoading(false);
         return;
@@ -48,16 +48,33 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const { data, error: rpcError } = await supabase
-        .from('tickets_cobranca')
-        .select('*')
-        .order('created_at', { ascending: false });
+        let allTickets: CobrancaTicket[] = [];
+        let page = 0;
+        let hasMore = true;
 
-      if (rpcError) {
-        throw new Error(`Erro ao buscar tickets de apoio: ${rpcError.message}. Verifique a tabela 'tickets_cobranca' no Supabase.`);
-      }
+        while(hasMore) {
+            const { data, error: rpcError } = await supabase
+                .from('tickets_cobranca')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+            
+            if (rpcError) {
+                throw new Error(`Erro ao buscar tickets de apoio: ${rpcError.message}. Verifique a tabela 'tickets_cobranca' no Supabase.`);
+            }
+
+            if (data) {
+                allTickets = allTickets.concat(data);
+            }
+
+            if (!data || data.length < PAGE_SIZE) {
+                hasMore = false;
+            } else {
+                page++;
+            }
+        }
       
-      setTickets(data || []);
+      setTickets(allTickets);
 
     } catch (err: any) {
         const errorMessage = err.message || 'Ocorreu um erro desconhecido.';

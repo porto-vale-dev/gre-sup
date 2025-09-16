@@ -1,10 +1,9 @@
 
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
-import type { CobrancaTicket, CobrancaTicketStatus } from '@/types';
+import { usePosContemplacaoTickets } from '@/contexts/PosContemplacaoTicketContext';
+import type { PosContemplacaoTicket, PosContemplacaoTicketStatus } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,87 +15,25 @@ import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle, Calendar
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, parseISO, addDays, getDay, isValid } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
-import { COBRANCA_TICKET_STATUSES, diretores, gerentesPorDiretor } from '@/lib/cobrancaData';
-import { CobrancaTicketDetailsModal } from './CobrancaTicketDetailsModal';
-import Link from 'next/link';
+import { POS_CONTEMPLACAO_STATUSES, RESPONSAVEIS, RELATORES } from '@/lib/posContemplacaoData';
 import { useAuth } from '@/contexts/AuthContext';
+import { PosContemplacaoTicketDetailsModal } from './PosContemplacaoTicketDetailsModal';
+import Link from 'next/link';
 
 
-const statusColors: Record<CobrancaTicketStatus, string> = {
-  "Aberta": "bg-blue-500",
-  "Em análise": "bg-yellow-500",
-  "Respondida": "bg-purple-600",
-  "Encaminhada": "bg-orange-500",
-  "Reabertura": "bg-pink-500",
-  "Resolvida": "bg-green-500",
-  "Dentro do prazo": "bg-teal-500",
-  "Fora do prazo": "bg-red-500",
+const statusColors: Record<PosContemplacaoTicketStatus, string> = {
+  "Aberto": "bg-blue-500",
+  "Em Análise": "bg-yellow-500",
+  "Concluído": "bg-green-500",
 };
 
-// Função para calcular horas úteis (seg-sex)
-const getBusinessHours = (startDate: Date): number => {
-    let currentDate = new Date();
-    let businessHours = 0;
-    let tempDate = new Date(startDate);
-
-    while (tempDate < currentDate) {
-        const dayOfWeek = getDay(tempDate);
-        if (dayOfWeek >= 1 && dayOfWeek <= 5) { // 1=Seg, 5=Sex
-            // Calcula o fim do dia atual ou a data final, o que vier primeiro
-            const endOfDay = new Date(tempDate);
-            endOfDay.setHours(23, 59, 59, 999);
-            const effectiveEndDate = currentDate < endOfDay ? currentDate : endOfDay;
-            
-            businessHours += (effectiveEndDate.getTime() - tempDate.getTime());
-        }
-        // Avança para o próximo dia
-        tempDate = addDays(tempDate, 1);
-        tempDate.setHours(0, 0, 0, 0);
-    }
-    return businessHours / (1000 * 60 * 60); // Converte de ms para horas
-};
-
-
-const getTicketDisplayStatus = (ticket: CobrancaTicket): CobrancaTicketStatus => {
-    const ticketDateString = ticket.created_at || ticket.data_atend;
-    
-    // Se não há data ou o status não é 'Aberta', retorna o status atual.
-    if (ticket.status !== 'Aberta' || !ticketDateString || !isValid(parseISO(ticketDateString))) {
-        return ticket.status; 
-    }
-    
-    let ticketDate = parseISO(ticketDateString);
-    const dayOfWeek = getDay(ticketDate);
-
-    // Se o ticket foi criado no sábado (6) ou domingo (0), ajusta a data de início para a próxima segunda-feira às 8h
-    if (dayOfWeek === 6) { // Sábado
-        ticketDate = addDays(ticketDate, 2);
-        ticketDate.setHours(8, 0, 0, 0);
-    } else if (dayOfWeek === 0) { // Domingo
-        ticketDate = addDays(ticketDate, 1);
-        ticketDate.setHours(8, 0, 0, 0);
-    }
-
-    const hoursSinceCreation = getBusinessHours(ticketDate);
-    
-    // Se o ticket tiver mais de 24h úteis E AINDA estiver como "Aberta", está fora do prazo
-    if (hoursSinceCreation > 24) {
-        return "Fora do prazo";
-    }
-
-    return ticket.status; // Retorna 'Aberta' se estiver dentro do prazo
-};
-
-
-const CobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket: CobrancaTicket; onOpenDetails: (ticket: CobrancaTicket) => void; onStatusChange: (ticketId: string, status: CobrancaTicketStatus) => void; }) => {
+const PosContemplacaoTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket: PosContemplacaoTicket; onOpenDetails: (ticket: PosContemplacaoTicket) => void; onStatusChange: (ticketId: string, status: PosContemplacaoTicketStatus) => void; }) => {
     const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
-    const displayStatus = getTicketDisplayStatus(ticket);
-    const displayDate = ticket.created_at || ticket.data_atend;
-
+    
     return (
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
             <CardHeader className="pb-3">
@@ -104,35 +41,35 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket:
                     <CardTitle className="text-lg font-headline text-primary flex items-center gap-2">
                         {ticket.motivo.length > 30 ? `${ticket.motivo.substring(0,27)}...` : ticket.motivo}
                     </CardTitle>
-                    <Badge variant={displayStatus === 'Resolvida' ? 'default' : displayStatus === 'Fora do prazo' ? 'destructive' : 'secondary'} className={`whitespace-nowrap ${statusColors[displayStatus]} text-white`}>
-                        {displayStatus}
+                    <Badge variant={ticket.status === 'Concluído' ? 'default' : 'secondary'} className={`whitespace-nowrap ${statusColors[ticket.status]} text-white`}>
+                        {ticket.status}
                     </Badge>
                 </div>
                 <CardDescription className="text-xs text-muted-foreground flex items-center gap-4 pt-1">
                     <span className="flex items-center gap-1.5"><TicketIcon className="h-3.5 w-3.5" /> Protocolo #{protocolDisplay}</span>
-                    <span className="flex items-center gap-1.5"><CalendarIcon className="h-3.5 w-3.5" /> {displayDate ? format(parseISO(displayDate), "dd/MM/yyyy", { locale: ptBR }) : 'Data N/A'}</span>
+                    <span className="flex items-center gap-1.5"><CalendarIcon className="h-3.5 w-3.5" /> {isValid(parseISO(ticket.created_at)) ? format(parseISO(ticket.created_at), "dd/MM/yyyy", { locale: ptBR }) : 'Data N/A'}</span>
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm flex-grow">
                  <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>Diretor: {ticket.diretor}</span>
+                    <span>Relator: {ticket.relator}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>Gerente: {ticket.gerente}</span>
+                    <span>Responsável: {ticket.responsavel}</span>
                 </div>
                  <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span>Cliente: {ticket.nome_cliente}</span>
                 </div>
                 <div className="flex items-center gap-2 pt-2">
-                    <Select value={ticket.status} onValueChange={(newStatus) => onStatusChange(ticket.id, newStatus as CobrancaTicketStatus)}>
+                    <Select value={ticket.status} onValueChange={(newStatus) => onStatusChange(ticket.id, newStatus as PosContemplacaoTicketStatus)}>
                         <SelectTrigger className="h-9 text-xs w-full" aria-label="Mudar status do ticket">
                             <SelectValue placeholder="Mudar status" />
                         </SelectTrigger>
                         <SelectContent>
-                        {COBRANCA_TICKET_STATUSES.map(s => (
+                        {POS_CONTEMPLACAO_STATUSES.map(s => (
                             <SelectItem key={s} value={s} className="text-xs">
                             {s}
                             </SelectItem>
@@ -151,18 +88,16 @@ const CobrancaTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket:
     );
 };
 
-
-export function CobrancaDashboardClient() {
-  const { tickets, isLoading, error, fetchTickets, updateTicket } = useCobrancaTickets();
+export function PosContemplacaoDashboardClient() {
+  const { tickets, isLoading, error, fetchTickets, updateTicket } = usePosContemplacaoTickets();
   const { user, cargo } = useAuth();
   
-  const [selectedTicket, setSelectedTicket] = useState<CobrancaTicket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<PosContemplacaoTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("Todos");
-  const [diretorFilter, setDiretorFilter] = useState<string>("");
-  const [gerenteFilter, setGerenteFilter] = useState<string>("");
-  const [availableGerentes, setAvailableGerentes] = useState<string[]>([]);
+  const [responsibleFilter, setResponsibleFilter] = useState<string>("");
+  const [relatorFilter, setRelatorFilter] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc"); 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
@@ -171,52 +106,34 @@ export function CobrancaDashboardClient() {
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
 
   useEffect(() => {
-    const allGerentes = Object.values(gerentesPorDiretor).flat().map(g => g.name);
-    const uniqueGerentes = ["Todos", ...Array.from(new Set(allGerentes))];
-    if (diretorFilter === 'Todos' || diretorFilter === '') {
-        setAvailableGerentes(uniqueGerentes);
-    } else {
-        const gerentes = gerentesPorDiretor[diretorFilter]?.map(g => g.name) || [];
-        setAvailableGerentes(["Todos", ...gerentes]);
-    }
-    setGerenteFilter("");
-  }, [diretorFilter]);
-
-  useEffect(() => {
     if(isDatePopoverOpen) {
       setTempDate(date);
     }
   }, [isDatePopoverOpen, date]);
   
-  const visibleTickets = useMemo(() => {
-    const baseTickets = tickets.filter(ticket => ticket.status !== "Resolvida");
-
-    if (cargo === 'gre' && user) {
-        return baseTickets.filter(ticket => ticket.user_id === user.id);
-    }
-    
-    return baseTickets;
-  }, [tickets, cargo, user]);
+  const activeTickets = useMemo(() => {
+    return tickets.filter(ticket => ticket.status !== "Concluído");
+  }, [tickets]);
 
 
   const filteredAndSortedTickets = useMemo(() => {
-    return visibleTickets
+    return activeTickets
       .filter(ticket => {
-        const displayStatus = getTicketDisplayStatus(ticket);
         const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
         const cleanedSearchTerm = searchTerm.toLowerCase();
         
         const searchMatch = ticket.nome_cliente.toLowerCase().includes(cleanedSearchTerm) ||
                             protocolDisplay.toLowerCase().includes(cleanedSearchTerm) ||
-                            ticket.motivo.toLowerCase().includes(cleanedSearchTerm);
+                            ticket.motivo.toLowerCase().includes(cleanedSearchTerm) ||
+                            ticket.responsavel.toLowerCase().includes(cleanedSearchTerm);
 
-        const statusMatch = statusFilter === "Todos" || displayStatus === statusFilter;
-        const diretorMatch = diretorFilter === "" || diretorFilter === "Todos" || ticket.diretor === diretorFilter;
-        const gerenteMatch = gerenteFilter === "" || gerenteFilter === "Todos" || ticket.gerente === gerenteFilter;
-
+        const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
+        const responsibleMatch = responsibleFilter === "" || responsibleFilter === "Todos" || ticket.responsavel === responsibleFilter;
+        const relatorMatch = relatorFilter === "" || relatorFilter === "Todos" || ticket.relator === relatorFilter;
+        
         let dateMatch = true;
         if (date?.from) {
-            const ticketDate = ticket.created_at || ticket.data_atend;
+            const ticketDate = ticket.created_at;
             if (ticketDate) {
                 const fromDate = new Date(date.from);
                 fromDate.setHours(0, 0, 0, 0); 
@@ -225,23 +142,20 @@ export function CobrancaDashboardClient() {
                 const submissionDate = new Date(ticketDate);
                 dateMatch = submissionDate >= fromDate && submissionDate <= toDate;
             } else {
-                dateMatch = false; // If there's a date filter but the ticket has no date
+                dateMatch = false;
             }
         }
 
-        return searchMatch && statusMatch && dateMatch && diretorMatch && gerenteMatch;
+        return searchMatch && statusMatch && dateMatch && responsibleMatch && relatorMatch;
       })
       .sort((a, b) => {
-        const dateA = a.created_at || a.data_atend;
-        const dateB = b.created_at || b.data_atend;
-        if (!dateA || !dateB) return 0;
-        const timeA = new Date(dateA).getTime();
-        const timeB = new Date(dateB).getTime();
+        const timeA = new Date(a.created_at).getTime();
+        const timeB = new Date(b.created_at).getTime();
         return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
       });
-  }, [visibleTickets, searchTerm, statusFilter, sortOrder, date, diretorFilter, gerenteFilter]);
+  }, [activeTickets, searchTerm, statusFilter, sortOrder, date, responsibleFilter, relatorFilter]);
 
-  const handleOpenDetails = (ticket: CobrancaTicket) => {
+  const handleOpenDetails = (ticket: PosContemplacaoTicket) => {
     setSelectedTicket(ticket);
     setIsModalOpen(true);
   };
@@ -251,14 +165,22 @@ export function CobrancaDashboardClient() {
     setSelectedTicket(null);
   };
   
-  const handleStatusChange = (ticketId: string, status: CobrancaTicketStatus) => {
+  const handleStatusChange = (ticketId: string, status: PosContemplacaoTicketStatus) => {
     updateTicket(ticketId, { status });
   };
 
   const ticketStatusesForFilter = useMemo(() => {
-    const statuses = new Set(visibleTickets.map(getTicketDisplayStatus));
+    const statuses = new Set(activeTickets.map(t => t.status));
     return ["Todos", ...Array.from(statuses)];
-  }, [visibleTickets]);
+  }, [activeTickets]);
+
+  const responsibleForFilter = useMemo(() => {
+    return [...RESPONSAVEIS];
+  }, []);
+
+  const relatorsForFilter = useMemo(() => {
+    return [...RELATORES];
+  }, []);
 
 
   if (isLoading) {
@@ -305,7 +227,7 @@ export function CobrancaDashboardClient() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 w-full"
-                    aria-label="Buscar tickets de cobrança"
+                    aria-label="Buscar tickets de Pós-Contemplação"
                 />
             </div>
 
@@ -359,31 +281,6 @@ export function CobrancaDashboardClient() {
                   </PopoverContent>
                 </Popover>
 
-                 <Select value={diretorFilter} onValueChange={setDiretorFilter}>
-                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por diretor">
-                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <SelectValue placeholder="Diretores" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Todos">Todos os Diretores</SelectItem>
-                        {diretores.map(diretor => (
-                            <SelectItem key={diretor.name} value={diretor.name}>{diretor.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select value={gerenteFilter} onValueChange={setGerenteFilter} disabled={availableGerentes.length <= 1}>
-                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por gerente">
-                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <SelectValue placeholder="Gerente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {availableGerentes.map(gerente => (
-                            <SelectItem key={gerente} value={gerente}>{gerente}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por status">
                         <ListFilter className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -396,6 +293,33 @@ export function CobrancaDashboardClient() {
                     </SelectContent>
                 </Select>
 
+                <Select value={relatorFilter} onValueChange={setRelatorFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por relator">
+                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Relator" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Todos">Todos</SelectItem>
+                        {relatorsForFilter.map(resp => (
+                            <SelectItem key={resp} value={resp}>{resp}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                
+                <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por responsável">
+                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Responsável" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Todos">Todos</SelectItem>
+                        {responsibleForFilter.map(resp => (
+                            <SelectItem key={resp} value={resp}>{resp}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+
                 <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
                     <SelectTrigger className="w-full sm:w-[150px]" aria-label="Ordenar por data">
                          <SelectValue placeholder="Ordenar por data" />
@@ -406,7 +330,7 @@ export function CobrancaDashboardClient() {
                     </SelectContent>
                 </Select>
                  <Button asChild variant="outline" className="w-full sm:w-auto">
-                  <Link href="/suporte-gre/cobranca/archived">
+                  <Link href="/pos-contemplacao/archived">
                     <Archive className="mr-2 h-4 w-4" />
                     Ver Arquivados
                   </Link>
@@ -426,18 +350,15 @@ export function CobrancaDashboardClient() {
       {filteredAndSortedTickets.length === 0 ? (
         <Alert variant="default" className="mt-6 border-primary/50 bg-primary/5">
           <Info className="h-5 w-5 text-primary" />
-          <AlertTitle className="text-primary">Nenhum Ticket de Apoio Encontrado</AlertTitle>
+          <AlertTitle className="text-primary">Nenhum Ticket Encontrado</AlertTitle>
           <AlertDescription>
-            {cargo === 'gre' 
-              ? "Não há tickets de apoio criados por você que correspondam aos filtros."
-              : "Não há tickets de Apoio ao Comercial que correspondam aos seus filtros."
-            }
+            Não há tickets de Pós-Contemplação que correspondam aos seus filtros.
           </AlertDescription>
         </Alert>
       ) : (
         <div className={`gap-6 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'space-y-4'}`}>
           {filteredAndSortedTickets.map(ticket => (
-            <CobrancaTicketCard 
+            <PosContemplacaoTicketCard 
               key={ticket.id} 
               ticket={ticket} 
               onOpenDetails={handleOpenDetails}
@@ -447,7 +368,7 @@ export function CobrancaDashboardClient() {
         </div>
       )}
        {selectedTicket && (
-        <CobrancaTicketDetailsModal
+        <PosContemplacaoTicketDetailsModal
           ticket={selectedTicket}
           isOpen={isModalOpen}
           onClose={handleCloseModal}

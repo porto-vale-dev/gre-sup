@@ -11,9 +11,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, User, Filter, Briefcase, Headset } from 'lucide-react';
+import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, User, Filter, Briefcase, Headset, ListFilter } from 'lucide-react';
 import { formatDistanceToNow, parseISO, addDays, getDay, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDetailsModal } from './TicketDetailsModal';
@@ -178,48 +179,57 @@ export function MyTicketsClient() {
   const [filterType, setFilterType] = useState<FilterType>('Todos');
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('Todos');
+  const [gerenteFilter, setGerenteFilter] = useState('Todos');
   const [selectedTicket, setSelectedTicket] = useState<Ticket | CobrancaTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const myTickets = useMemo(() => {
     if (!user || !email) return [];
     
-    // Suporte tickets are filtered by who created them (user_id)
     const mySupportTickets = supportTickets.filter(t => t.user_id === user.id);
 
-    // Cobrança tickets are filtered if the user is the responsible manager OR director
-    const myCobrancaTickets = cobrancaTickets.filter(t => t.email_gerente === email || t.email_diretor === email);
+    // Apenas gerentes e diretores podem ver os tickets de cobrança aqui
+    const myCobrancaTickets = cobrancaTickets.filter(t => 
+      t.email_gerente === email || 
+      t.email_diretor === email
+    );
     
     const allTickets: (Ticket | CobrancaTicket)[] = [
       ...mySupportTickets,
       ...myCobrancaTickets
     ];
     
-    // Remove duplicates in case a user is both creator and responsible for a ticket in some way
     return Array.from(new Map(allTickets.map(item => [item.id, item])).values());
   }, [supportTickets, cobrancaTickets, user, email]);
 
 
   const filteredTickets = useMemo(() => {
     return myTickets.filter(ticket => {
+        const isCobrança = isCobrancaTicket(ticket);
+        const displayStatus = isCobrança ? getCobrancaTicketDisplayStatus(ticket) : ticket.status;
+
         const typeMatch = 
             filterType === 'Todos' ||
-            (filterType === 'Suporte' && !isCobrancaTicket(ticket)) ||
-            (filterType === 'Cobrança' && isCobrancaTicket(ticket));
+            (filterType === 'Suporte' && !isCobrança) ||
+            (filterType === 'Cobrança' && isCobrança);
 
-        const isCobrança = isCobrancaTicket(ticket);
+        const statusMatch = statusFilter === 'Todos' || displayStatus === statusFilter;
         
+        const gerente = isCobrança ? ticket.gerente : ticket.responsible;
+        const gerenteMatch = gerenteFilter === 'Todos' || gerente === gerenteFilter;
+        
+        const cleanedSearchTerm = searchTerm.trim().toLowerCase();
         const protocolValue = isCobrança 
             ? String(ticket.protocolo ?? '') 
             : String(ticket.protocol);
-            
-        const protocolMatch = protocolValue.toLowerCase().includes(searchTerm.toLowerCase());
+        const protocolPadded = protocolValue.padStart(4, '0');
+        const protocolMatch = protocolValue.includes(cleanedSearchTerm) || protocolPadded.includes(cleanedSearchTerm);
 
         const reason = isCobrança ? ticket.motivo : ticket.reason;
+        const searchMatch = protocolMatch || reason.toLowerCase().includes(cleanedSearchTerm);
 
-        const searchMatch = protocolMatch || reason.toLowerCase().includes(searchTerm.toLowerCase());
-
-        return typeMatch && searchMatch;
+        return typeMatch && searchMatch && statusMatch && gerenteMatch;
     }).sort((a, b) => {
         const dateAString = isCobrancaTicket(a) ? (a.created_at || a.data_atend) : a.submission_date;
         const dateBString = isCobrancaTicket(b) ? (b.created_at || b.data_atend) : b.submission_date;
@@ -229,16 +239,28 @@ export function MyTicketsClient() {
 
         return parseISO(dateBString).getTime() - parseISO(dateAString).getTime();
     });
-  }, [myTickets, searchTerm, filterType]);
+  }, [myTickets, searchTerm, filterType, statusFilter, gerenteFilter]);
 
   const stats = useMemo(() => {
-    const relevantTickets = myTickets; // Base stats on all user-related tickets
+    const relevantTickets = myTickets;
     return {
         total: relevantTickets.length,
         pending: relevantTickets.filter(t => t.status !== 'Concluído' && t.status !== 'Resolvida').length,
         completed: relevantTickets.filter(t => t.status === 'Concluído' || t.status === 'Resolvida').length
     };
   }, [myTickets]);
+
+  const availableStatuses = useMemo(() => {
+    const statuses = new Set(filteredTickets.map(ticket => isCobrancaTicket(ticket) ? getCobrancaTicketDisplayStatus(ticket) : ticket.status));
+    return ['Todos', ...Array.from(statuses)];
+  }, [filteredTickets]);
+  
+  const availableGerentes = useMemo(() => {
+      const gerentes = new Set(filteredTickets.map(ticket => {
+          return isCobrancaTicket(ticket) ? ticket.gerente : ticket.responsible;
+      }).filter(Boolean) as string[]);
+      return ['Todos', ...Array.from(gerentes)];
+  }, [filteredTickets]);
 
   const handleOpenDetails = (ticket: Ticket | CobrancaTicket) => {
     setSelectedTicket(ticket);
@@ -332,14 +354,40 @@ export function MyTicketsClient() {
         </Card>
         
         <div className="space-y-6">
-            <div className="relative">
-                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input 
-                    placeholder="Pesquise pelo protocolo ou motivo da solicitação" 
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-grow">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input 
+                        placeholder="Pesquise pelo protocolo ou motivo da solicitação" 
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <div className="flex gap-4">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                            <ListFilter className="mr-2 h-4 w-4" />
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableStatuses.map(status => (
+                                <SelectItem key={status} value={status}>{status}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select value={gerenteFilter} onValueChange={setGerenteFilter}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                            <User className="mr-2 h-4 w-4" />
+                            <SelectValue placeholder="Gerente/Responsável" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableGerentes.map(gerente => (
+                                <SelectItem key={gerente} value={gerente}>{gerente}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

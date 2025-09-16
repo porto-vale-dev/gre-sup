@@ -11,6 +11,7 @@ import { useAuth } from './AuthContext';
 import { MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
 
 const TICKET_FILES_BUCKET = 'ticket-files';
+const PAGE_SIZE = 1000;
 
 interface TicketContextType {
   tickets: Ticket[];
@@ -59,18 +60,35 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
     setIsLoadingTickets(true);
     setError(null);
-    try {
-      // Simplificado para buscar apenas da tabela 'tickets' de suporte
-      const { data, error: fetchError } = await supabase
-        .from('tickets')
-        .select('*')
-        .order('submission_date', { ascending: false });
 
-      if (fetchError) {
-        throw new Error(`Erro ao buscar tickets de suporte: ${fetchError.message}`);
-      }
-      
-      setTickets(data || []);
+    try {
+        let allTickets: Ticket[] = [];
+        let page = 0;
+        let hasMore = true;
+
+        while(hasMore) {
+            const { data, error: fetchError } = await supabase
+                .from('tickets')
+                .select('*')
+                .order('submission_date', { ascending: false })
+                .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+            if (fetchError) {
+                throw new Error(`Erro ao buscar tickets de suporte: ${fetchError.message}`);
+            }
+
+            if (data) {
+                allTickets = allTickets.concat(data);
+            }
+
+            if (!data || data.length < PAGE_SIZE) {
+                hasMore = false;
+            } else {
+                page++;
+            }
+        }
+        
+        setTickets(allTickets);
 
     } catch (err: any) {
         const errorMessage = err.message || 'Ocorreu um erro desconhecido ao buscar os tickets.';

@@ -1,8 +1,8 @@
 
-
 export type TicketStatus = "Novo" | "Em Andamento" | "Ativo" | "Atrasado" | "Concluído";
 export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Respondida" | "Resolvida" | "Dentro do prazo" | "Fora do prazo" | "Reabertura";
 export type RetornoComercialStatus = 'Tirou dúvidas' | 'Tentando contato' | 'Em andamento' | 'Revertido' | 'Não Revertido' | 'Sem retorno';
+export type PosContemplacaoTicketStatus = "Aberto" | "Em Análise" | "Concluído";
 
 
 export interface SolutionFile {
@@ -73,3 +73,25 @@ export interface ReasonAssignment {
   username: string;
 }
 
+
+// Type for the new "Pós Contemplação" tickets
+export interface PosContemplacaoTicket {
+  id: string;
+  created_at: string;
+  protocolo?: number;
+  nome_cliente: string;
+  cpf: string;
+  telefone: string;
+  email: string;
+  cota: string;
+  grupo: string;
+  relator: string;
+  responsavel: string;
+  motivo: string;
+  status: PosContemplacaoTicketStatus;
+  observacoes?: string | null;
+  file_path?: string | null;
+  file_name?: string | null;
+}
+
+export type CreatePosContemplacaoTicket = Omit<PosContemplacaoTicket, 'id' | 'created_at' | 'protocolo' | 'status'> & { files?: FileList };
