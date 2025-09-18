@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TICKET_STATUSES } from '@/lib/constants';
 import { useTickets } from '@/contexts/TicketContext';
-import { CalendarDays, Clock, FileText, User, Tag, Edit3, Check, AlertTriangle, Hourglass, CheckCircle2, ExternalLink, X, Ticket as TicketIcon, Activity } from 'lucide-react';
+import { CalendarDays, Clock, FileText, User, Tag, Edit3, Check, AlertTriangle, Hourglass, CheckCircle2, ExternalLink, X, Ticket as TicketIcon, Activity, ShieldCheck } from 'lucide-react';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -24,6 +24,7 @@ const statusColors: Record<TicketStatus, string> = {
   "Em Andamento": "bg-yellow-500",
   "Ativo": "bg-orange-500",
   "Atrasado": "bg-red-500",
+  "Porto Resolve": "bg-purple-600",
   "Concluído": "bg-green-500",
 };
 
@@ -32,6 +33,7 @@ const statusIcons: Record<TicketStatus, React.ElementType> = {
   "Em Andamento": Hourglass,
   "Ativo": Activity,
   "Atrasado": AlertTriangle,
+  "Porto Resolve": ShieldCheck,
   "Concluído": CheckCircle2,
 };
 
