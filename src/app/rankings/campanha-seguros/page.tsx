@@ -3,9 +3,42 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ShieldAlert } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function CampanhaSegurosPage() {
+  const { cargo } = useAuth();
+  const allowedRoles = ['adm', 'greadmin', 'diretor', 'colaborador'];
+
+  if (!cargo || !allowedRoles.includes(cargo)) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
+        <Card className="w-full max-w-md text-center shadow-xl">
+          <CardHeader>
+            <div className="mx-auto bg-destructive/10 text-destructive p-4 rounded-full w-fit">
+              <ShieldAlert className="h-12 w-12" />
+            </div>
+            <CardTitle className="font-headline text-2xl text-destructive mt-4">
+              Acesso Negado
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="text-muted-foreground">
+              Você não tem permissão para visualizar este ranking.
+            </p>
+            <Button asChild>
+              <Link href="/rankings">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar aos Rankings
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 h-[calc(100vh-10rem)]">
       <div>
