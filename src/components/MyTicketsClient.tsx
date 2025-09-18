@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, User, Filter, Briefcase, Headset, ListFilter } from 'lucide-react';
+import { Search, Eye, FileText, Hourglass, CheckCircle2, AlertCircle, Ticket as TicketIcon, CalendarDays, User, Filter, Briefcase, Headset, ListFilter, ShieldCheck, Activity } from 'lucide-react';
 import { formatDistanceToNow, parseISO, addDays, getDay, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDetailsModal } from './TicketDetailsModal';
@@ -27,6 +27,7 @@ const statusColors: Record<TicketStatus | CobrancaTicketStatus, string> = {
   "Em Andamento": "bg-yellow-500 hover:bg-yellow-500",
   "Ativo": "bg-orange-500 hover:bg-orange-500",
   "Atrasado": "bg-red-500 hover:bg-red-500",
+  "Porto Resolve": "bg-purple-600 hover:bg-purple-600",
   "Concluído": "bg-green-500 hover:bg-green-500",
   // Cobrança
   "Aberta": "bg-blue-500 hover:bg-blue-500",
@@ -43,8 +44,9 @@ const statusIcons: Record<TicketStatus | CobrancaTicketStatus, React.ElementType
   // Suporte
   "Novo": FileText,
   "Em Andamento": Hourglass,
-  "Ativo": Hourglass,
+  "Ativo": Activity,
   "Atrasado": AlertCircle,
+  "Porto Resolve": ShieldCheck,
   "Concluído": CheckCircle2,
   // Cobrança
   "Aberta": FileText,
