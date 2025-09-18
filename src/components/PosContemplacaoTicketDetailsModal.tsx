@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, Paperclip, Eye, Download, File } from 'lucide-react';
 import { usePosContemplacaoTickets } from '@/contexts/PosContemplacaoTicketContext';
-import { MOTIVOS_POS_CONTEMPLACAO, RELATORES, RESPONSAVEIS } from '@/lib/posContemplacaoData';
+import { MOTIVOS_POS_CONTEMPLACAO, RESPONSAVEIS } from '@/lib/posContemplacaoData';
 
 
 const FilePreviewItem: React.FC<{
@@ -214,8 +214,8 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                           <SelectValue placeholder="Selecione o relator" />
                         </SelectTrigger>
                         <SelectContent>
-                          {RELATORES.map(r => (
-                            <SelectItem key={r} value={r}>{r}</SelectItem>
+                          {RESPONSAVEIS.map(r => (
+                            <SelectItem key={r.email} value={r.email}>{r.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -228,7 +228,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                         </SelectTrigger>
                         <SelectContent>
                           {RESPONSAVEIS.map(r => (
-                            <SelectItem key={r} value={r}>{r}</SelectItem>
+                            <SelectItem key={r.email} value={r.email}>{r.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function ArchivedPosContemplacaoTicketsPage() {
     const { cargo } = useAuth();
-    const allowedRoles = ['adm', 'greadmin', 'gre_con'];
+    const allowedRoles = ['adm', 'greadmin', 'gre_con', 'gre_con_admin'];
     const canViewManagement = cargo && allowedRoles.includes(cargo);
 
     if (!canViewManagement) {

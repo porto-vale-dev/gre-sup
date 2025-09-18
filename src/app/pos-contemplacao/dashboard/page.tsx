@@ -11,7 +11,7 @@ import { PosContemplacaoDashboardClient } from "@/components/PosContemplacaoDash
 
 export default function PosContemplacaoDashboardPage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'greadmin', 'gre_con'];
+  const allowedRoles = ['adm', 'greadmin', 'gre_con', 'gre_con_admin'];
   const canViewManagement = cargo && allowedRoles.includes(cargo);
 
   if (!cargo || !allowedRoles.includes(cargo)) {

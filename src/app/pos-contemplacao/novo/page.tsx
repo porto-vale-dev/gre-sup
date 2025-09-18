@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,8 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Send, Loader2, Paperclip, UploadCloud, X, Milestone } from 'lucide-react';
 import { usePosContemplacaoTickets } from '@/contexts/PosContemplacaoTicketContext';
-import Link from 'next/link';
-import { MOTIVOS_POS_CONTEMPLACAO, RELATORES, RESPONSAVEIS } from '@/lib/posContemplacaoData';
+import { useAuth } from '@/contexts/AuthContext';
+import { MOTIVOS_POS_CONTEMPLACAO, RESPONSAVEIS } from '@/lib/posContemplacaoData';
 
 const posContemplacaoSchema = z.object({
     nome_cliente: z.string().min(1, "Nome do cliente é obrigatório."),
@@ -66,6 +66,7 @@ const formatPhone = (value: string) => {
 
 export default function NovoTicketPosContemplacaoPage() {
   const { addTicket, isLoading } = usePosContemplacaoTickets();
+  const { username, email: userEmail } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<PosContemplacaoFormData>({
@@ -83,6 +84,12 @@ export default function NovoTicketPosContemplacaoPage() {
       observacoes: "",
     },
   });
+  
+  useEffect(() => {
+    if(username) {
+      form.setValue('relator', username);
+    }
+  }, [username, form]);
 
   const selectedFiles = form.watch("files");
   const selectedFilesArray = selectedFiles ? Array.from(selectedFiles) : [];
@@ -105,13 +112,27 @@ export default function NovoTicketPosContemplacaoPage() {
   async function onSubmit(data: PosContemplacaoFormData) {
     setIsSubmitting(true);
     
+    if (!userEmail) {
+        toast({
+            title: "Erro de autenticação",
+            description: "Não foi possível identificar o seu e-mail de usuário.",
+            variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+    }
+    
     const success = await addTicket({
         ...data,
+        relator: userEmail,
         observacoes: data.observacoes || '',
     }, data.files ? Array.from(data.files) : undefined);
     
     if (success) {
       form.reset();
+      if (username) {
+        form.setValue('relator', username);
+      }
     }
     
     setIsSubmitting(false);
@@ -237,18 +258,9 @@ export default function NovoTicketPosContemplacaoPage() {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Relator</FormLabel>
-                                  <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Selecione o relator" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {RELATORES.map(name => (
-                                        <SelectItem key={name} value={name}>{name}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                   <FormControl>
+                                      <Input value={username || 'Carregando...'} disabled />
+                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
                               )}
@@ -266,8 +278,8 @@ export default function NovoTicketPosContemplacaoPage() {
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      {RESPONSAVEIS.map(name => (
-                                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                                      {RESPONSAVEIS.map(item => (
+                                        <SelectItem key={item.email} value={item.email}>{item.name}</SelectItem>
                                       ))}
                                     </SelectContent>
                                   </Select>
@@ -367,9 +379,6 @@ export default function NovoTicketPosContemplacaoPage() {
                         <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting || isLoading}>
                             {(isSubmitting || isLoading) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                             {(isSubmitting || isLoading) ? "Enviando..." : "Enviar Solicitação"}
-                        </Button>
-                        <Button variant="outline" asChild>
-                            <Link href="/pos-contemplacao/dashboard">Cancelar</Link>
                         </Button>
                     </div>
                 </form>

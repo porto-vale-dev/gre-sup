@@ -89,7 +89,7 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
   const addTicket = async (ticketData: CreatePosContemplacaoTicket, files?: File[]): Promise<boolean> => {
     setIsLoading(true);
     try {
-        if (!user) throw new Error("Usuário não autenticado.");
+        if (!user || !user.email) throw new Error("Usuário não autenticado ou sem e-mail.");
 
         let filePath: string | null = null;
         let fileName: string | null = null;
@@ -118,6 +118,7 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
 
         const payload = {
             ...restOfTicketData,
+            relator: user.email, // Save user's email as the relator
             status: 'Aberto' as PosContemplacaoTicketStatus,
             file_path: filePath,
             file_name: fileName,

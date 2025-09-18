@@ -32,6 +32,14 @@ const statusColors: Record<PosContemplacaoTicketStatus, string> = {
 const ArchivedPosContemplacaoTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket: PosContemplacaoTicket; onOpenDetails: (ticket: PosContemplacaoTicket) => void; onStatusChange: (ticketId: string, status: PosContemplacaoTicketStatus) => void; }) => {
     const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
     
+    const findNameByEmail = (email: string) => {
+        const user = RESPONSAVEIS.find(r => r.email.toLowerCase() === email.toLowerCase());
+        return user ? user.name : email;
+    };
+
+    const relatorName = findNameByEmail(ticket.relator);
+    const responsavelName = findNameByEmail(ticket.responsavel);
+
     return (
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
             <CardHeader className="pb-3">
@@ -51,11 +59,11 @@ const ArchivedPosContemplacaoTicketCard = ({ ticket, onOpenDetails, onStatusChan
             <CardContent className="space-y-3 text-sm flex-grow">
                  <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>Relator: {ticket.relator}</span>
+                    <span>Relator: {relatorName}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>Responsável: {ticket.responsavel}</span>
+                    <span>Responsável: {responsavelName}</span>
                 </div>
                  <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
@@ -89,6 +97,7 @@ const ArchivedPosContemplacaoTicketCard = ({ ticket, onOpenDetails, onStatusChan
 
 export function ArchivedPosContemplacaoTicketsClient() {
   const { tickets, isLoading, error, fetchTickets, updateTicket } = usePosContemplacaoTickets();
+  const { cargo, email } = useAuth();
   
   const [selectedTicket, setSelectedTicket] = useState<PosContemplacaoTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -108,11 +117,15 @@ export function ArchivedPosContemplacaoTicketsClient() {
   }, [isDatePopoverOpen, date]);
   
   const archivedTickets = useMemo(() => {
-    return tickets.filter(ticket => ticket.status === "Concluído");
-  }, [tickets]);
+    const baseTickets = tickets.filter(ticket => ticket.status === "Concluído");
+    if (cargo === 'gre_con' && email) {
+        return baseTickets.filter(ticket => ticket.relator === email || ticket.responsavel === email);
+    }
+    return baseTickets;
+  }, [tickets, cargo, email]);
 
    const responsibleForFilter = useMemo(() => {
-    return ["Todos", ...RESPONSAVEIS];
+    return ["Todos", ...RESPONSAVEIS.map(r => r.name)];
   }, []);
 
   const filteredAndSortedTickets = useMemo(() => {
@@ -300,7 +313,10 @@ export function ArchivedPosContemplacaoTicketsClient() {
           <Info className="h-5 w-5 text-primary" />
           <AlertTitle className="text-primary">Nenhum Ticket Arquivado</AlertTitle>
           <AlertDescription>
-            Não há tickets concluídos que correspondam aos filtros.
+             {cargo === 'gre_con' 
+              ? "Não há tickets concluídos sob sua responsabilidade ou criados por você que correspondam aos filtros."
+              : "Não há tickets concluídos que correspondam aos filtros."
+            }
           </AlertDescription>
         </Alert>
       ) : (

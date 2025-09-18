@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -18,7 +19,7 @@ import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
-import { POS_CONTEMPLACAO_STATUSES, RESPONSAVEIS, RELATORES } from '@/lib/posContemplacaoData';
+import { POS_CONTEMPLACAO_STATUSES, RESPONSAVEIS } from '@/lib/posContemplacaoData';
 import { useAuth } from '@/contexts/AuthContext';
 import { PosContemplacaoTicketDetailsModal } from './PosContemplacaoTicketDetailsModal';
 import Link from 'next/link';
@@ -33,6 +34,14 @@ const statusColors: Record<PosContemplacaoTicketStatus, string> = {
 const PosContemplacaoTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket: PosContemplacaoTicket; onOpenDetails: (ticket: PosContemplacaoTicket) => void; onStatusChange: (ticketId: string, status: PosContemplacaoTicketStatus) => void; }) => {
     const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
     
+    const findNameByEmail = (email: string) => {
+        const user = RESPONSAVEIS.find(r => r.email.toLowerCase() === email.toLowerCase());
+        return user ? user.name : email;
+    };
+
+    const relatorName = findNameByEmail(ticket.relator);
+    const responsavelName = findNameByEmail(ticket.responsavel);
+
     return (
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
             <CardHeader className="pb-3">
@@ -52,11 +61,11 @@ const PosContemplacaoTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { 
             <CardContent className="space-y-3 text-sm flex-grow">
                  <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>Relator: {ticket.relator}</span>
+                    <span>Relator: {relatorName}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>Responsável: {ticket.responsavel}</span>
+                    <span>Responsável: {responsavelName}</span>
                 </div>
                  <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
@@ -89,7 +98,7 @@ const PosContemplacaoTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { 
 
 export function PosContemplacaoDashboardClient() {
   const { tickets, isLoading, error, fetchTickets, updateTicket } = usePosContemplacaoTickets();
-  const { user, cargo } = useAuth();
+  const { user, cargo, email } = useAuth();
   
   const [selectedTicket, setSelectedTicket] = useState<PosContemplacaoTicket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -111,8 +120,14 @@ export function PosContemplacaoDashboardClient() {
   }, [isDatePopoverOpen, date]);
   
   const activeTickets = useMemo(() => {
-    return tickets.filter(ticket => ticket.status !== "Concluído");
-  }, [tickets]);
+    const baseTickets = tickets.filter(ticket => ticket.status !== "Concluído");
+    
+    if (cargo === 'gre_con' && email) {
+        return baseTickets.filter(ticket => ticket.relator === email || ticket.responsavel === email);
+    }
+    
+    return baseTickets;
+  }, [tickets, cargo, email]);
 
 
   const filteredAndSortedTickets = useMemo(() => {
@@ -178,8 +193,13 @@ export function PosContemplacaoDashboardClient() {
   }, []);
 
   const relatorsForFilter = useMemo(() => {
-    return [...RELATORES];
-  }, []);
+    const uniqueRelatorEmails = [...new Set(tickets.map(t => t.relator))];
+    const relatorObjects = uniqueRelatorEmails.map(email => {
+        const user = RESPONSAVEIS.find(r => r.email === email);
+        return { email: email, name: user ? user.name : email.split('@')[0] };
+    });
+    return [{ email: 'Todos', name: 'Todos' }, ...relatorObjects];
+}, [tickets]);
 
 
   if (isLoading) {
@@ -298,9 +318,8 @@ export function PosContemplacaoDashboardClient() {
                         <SelectValue placeholder="Relator" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="Todos">Todos</SelectItem>
-                        {relatorsForFilter.map(resp => (
-                            <SelectItem key={resp} value={resp}>{resp}</SelectItem>
+                        {relatorsForFilter.map(relator => (
+                            <SelectItem key={relator.email} value={relator.email}>{relator.name}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -313,7 +332,7 @@ export function PosContemplacaoDashboardClient() {
                     <SelectContent>
                         <SelectItem value="Todos">Todos</SelectItem>
                         {responsibleForFilter.map(resp => (
-                            <SelectItem key={resp} value={resp}>{resp}</SelectItem>
+                            <SelectItem key={resp.email} value={resp.email}>{resp.name}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -351,7 +370,10 @@ export function PosContemplacaoDashboardClient() {
           <Info className="h-5 w-5 text-primary" />
           <AlertTitle className="text-primary">Nenhum Ticket Encontrado</AlertTitle>
           <AlertDescription>
-            Não há tickets de Pós-Contemplação que correspondam aos seus filtros.
+            {cargo === 'gre_con' 
+              ? "Não há tickets de pós-contemplação sob sua responsabilidade ou criados por você que correspondam aos filtros."
+              : "Não há tickets de Pós-Contemplação que correspondam aos seus filtros."
+            }
           </AlertDescription>
         </Alert>
       ) : (

@@ -76,10 +76,12 @@ export function SiteHeader() {
     
     const isPosContemplacaoDashboard = pathname.startsWith('/pos-contemplacao/dashboard');
     const isPosContemplacaoGestao = pathname === '/pos-contemplacao/gestao';
+    const isPosContemplacaoNovo = pathname === '/pos-contemplacao/novo';
+    const isPosContemplacaoArchived = pathname === '/pos-contemplacao/archived';
     
-    const allowedManagementRoles = ['adm', 'greadmin', 'gre', 'grejac', 'greadminjac'];
+    const allowedManagementRoles = ['adm', 'greadmin', 'gre', 'gre_con', 'gre_con_admin'];
     const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
-    const canViewSettings = cargo === 'adm' || cargo === 'greadmin' || cargo === 'gre';
+    const canViewSettings = cargo === 'adm' || cargo === 'greadmin';
 
     const isCobrancaArea = pathname.includes('/cobranca/');
     const logoLink = isCobrancaArea ? '/suporte-gre/cobranca/dashboard' : isTicketDashboardArea ? '/suporte-gre/painel' : '/pos-contemplacao/dashboard';
@@ -121,7 +123,7 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               )}
-              {isPosContemplacaoGestao && (
+              {(isPosContemplacaoGestao || isPosContemplacaoNovo || isPosContemplacaoArchived) && (
                   <Link href="/pos-contemplacao/dashboard" passHref>
                       <Button variant="ghost" size="sm" aria-label="Painel Pós-Contemplação">
                           <LayoutDashboard className="h-4 w-4 sm:mr-2" />
