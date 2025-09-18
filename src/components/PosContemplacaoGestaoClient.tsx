@@ -201,8 +201,6 @@ export function PosContemplacaoGestaoClient() {
     return exportHistory.filter(item => item.username === username).slice(0, 5);
   }, [exportHistory, username]);
 
-  const responsibleList = useMemo(() => ["Todos", ...RESPONSAVEIS], []);
-
 
   const stats = useMemo(() => {
     if (!filteredTickets || filteredTickets.length === 0) {
@@ -354,8 +352,9 @@ export function PosContemplacaoGestaoClient() {
                 <SelectValue placeholder="Filtrar por responsável" />
               </SelectTrigger>
               <SelectContent>
-                 {responsibleList.map(name => (
-                    <SelectItem key={name} value={name} className="capitalize">{name}</SelectItem>
+                 <SelectItem value="Todos">Todos</SelectItem>
+                  {RESPONSAVEIS.map(responsavel => (
+                    <SelectItem key={responsavel.email} value={responsavel.email} className="capitalize">{responsavel.name}</SelectItem>
                   ))}
               </SelectContent>
             </Select>
