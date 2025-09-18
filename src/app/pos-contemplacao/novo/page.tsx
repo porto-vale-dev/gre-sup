@@ -68,6 +68,7 @@ export default function NovoTicketPosContemplacaoPage() {
   const { addTicket, isLoading } = usePosContemplacaoTickets();
   const { username, email: userEmail } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<PosContemplacaoFormData>({
     resolver: zodResolver(posContemplacaoSchema),
