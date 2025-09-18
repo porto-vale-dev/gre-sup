@@ -3,58 +3,65 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ShieldAlert } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowLeft, Trophy, ArrowRight } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-export default function TrimestralPage() {
-  const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'diretor', 'greadmin'];
+interface Ranking {
+  title: string;
+  href: string;
+  Icon: LucideIcon;
+  description: string;
+}
 
-  if (!cargo || !allowedRoles.includes(cargo)) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
-        <Card className="w-full max-w-md text-center shadow-xl">
-          <CardHeader>
-            <div className="mx-auto bg-destructive/10 text-destructive p-4 rounded-full w-fit">
-              <ShieldAlert className="h-12 w-12" />
+const rankings: Ranking[] = [
+  {
+    title: "Ranking Campanha",
+    href: "/rankings/campanha",
+    Icon: Trophy,
+    description: "Confira os resultados da campanha atual.",
+  },
+];
+
+const RankingCard = ({ ranking }: { ranking: Ranking }) => (
+  <Link href={ranking.href} className="group block">
+    <Card className="h-full hover:border-primary hover:shadow-lg transition-all duration-300 flex flex-col">
+      <CardContent className="p-6 flex flex-col items-start gap-4 flex-grow">
+        <div className="flex justify-between items-center w-full">
+            <div className="bg-primary/10 text-primary p-3 rounded-lg">
+                <ranking.Icon className="h-6 w-6" />
             </div>
-            <CardTitle className="font-headline text-2xl text-destructive mt-4">
-              Acesso Negado
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <p className="text-muted-foreground">
-              Você não tem permissão para visualizar este ranking.
-            </p>
-            <Button asChild>
-              <Link href="/rankings">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar aos Rankings
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+            <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-transform" />
+        </div>
+        <div className="flex-grow">
+          <h3 className="text-lg font-semibold text-card-foreground">{ranking.title}</h3>
+          <p className="text-sm text-muted-foreground mt-1">{ranking.description}</p>
+        </div>
+      </CardContent>
+    </Card>
+  </Link>
+);
 
+
+export default function RankingsPage() {
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-10rem)]">
-      <div>
-        <Link href="/rankings" passHref>
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar aos Rankings
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+            <h1 className="text-3xl font-bold font-headline text-primary">Rankings</h1>
+            <p className="text-muted-foreground mt-1">Selecione um ranking para visualizar.</p>
+        </div>
+        <Link href="/hub" passHref>
+          <Button variant="outline">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Hub
           </Button>
         </Link>
       </div>
-      <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden">
-        <iframe
-          title="Ranking Trimestral"
-          src="https://app.powerbi.com/view?r=eyJrIjoiNGI0Yzg4YmUtN2I2OS00ZjkwLWEwMWUtZWFhNWRjNGM4ZWQ3IiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
-          allowFullScreen
-          className="absolute top-0 left-0 w-full h-full border-0"
-        ></iframe>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {rankings.map(ranking => (
+          <RankingCard key={ranking.href} ranking={ranking} />
+        ))}
       </div>
     </div>
   );

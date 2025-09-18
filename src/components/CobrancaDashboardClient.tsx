@@ -191,7 +191,7 @@ export function CobrancaDashboardClient() {
   const visibleTickets = useMemo(() => {
     const baseTickets = tickets.filter(ticket => ticket.status !== "Resolvida");
 
-    if (cargo === 'gre' && user) {
+    if (cargo === 'gre_apoio' && user) {
         return baseTickets.filter(ticket => ticket.user_id === user.id);
     }
     
@@ -428,7 +428,7 @@ export function CobrancaDashboardClient() {
           <Info className="h-5 w-5 text-primary" />
           <AlertTitle className="text-primary">Nenhum Ticket de Apoio Encontrado</AlertTitle>
           <AlertDescription>
-            {cargo === 'gre' 
+            {cargo === 'gre_apoio' 
               ? "Não há tickets de apoio criados por você que correspondam aos filtros."
               : "Não há tickets de Apoio ao Comercial que correspondam aos seus filtros."
             }

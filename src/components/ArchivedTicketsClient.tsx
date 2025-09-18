@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useTickets } from '@/contexts/TicketContext';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Ticket } from '@/types';
 import { TicketCard } from '@/components/TicketCard';
 import { TicketDetailsModal } from '@/components/TicketDetailsModal';
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 
 export function ArchivedTicketsClient() {
   const { tickets, isLoadingTickets, error, fetchTickets } = useTickets();
+  const { cargo, username } = useAuth();
 
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,8 +46,15 @@ export function ArchivedTicketsClient() {
 
 
   const archivedTickets = useMemo(() => {
-    return tickets.filter(ticket => ticket.status === "Concluído");
-  }, [tickets]);
+    const baseTickets = tickets.filter(ticket => ticket.status === "Concluído");
+
+    // Filter tickets for 'gre' and 'gre_apoio_admin' roles
+    if ((cargo === 'gre' || cargo === 'gre_apoio_admin') && username) {
+        return baseTickets.filter(ticket => ticket.responsible === username);
+    }
+
+    return baseTickets;
+  }, [tickets, cargo, username]);
 
   const responsibleNamesForFilter = useMemo(() => {
     const allResponsibles = new Set(tickets.map(t => t.responsible).filter(Boolean) as string[]);
@@ -62,6 +71,7 @@ export function ArchivedTicketsClient() {
                             (ticket.responsible && ticket.responsible.toLowerCase().includes(cleanedSearchTerm));
         
         const responsibleMatch = (() => {
+          if (cargo === 'gre' || cargo === 'gre_apoio_admin') return true;
           if (responsibleFilter === "Todos") return true;
           if (responsibleFilter === "não atribuído") return !ticket.responsible;
           return ticket.responsible?.toLowerCase() === responsibleFilter.toLowerCase();
@@ -86,7 +96,7 @@ export function ArchivedTicketsClient() {
         const dateB = new Date(b.submission_date).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
-  }, [archivedTickets, searchTerm, responsibleFilter, sortOrder, date]);
+  }, [archivedTickets, searchTerm, responsibleFilter, sortOrder, date, cargo]);
 
   const handleOpenDetails = (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -195,17 +205,21 @@ export function ArchivedTicketsClient() {
                 </div>
               </PopoverContent>
             </Popover>
-            <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
-              <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por responsável">
-                <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="Filtrar por responsável" />
-              </SelectTrigger>
-              <SelectContent>
-                {responsibleNamesForFilter.map(name => (
-                  <SelectItem key={name} value={name} className="capitalize">{name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            
+            {(cargo === 'adm' || cargo === 'greadmin') && (
+              <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
+                <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por responsável">
+                  <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder="Filtrar por responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  {responsibleNamesForFilter.map(name => (
+                    <SelectItem key={name} value={name} className="capitalize">{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
 
             <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
               <SelectTrigger className="w-full sm:w-[150px]" aria-label="Ordenar por data">
@@ -233,7 +247,10 @@ export function ArchivedTicketsClient() {
           <Info className="h-5 w-5 text-primary" />
           <AlertTitle className="text-primary">Nenhum Ticket Arquivado</AlertTitle>
           <AlertDescription>
-            Não há tickets concluídos para exibir aqui que correspondam aos seus filtros.
+             {(cargo === 'gre' || cargo === 'gre_apoio_admin')
+                ? "Não há tickets concluídos atribuídos a você."
+                : "Não há tickets concluídos para exibir aqui que correspondam aos seus filtros."
+             }
           </AlertDescription>
         </Alert>
       ) : (
@@ -254,9 +271,3 @@ export function ArchivedTicketsClient() {
     </div>
   );
 }
-
-    
-
-    
-
-    

@@ -50,8 +50,8 @@ export function DashboardClient() {
   const activeTickets = useMemo(() => {
     const baseTickets = tickets.filter(ticket => ticket.status !== "Concluído");
 
-    // If user has role 'gre', filter tickets assigned to them
-    if (cargo === 'gre' && username) {
+    // If user has role 'gre' or 'gre_apoio_admin', filter tickets assigned to them
+    if ((cargo === 'gre' || cargo === 'gre_apoio_admin') && username) {
       return baseTickets.filter(ticket => ticket.responsible === username);
     }
     
@@ -270,7 +270,7 @@ export function DashboardClient() {
           <Info className="h-5 w-5 text-primary" />
           <AlertTitle className="text-primary">Nenhum Ticket Ativo Encontrado</AlertTitle>
           <AlertDescription>
-            {cargo === 'gre' 
+            {cargo === 'gre' || cargo === 'gre_apoio_admin'
               ? "Não há tickets ativos atribuídos a você no momento."
               : "Não há tickets ativos que correspondam aos seus filtros atuais ou nenhum ticket foi aberto ainda."
             }
@@ -294,9 +294,3 @@ export function DashboardClient() {
     </div>
   );
 }
-
-    
-
-    
-
-    

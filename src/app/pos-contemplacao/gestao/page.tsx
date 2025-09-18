@@ -10,7 +10,7 @@ import { PosContemplacaoGestaoClient } from '@/components/PosContemplacaoGestaoC
 
 export default function GestaoPosContemplacaoPage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'greadmin', 'gre'];
+  const allowedRoles = ['adm', 'greadmin', 'gre_con'];
 
   if (!cargo || !allowedRoles.includes(cargo)) {
     return (
