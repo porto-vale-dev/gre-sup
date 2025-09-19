@@ -147,7 +147,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
 
       if (newTicketData) {
         // Disparar o webhook para N8N para novo ticket
-        const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/213124asd144das"; // ESTE É O WEBHOOK
+        const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/213124asd144das"; // ESTE É O WEBHOOK
         fetch(webhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -243,7 +243,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       }
 
       // Webhook é disparado ao salvar detalhes, notificando como reabertura
-      const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/213124asd144das"; // ESTE É O WEBHOOK
+      const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/nvrjgvnrejbgeerespostaticket"; // ESTE É O WEBHOOK
       fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
