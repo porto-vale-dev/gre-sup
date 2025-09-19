@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, Info, LayoutGrid, List, User, AlertCircle, Calendar as CalendarIcon, ExternalLink, Ticket as TicketIcon } from 'lucide-react';
+import { Search, Info, LayoutGrid, List, User, AlertCircle, Calendar as CalendarIcon, ExternalLink, Ticket as TicketIcon, MessageSquare } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -19,7 +19,7 @@ import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
-import { POS_CONTEMPLACAO_STATUSES, RESPONSAVEIS } from '@/lib/posContemplacaoData';
+import { POS_CONTEMPLACAO_STATUSES, RESPONSAVEIS, MOTIVOS_POS_CONTEMPLACAO } from '@/lib/posContemplacaoData';
 import { useAuth } from '@/contexts/AuthContext';
 import { PosContemplacaoTicketDetailsModal } from './PosContemplacaoTicketDetailsModal';
 
@@ -103,6 +103,7 @@ export function ArchivedPosContemplacaoTicketsClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [responsibleFilter, setResponsibleFilter] = useState<string>("Todos");
+  const [motivoFilter, setMotivoFilter] = useState<string>("Todos");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -139,6 +140,7 @@ export function ArchivedPosContemplacaoTicketsClient() {
                             ticket.motivo.toLowerCase().includes(cleanedSearchTerm);
         
         const responsibleMatch = responsibleFilter === "Todos" || ticket.responsavel === responsibleFilter;
+        const motivoMatch = motivoFilter === "Todos" || ticket.motivo === motivoFilter;
 
         let dateMatch = true;
         if (date?.from) {
@@ -155,14 +157,14 @@ export function ArchivedPosContemplacaoTicketsClient() {
             }
         }
 
-        return searchMatch && dateMatch && responsibleMatch;
+        return searchMatch && dateMatch && responsibleMatch && motivoMatch;
       })
       .sort((a, b) => {
         const timeA = new Date(a.created_at).getTime();
         const timeB = new Date(b.created_at).getTime();
         return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
       });
-  }, [archivedTickets, searchTerm, sortOrder, date, responsibleFilter]);
+  }, [archivedTickets, searchTerm, sortOrder, date, responsibleFilter, motivoFilter]);
 
   const handleOpenDetails = (ticket: PosContemplacaoTicket) => {
     setSelectedTicket(ticket);
@@ -231,10 +233,10 @@ export function ArchivedPosContemplacaoTicketsClient() {
                     <Button
                       id="date"
                       variant={"outline"}
+                      size="icon"
                       className={cn(
-                        "w-full sm:w-auto px-3 justify-start text-left font-normal",
-                        !date && "text-muted-foreground",
-                        date && "bg-[#5F5F5F] text-white hover:bg-[#5F5F5F]/90 hover:text-white"
+                        "w-full sm:w-10",
+                        !date && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="h-4 w-4" />
@@ -275,6 +277,19 @@ export function ArchivedPosContemplacaoTicketsClient() {
                   </PopoverContent>
                 </Popover>
 
+                <Select value={motivoFilter} onValueChange={setMotivoFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por motivo">
+                        <MessageSquare className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Filtrar por motivo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Todos">Todos os Motivos</SelectItem>
+                        {MOTIVOS_POS_CONTEMPLACAO.map(motivo => (
+                            <SelectItem key={motivo} value={motivo}>{motivo}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
                 <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
                     <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por responsável">
                         <User className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -296,7 +311,7 @@ export function ArchivedPosContemplacaoTicketsClient() {
                         <SelectItem value="asc">Mais Antigos</SelectItem>
                     </SelectContent>
                 </Select>
-                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {if(value) setViewMode(value as "grid" | "list")}} className="hidden sm:flex">
+                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {if(value) setViewMode(value as "grid" | "list")}}>
                     <ToggleGroupItem value="grid" aria-label="Visualização em grade">
                         <LayoutGrid className="h-4 w-4" />
                     </ToggleGroupItem>

@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle, Calendar as CalendarIcon, ExternalLink, Ticket as TicketIcon, Archive } from 'lucide-react';
+import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle, Calendar as CalendarIcon, ExternalLink, Ticket as TicketIcon, Archive, MessageSquare } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -19,7 +19,7 @@ import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
-import { POS_CONTEMPLACAO_STATUSES, RESPONSAVEIS } from '@/lib/posContemplacaoData';
+import { POS_CONTEMPLACAO_STATUSES, RESPONSAVEIS, MOTIVOS_POS_CONTEMPLACAO } from '@/lib/posContemplacaoData';
 import { useAuth } from '@/contexts/AuthContext';
 import { PosContemplacaoTicketDetailsModal } from './PosContemplacaoTicketDetailsModal';
 import Link from 'next/link';
@@ -36,7 +36,7 @@ const PosContemplacaoTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { 
     
     const findNameByEmail = (email: string) => {
         const user = RESPONSAVEIS.find(r => r.email.toLowerCase() === email.toLowerCase());
-        return user ? user.name : email;
+        return user ? user.name : email.split('@')[0];
     };
 
     const relatorName = findNameByEmail(ticket.relator);
@@ -106,6 +106,7 @@ export function PosContemplacaoDashboardClient() {
   const [statusFilter, setStatusFilter] = useState<string>("Todos");
   const [responsibleFilter, setResponsibleFilter] = useState<string>("");
   const [relatorFilter, setRelatorFilter] = useState<string>("");
+  const [motivoFilter, setMotivoFilter] = useState<string>("Todos");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc"); 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
@@ -144,6 +145,7 @@ export function PosContemplacaoDashboardClient() {
         const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
         const responsibleMatch = responsibleFilter === "" || responsibleFilter === "Todos" || ticket.responsavel === responsibleFilter;
         const relatorMatch = relatorFilter === "" || relatorFilter === "Todos" || ticket.relator === relatorFilter;
+        const motivoMatch = motivoFilter === "Todos" || ticket.motivo === motivoFilter;
         
         let dateMatch = true;
         if (date?.from) {
@@ -160,14 +162,14 @@ export function PosContemplacaoDashboardClient() {
             }
         }
 
-        return searchMatch && statusMatch && dateMatch && responsibleMatch && relatorMatch;
+        return searchMatch && statusMatch && dateMatch && responsibleMatch && relatorMatch && motivoMatch;
       })
       .sort((a, b) => {
         const timeA = new Date(a.created_at).getTime();
         const timeB = new Date(b.created_at).getTime();
         return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
       });
-  }, [activeTickets, searchTerm, statusFilter, sortOrder, date, responsibleFilter, relatorFilter]);
+  }, [activeTickets, searchTerm, statusFilter, sortOrder, date, responsibleFilter, relatorFilter, motivoFilter]);
 
   const handleOpenDetails = (ticket: PosContemplacaoTicket) => {
     setSelectedTicket(ticket);
@@ -199,7 +201,7 @@ export function PosContemplacaoDashboardClient() {
         return { email: email, name: user ? user.name : email.split('@')[0] };
     });
     return [{ email: 'Todos', name: 'Todos' }, ...relatorObjects];
-}, [tickets]);
+  }, [tickets]);
 
 
   if (isLoading) {
@@ -237,8 +239,8 @@ export function PosContemplacaoDashboardClient() {
   return (
     <div className="space-y-6">
       <div className="p-4 bg-card border rounded-lg shadow">
-        <div className="flex flex-col lg:flex-row gap-2 items-center w-full">
-            <div className="relative w-full lg:flex-grow">
+        <div className="flex flex-nowrap gap-2 items-center">
+            <div className="relative flex-grow min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                     type="search"
@@ -249,119 +251,132 @@ export function PosContemplacaoDashboardClient() {
                     aria-label="Buscar tickets de Pós-Contemplação"
                 />
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto items-center shrink-0">
-                <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="date"
-                      variant={"outline"}
-                      className={cn(
-                        "w-full sm:w-auto px-3 justify-start text-left font-normal",
-                        !date && "text-muted-foreground",
-                        date && "bg-[#5F5F5F] text-white hover:bg-[#5F5F5F]/90 hover:text-white"
-                      )}
-                    >
-                      <CalendarIcon className="h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
-                    <Calendar
-                      initialFocus
-                      mode="range"
-                      defaultMonth={date?.from}
-                      selected={tempDate}
-                      onSelect={setTempDate}
-                      numberOfMonths={1}
-                      locale={ptBR}
-                    />
-                    <div className="p-2 border-t flex justify-end gap-2">
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => {
-                                setDate(undefined);
-                                setTempDate(undefined);
-                                setIsDatePopoverOpen(false);
-                            }}
-                        >
-                            Limpar
-                        </Button>
-                        <Button 
-                            size="sm" 
-                            onClick={() => {
-                                setDate(tempDate);
-                                setIsDatePopoverOpen(false);
-                            }}
-                        >
-                            Aplicar
-                        </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por status">
-                        <ListFilter className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <SelectValue placeholder="Filtrar por status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {ticketStatusesForFilter.map(status => (
-                            <SelectItem key={status} value={status}>{status}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select value={relatorFilter} onValueChange={setRelatorFilter}>
-                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por relator">
-                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <SelectValue placeholder="Relator" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {relatorsForFilter.map(relator => (
-                            <SelectItem key={relator.email} value={relator.email}>{relator.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                
-                <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
-                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrar por responsável">
-                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <SelectValue placeholder="Responsável" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Todos">Todos</SelectItem>
-                        {responsibleForFilter.map(resp => (
-                            <SelectItem key={resp.email} value={resp.email}>{resp.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-
-                <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
-                    <SelectTrigger className="w-full sm:w-[150px]" aria-label="Ordenar por data">
-                         <SelectValue placeholder="Ordenar por data" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="desc">Mais Recentes</SelectItem>
-                        <SelectItem value="asc">Mais Antigos</SelectItem>
-                    </SelectContent>
-                </Select>
-                 <Button asChild variant="outline" className="w-full sm:w-auto">
-                  <Link href="/pos-contemplacao/archived">
-                    <Archive className="mr-2 h-4 w-4" />
-                    Ver Arquivados
-                  </Link>
+            
+            <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={"outline"}
+                  size="icon"
+                  className={cn(
+                    "w-10 shrink-0",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="h-4 w-4" />
                 </Button>
-                <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {if(value) setViewMode(value as "grid" | "list")}} className="hidden sm:flex">
-                    <ToggleGroupItem value="grid" aria-label="Visualização em grade">
-                        <LayoutGrid className="h-4 w-4" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="list" aria-label="Visualização em lista">
-                        <List className="h-4 w-4" />
-                    </ToggleGroupItem>
-                </ToggleGroup>
-            </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={date?.from}
+                  selected={tempDate}
+                  onSelect={setTempDate}
+                  numberOfMonths={1}
+                  locale={ptBR}
+                />
+                <div className="p-2 border-t flex justify-end gap-2">
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                            setDate(undefined);
+                            setTempDate(undefined);
+                            setIsDatePopoverOpen(false);
+                        }}
+                    >
+                        Limpar
+                    </Button>
+                    <Button 
+                        size="sm" 
+                        onClick={() => {
+                            setDate(tempDate);
+                            setIsDatePopoverOpen(false);
+                        }}
+                    >
+                        Aplicar
+                    </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[130px] shrink-0" aria-label="Filtrar por status">
+                    <ListFilter className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                    {ticketStatusesForFilter.map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+
+            <Select value={motivoFilter} onValueChange={setMotivoFilter}>
+                <SelectTrigger className="w-[180px] shrink-0" aria-label="Filtrar por motivo">
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Motivo" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Todos">Todos os Motivos</SelectItem>
+                    {MOTIVOS_POS_CONTEMPLACAO.map(motivo => (
+                        <SelectItem key={motivo} value={motivo}>{motivo}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+
+            <Select value={relatorFilter} onValueChange={setRelatorFilter}>
+                <SelectTrigger className="w-[150px] shrink-0" aria-label="Filtrar por relator">
+                    <User className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Relator" />
+                </SelectTrigger>
+                <SelectContent>
+                    {relatorsForFilter.map(relator => (
+                        <SelectItem key={relator.email} value={relator.email}>{relator.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            
+            <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
+                <SelectTrigger className="w-[150px] shrink-0" aria-label="Filtrar por responsável">
+                    <User className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Todos">Todos</SelectItem>
+                    {responsibleForFilter.map(resp => (
+                        <SelectItem key={resp.email} value={resp.email}>{resp.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+
+
+            <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
+                <SelectTrigger className="w-[140px] shrink-0" aria-label="Ordenar por data">
+                     <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="desc">Mais Recentes</SelectItem>
+                    <SelectItem value="asc">Mais Antigos</SelectItem>
+                </SelectContent>
+            </Select>
+
+            <Button asChild variant="outline" className="shrink-0">
+              <Link href="/pos-contemplacao/archived">
+                <Archive className="mr-2 h-4 w-4" />
+                Arquivados
+              </Link>
+            </Button>
+            
+            <ToggleGroup type="single" value={viewMode} onValueChange={(value) => {if(value) setViewMode(value as "grid" | "list")}}>
+                <ToggleGroupItem value="grid" aria-label="Visualização em grade">
+                    <LayoutGrid className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="Visualização em lista">
+                    <List className="h-4 w-4" />
+                </ToggleGroupItem>
+            </ToggleGroup>
         </div>
       </div>
 
