@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -9,7 +10,7 @@ import { CobrancaGestaoClient } from '@/components/CobrancaGestaoClient';
 
 export default function GestaoApoioCobrancaPage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'greadmin', 'gre'];
+  const allowedRoles = ['adm', 'greadmin', 'gre_apoio_admin'];
 
   if (!cargo || !allowedRoles.includes(cargo)) {
     return (

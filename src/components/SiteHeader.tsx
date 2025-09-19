@@ -79,10 +79,16 @@ export function SiteHeader() {
     const isPosContemplacaoNovo = pathname === '/pos-contemplacao/novo';
     const isPosContemplacaoArchived = pathname === '/pos-contemplacao/archived';
     
-    const allowedManagementRoles = ['adm', 'greadmin', 'gre', 'gre_con', 'gre_con_admin'];
+    const allowedManagementRoles = ['adm', 'greadmin', 'gre'];
     const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
     const canViewSettings = cargo === 'adm' || cargo === 'greadmin';
+    
+    const posContemplacaoGestaoRoles = ['adm', 'greadmin', 'gre_con_admin'];
+    const canViewPosContemplacaoGestao = cargo && posContemplacaoGestaoRoles.includes(cargo);
 
+    const cobrancaGestaoRoles = ['adm', 'greadmin', 'gre_apoio_admin'];
+    const canViewCobrancaGestao = cargo && cobrancaGestaoRoles.includes(cargo);
+    
     const isCobrancaArea = pathname.includes('/cobranca/');
     const logoLink = isCobrancaArea ? '/suporte-gre/cobranca/dashboard' : isTicketDashboardArea ? '/suporte-gre/painel' : '/pos-contemplacao/dashboard';
 
@@ -131,7 +137,7 @@ export function SiteHeader() {
                       </Button>
                   </Link>
               )}
-               {isCobrancaDashboardArea && canViewManagement && (
+               {isCobrancaDashboardArea && canViewCobrancaGestao && (
                  <Link href="/suporte-gre/cobranca/gestao" passHref>
                   <Button variant="ghost" size="sm" aria-label="Gestão de Apoio">
                     <BarChart2 className="h-4 w-4 sm:mr-2" />
@@ -147,7 +153,7 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               )}
-              {isPosContemplacaoDashboard && canViewManagement && (
+              {isPosContemplacaoDashboard && canViewPosContemplacaoGestao && (
                  <Link href="/pos-contemplacao/gestao" passHref>
                   <Button variant="ghost" size="sm" aria-label="Gestão de Pós-Contemplação">
                     <BarChart2 className="h-4 w-4 sm:mr-2" />
