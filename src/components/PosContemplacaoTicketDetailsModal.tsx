@@ -22,6 +22,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, Paperclip, Eye, Download, File, CalendarIcon as CalendarIconLucide } from 'lucide-react';
 import { usePosContemplacaoTickets } from '@/contexts/PosContemplacaoTicketContext';
 import { MOTIVOS_POS_CONTEMPLACAO, RESPONSAVEIS } from '@/lib/posContemplacaoData';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 
 const FilePreviewItem: React.FC<{
@@ -81,20 +84,20 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
 
   // State for editable fields
-  const [relator, setRelator] = useState(ticket?.relator || '');
   const [responsavel, setResponsavel] = useState(ticket?.responsavel || '');
   const [motivo, setMotivo] = useState(ticket?.motivo || '');
   const [observacoes, setObservacoes] = useState(ticket?.observacoes || '');
+  const [dataLimite, setDataLimite] = useState<Date | null>(null);
   
   const [isSaving, setIsSaving] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
 
   useEffect(() => {
     if (ticket) {
-      setRelator(ticket.relator);
       setResponsavel(ticket.responsavel);
       setMotivo(ticket.motivo);
       setObservacoes(ticket.observacoes || '');
+      setDataLimite(ticket.data_limite ? parseISO(ticket.data_limite) : null);
     }
   }, [ticket, isOpen]);
   
@@ -102,7 +105,12 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   const handleSave = async () => {
     if (!ticket) return;
     setIsSaving(true);
-    await updateTicket(ticket.id, { responsavel, motivo, observacoes });
+    await updateTicket(ticket.id, { 
+      responsavel, 
+      motivo, 
+      observacoes,
+      data_limite: dataLimite ? dataLimite.toISOString() : null,
+    });
     setIsSaving(false);
     onClose();
   };
@@ -114,6 +122,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
         responsavel, 
         motivo, 
         observacoes,
+        data_limite: dataLimite ? dataLimite.toISOString() : null,
         status: 'Concluído' 
     });
     setIsCompleting(false);
@@ -127,12 +136,6 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   const formattedDate = isValid(submissionDate) 
     ? format(submissionDate, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })
     : 'Data inválida';
-
-    const dataLimite = ticket.data_limite ? parseISO(ticket.data_limite) : null;
-    const formattedDataLimite = dataLimite && isValid(dataLimite)
-        ? format(dataLimite, "dd/MM/yyyy", { locale: ptBR })
-        : 'Não definida';
-
 
   const renderAttachments = () => {
     if (!ticket.file_path || !ticket.file_name) {
@@ -209,10 +212,33 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />Data de Abertura:</strong>
                   <p>{formattedDate}</p>
                 </div>
-                <div>
+                
+                 <div className="flex flex-col gap-1.5">
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><CalendarIconLucide className="h-4 w-4" />Data Limite:</strong>
-                  <p>{formattedDataLimite}</p>
+                   <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !dataLimite && "text-muted-foreground"
+                            )}
+                            >
+                            <CalendarDays className="mr-2 h-4 w-4" />
+                            {dataLimite ? format(dataLimite, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                            mode="single"
+                            selected={dataLimite}
+                            onSelect={setDataLimite}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
                 </div>
+
                 <div>
                   <strong className="font-medium text-muted-foreground">Status:</strong>
                   <Badge variant={ticket.status === 'Concluído' ? 'default' : 'secondary'}>{ticket.status}</Badge>
@@ -224,9 +250,9 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                       <Label htmlFor="relator-select" className="font-medium text-muted-foreground flex items-center gap-1.5"><User className="h-4 w-4" />Relator:</Label>
-                      <Select value={relator} onValueChange={setRelator} disabled>
+                      <Select value={ticket.relator} disabled>
                         <SelectTrigger id="relator-select">
-                          <SelectValue placeholder="Selecione o relator" />
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {RESPONSAVEIS.map(r => (
@@ -307,3 +333,5 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
     </Dialog>
   );
 }
+
+    
