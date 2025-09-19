@@ -87,7 +87,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   const [responsavel, setResponsavel] = useState(ticket?.responsavel || '');
   const [motivo, setMotivo] = useState(ticket?.motivo || '');
   const [observacoes, setObservacoes] = useState(ticket?.observacoes || '');
-  const [dataLimite, setDataLimite] = useState<Date | null>(null);
+  const [dataLimite, setDataLimite] = useState<Date | undefined>(undefined);
   
   const [isSaving, setIsSaving] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -97,7 +97,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
       setResponsavel(ticket.responsavel);
       setMotivo(ticket.motivo);
       setObservacoes(ticket.observacoes || '');
-      setDataLimite(ticket.data_limite ? parseISO(ticket.data_limite) : null);
+      setDataLimite(ticket.data_limite ? parseISO(ticket.data_limite) : undefined);
     }
   }, [ticket, isOpen]);
   
@@ -232,7 +232,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                             <Calendar
                             mode="single"
                             selected={dataLimite}
-                            onSelect={setDataLimite}
+                            onSelect={(date) => setDataLimite(date || undefined)}
                             initialFocus
                             />
                         </PopoverContent>
@@ -333,5 +333,3 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
     </Dialog>
   );
 }
-
-    
