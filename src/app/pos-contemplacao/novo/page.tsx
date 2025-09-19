@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, type ChangeEvent, useEffect } from 'react';
@@ -13,10 +12,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Send, Loader2, Paperclip, UploadCloud, X, Milestone } from 'lucide-react';
+import { Send, Loader2, Paperclip, UploadCloud, X, Milestone, CalendarIcon } from 'lucide-react';
 import { usePosContemplacaoTickets } from '@/contexts/PosContemplacaoTicketContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { MOTIVOS_POS_CONTEMPLACAO, RESPONSAVEIS } from '@/lib/posContemplacaoData';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const posContemplacaoSchema = z.object({
     nome_cliente: z.string().min(1, "Nome do cliente é obrigatório."),
@@ -28,6 +32,9 @@ const posContemplacaoSchema = z.object({
     relator: z.string().min(1, "Relator é obrigatório."),
     responsavel: z.string().min(1, "Responsável é obrigatório."),
     motivo: z.string().min(1, "Motivo é obrigatório."),
+    data_limite: z.date({
+      required_error: "A data limite de resposta é obrigatória.",
+    }),
     observacoes: z.string().optional(),
     files: z.custom<FileList>().optional(),
 });
@@ -127,6 +134,7 @@ export default function NovoTicketPosContemplacaoPage() {
         ...data,
         relator: userEmail,
         observacoes: data.observacoes || '',
+        data_limite: data.data_limite.toISOString(),
     }, data.files ? Array.from(data.files) : undefined);
     
     if (success) {
@@ -328,6 +336,47 @@ export default function NovoTicketPosContemplacaoPage() {
                                 </FormItem>
                             )}
                         />
+                         <FormField
+                            control={form.control}
+                            name="data_limite"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                <FormLabel>Data Limite de Resposta</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-[240px] pl-3 text-left font-normal",
+                                            !field.value && "text-muted-foreground"
+                                        )}
+                                        >
+                                        {field.value ? (
+                                            format(field.value, "PPP", { locale: ptBR })
+                                        ) : (
+                                            <span>Escolha uma data</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        disabled={(date) =>
+                                            date < new Date() || date < new Date("1900-01-01")
+                                        }
+                                        initialFocus
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
                          <FormField
                             control={form.control}
                             name="files" 

@@ -51,7 +51,7 @@ const parseComments = (obs: string | RetornoComercialComment[] | null | undefine
 }
 
 export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isUserResponseView = false }: CobrancaTicketDetailsModalProps) {
-  const { getTicketById, updateTicketDetailsAndRetorno, updateTicket, saveUserResponse } = useCobrancaTickets();
+  const { getTicketById, updateTicketDetailsAndRetorno, updateTicket, saveUserResponse, updateAndResolveTicket } = useCobrancaTickets();
   const { toast } = useToast();
   const { username } = useAuth();
   
@@ -139,9 +139,18 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
   const handleMarkAsResolved = async () => {
     if (!ticket) return;
     setIsResolving(true);
-    await updateTicket(ticket.id, { status: 'Resolvida' });
+    
+    const success = await updateAndResolveTicket(ticket.id, {
+        diretor,
+        gerente,
+        observacoes,
+    });
+    
+    if (success) {
+        onClose();
+    }
+    
     setIsResolving(false);
-    onClose();
   };
 
   if (!ticket) return null;
@@ -326,7 +335,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                       </Button>
                        <Button onClick={handleMarkAsResolved} disabled={isResolving || isSaving} className="w-full bg-green-600 hover:bg-green-700">
                         {isResolving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                        {isResolving ? 'Resolvendo...' : 'Resolvida'}
+                        {isResolving ? 'Resolvendo...' : 'Salvar e Resolver'}
                       </Button>
                     </div>
                 </>

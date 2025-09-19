@@ -122,6 +122,7 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
             status: 'Aberto' as PosContemplacaoTicketStatus,
             file_path: filePath,
             file_name: fileName,
+            data_limite: ticketData.data_limite,
         };
 
         const { error: insertError } = await supabase
@@ -146,6 +147,11 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
   };
 
   const updateTicket = async (ticketId: string, updates: Partial<PosContemplacaoTicket>) => {
+    if (Object.keys(updates).length === 0) {
+        toast({ title: "Nenhuma Alteração", description: "Nenhuma informação foi alterada.", variant: "default" });
+        return;
+    }
+
     const { error } = await supabase
       .from('tickets_poscontemplacao')
       .update(updates)
@@ -155,12 +161,8 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
       toast({ title: "Erro ao Atualizar", description: `Não foi possível atualizar o ticket. Detalhes: ${error.message}`, variant: "destructive" });
       return;
     }
-
-    if (updates.status) {
-        toast({ title: "Status Atualizado!", description: `O status do ticket foi alterado para ${updates.status}.` });
-    } else {
-        toast({ title: "Ticket Atualizado!", description: `As informações do ticket foram salvas.` });
-    }
+    
+    toast({ title: "Ticket Atualizado!", description: `As informações do ticket foram salvas.` });
     
     await fetchTickets();
   };

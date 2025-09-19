@@ -41,6 +41,9 @@ const PosContemplacaoTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { 
 
     const relatorName = findNameByEmail(ticket.relator);
     const responsavelName = findNameByEmail(ticket.responsavel);
+    
+    const dataLimite = ticket.data_limite ? parseISO(ticket.data_limite) : null;
+    const formattedDataLimite = dataLimite && isValid(dataLimite) ? format(dataLimite, "dd/MM/yy", { locale: ptBR }) : 'N/D';
 
     return (
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
@@ -53,9 +56,10 @@ const PosContemplacaoTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { 
                         {ticket.status}
                     </Badge>
                 </div>
-                <CardDescription className="text-xs text-muted-foreground flex items-center gap-4 pt-1">
+                <CardDescription className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
                     <span className="flex items-center gap-1.5"><TicketIcon className="h-3.5 w-3.5" /> Protocolo #{protocolDisplay}</span>
-                    <span className="flex items-center gap-1.5"><CalendarIcon className="h-3.5 w-3.5" /> {isValid(parseISO(ticket.created_at)) ? format(parseISO(ticket.created_at), "dd/MM/yyyy", { locale: ptBR }) : 'Data N/A'}</span>
+                    <span className="flex items-center gap-1.5"><CalendarIcon className="h-3.5 w-3.5" /> {isValid(parseISO(ticket.created_at)) ? format(parseISO(ticket.created_at), "dd/MM/yy", { locale: ptBR }) : 'N/A'}</span>
+                    <span className="flex items-center gap-1.5 font-medium"><CalendarIcon className="h-3.5 w-3.5 text-red-500" /> Limite: {formattedDataLimite}</span>
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm flex-grow">
@@ -114,11 +118,9 @@ export function PosContemplacaoDashboardClient() {
   const [tempDate, setTempDate] = useState<DateRange | undefined>(undefined);
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
 
-  useEffect(() => {
-    if(isDatePopoverOpen) {
-      setTempDate(date);
-    }
-  }, [isDatePopoverOpen, date]);
+  const [deadlineDate, setDeadlineDate] = useState<DateRange | undefined>(undefined);
+  const [tempDeadlineDate, setTempDeadlineDate] = useState<DateRange | undefined>(undefined);
+  const [isDeadlinePopoverOpen, setIsDeadlinePopoverOpen] = useState(false);
   
   const activeTickets = useMemo(() => {
     const baseTickets = tickets.filter(ticket => ticket.status !== "Concluído");
@@ -129,6 +131,14 @@ export function PosContemplacaoDashboardClient() {
     
     return baseTickets;
   }, [tickets, cargo, email]);
+
+  useEffect(() => {
+    if(isDatePopoverOpen) setTempDate(date);
+  }, [isDatePopoverOpen, date]);
+  
+  useEffect(() => {
+    if(isDeadlinePopoverOpen) setTempDeadlineDate(deadlineDate);
+  }, [isDeadlinePopoverOpen, deadlineDate]);
 
 
   const filteredAndSortedTickets = useMemo(() => {
@@ -150,26 +160,37 @@ export function PosContemplacaoDashboardClient() {
         let dateMatch = true;
         if (date?.from) {
             const ticketDate = ticket.created_at;
-            if (ticketDate) {
-                const fromDate = new Date(date.from);
-                fromDate.setHours(0, 0, 0, 0); 
-                const toDate = date.to ? new Date(date.to) : new Date(date.from);
-                toDate.setHours(23, 59, 59, 999); 
-                const submissionDate = new Date(ticketDate);
+            if (ticketDate && isValid(parseISO(ticketDate))) {
+                const fromDate = new Date(date.from.setHours(0, 0, 0, 0));
+                const toDate = date.to ? new Date(date.to.setHours(23, 59, 59, 999)) : fromDate;
+                const submissionDate = parseISO(ticketDate);
                 dateMatch = submissionDate >= fromDate && submissionDate <= toDate;
             } else {
                 dateMatch = false;
             }
         }
+        
+        let deadlineMatch = true;
+        if (deadlineDate?.from) {
+            const ticketDeadline = ticket.data_limite;
+            if (ticketDeadline && isValid(parseISO(ticketDeadline))) {
+                const fromDate = new Date(deadlineDate.from.setHours(0, 0, 0, 0));
+                const toDate = deadlineDate.to ? new Date(deadlineDate.to.setHours(23, 59, 59, 999)) : fromDate;
+                const submissionDeadline = parseISO(ticketDeadline);
+                deadlineMatch = submissionDeadline >= fromDate && submissionDeadline <= toDate;
+            } else {
+                deadlineMatch = false;
+            }
+        }
 
-        return searchMatch && statusMatch && dateMatch && responsibleMatch && relatorMatch && motivoMatch;
+        return searchMatch && statusMatch && dateMatch && deadlineMatch && responsibleMatch && relatorMatch && motivoMatch;
       })
       .sort((a, b) => {
         const timeA = new Date(a.created_at).getTime();
         const timeB = new Date(b.created_at).getTime();
         return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
       });
-  }, [activeTickets, searchTerm, statusFilter, sortOrder, date, responsibleFilter, relatorFilter, motivoFilter]);
+  }, [activeTickets, searchTerm, statusFilter, sortOrder, date, deadlineDate, responsibleFilter, relatorFilter, motivoFilter]);
 
   const handleOpenDetails = (ticket: PosContemplacaoTicket) => {
     setSelectedTicket(ticket);
@@ -254,49 +275,30 @@ export function PosContemplacaoDashboardClient() {
             
             <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
               <PopoverTrigger asChild>
-                <Button
-                  id="date"
-                  variant={"outline"}
-                  size="icon"
-                  className={cn(
-                    "w-10 shrink-0",
-                    !date && "text-muted-foreground"
-                  )}
-                >
+                <Button id="date" variant={"outline"} size="icon" className={cn("w-10 shrink-0", !date && "text-muted-foreground")}>
                   <CalendarIcon className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  initialFocus
-                  mode="range"
-                  defaultMonth={date?.from}
-                  selected={tempDate}
-                  onSelect={setTempDate}
-                  numberOfMonths={1}
-                  locale={ptBR}
-                />
+                <Calendar initialFocus mode="range" defaultMonth={date?.from} selected={tempDate} onSelect={setTempDate} numberOfMonths={1} locale={ptBR}/>
                 <div className="p-2 border-t flex justify-end gap-2">
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => {
-                            setDate(undefined);
-                            setTempDate(undefined);
-                            setIsDatePopoverOpen(false);
-                        }}
-                    >
-                        Limpar
-                    </Button>
-                    <Button 
-                        size="sm" 
-                        onClick={() => {
-                            setDate(tempDate);
-                            setIsDatePopoverOpen(false);
-                        }}
-                    >
-                        Aplicar
-                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => { setDate(undefined); setTempDate(undefined); setIsDatePopoverOpen(false); }}>Limpar</Button>
+                    <Button size="sm" onClick={() => { setDate(tempDate); setIsDatePopoverOpen(false); }}>Aplicar</Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Popover open={isDeadlinePopoverOpen} onOpenChange={setIsDeadlinePopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button id="deadlineDate" variant={"outline"} size="icon" className={cn("w-10 shrink-0", !deadlineDate && "text-muted-foreground")}>
+                  <CalendarIcon className="h-4 w-4 text-red-500" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                 <Calendar initialFocus mode="range" defaultMonth={deadlineDate?.from} selected={tempDeadlineDate} onSelect={setTempDeadlineDate} numberOfMonths={1} locale={ptBR}/>
+                 <div className="p-2 border-t flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => { setDeadlineDate(undefined); setTempDeadlineDate(undefined); setIsDeadlinePopoverOpen(false); }}>Limpar</Button>
+                    <Button size="sm" onClick={() => { setDeadlineDate(tempDeadlineDate); setIsDeadlinePopoverOpen(false); }}>Aplicar</Button>
                 </div>
               </PopoverContent>
             </Popover>
@@ -413,3 +415,5 @@ export function PosContemplacaoDashboardClient() {
     </div>
   );
 }
+
+    

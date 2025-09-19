@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function CampanhaPage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'greadmin', 'diretor', 'gerente', 'gre', 'gre_con', 'gre_con_admin', 'gre_apoio_admin', 'gre_apoio', 'colaborador'];
+  const allowedRoles = ['adm', 'greadmin', 'diretor', 'gerente', 'gerente1', 'gre', 'gre_con', 'gre_con_admin', 'gre_apoio_admin', 'gre_apoio', 'colaborador'];
 
   if (!cargo || !allowedRoles.includes(cargo)) {
     return (

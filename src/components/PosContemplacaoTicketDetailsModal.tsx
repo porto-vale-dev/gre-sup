@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, Paperclip, Eye, Download, File } from 'lucide-react';
+import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, Paperclip, Eye, Download, File, CalendarIcon as CalendarIconLucide } from 'lucide-react';
 import { usePosContemplacaoTickets } from '@/contexts/PosContemplacaoTicketContext';
 import { MOTIVOS_POS_CONTEMPLACAO, RESPONSAVEIS } from '@/lib/posContemplacaoData';
 
@@ -102,7 +102,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   const handleSave = async () => {
     if (!ticket) return;
     setIsSaving(true);
-    await updateTicket(ticket.id, { relator, responsavel, motivo, observacoes });
+    await updateTicket(ticket.id, { responsavel, motivo, observacoes });
     setIsSaving(false);
     onClose();
   };
@@ -110,7 +110,12 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   const handleComplete = async () => {
     if (!ticket) return;
     setIsCompleting(true);
-    await updateTicket(ticket.id, { status: 'Concluído' });
+    await updateTicket(ticket.id, { 
+        responsavel, 
+        motivo, 
+        observacoes,
+        status: 'Concluído' 
+    });
     setIsCompleting(false);
     onClose();
   };
@@ -122,6 +127,12 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   const formattedDate = isValid(submissionDate) 
     ? format(submissionDate, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })
     : 'Data inválida';
+
+    const dataLimite = ticket.data_limite ? parseISO(ticket.data_limite) : null;
+    const formattedDataLimite = dataLimite && isValid(dataLimite)
+        ? format(dataLimite, "dd/MM/yyyy", { locale: ptBR })
+        : 'Não definida';
+
 
   const renderAttachments = () => {
     if (!ticket.file_path || !ticket.file_name) {
@@ -199,6 +210,10 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                   <p>{formattedDate}</p>
                 </div>
                 <div>
+                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><CalendarIconLucide className="h-4 w-4" />Data Limite:</strong>
+                  <p>{formattedDataLimite}</p>
+                </div>
+                <div>
                   <strong className="font-medium text-muted-foreground">Status:</strong>
                   <Badge variant={ticket.status === 'Concluído' ? 'default' : 'secondary'}>{ticket.status}</Badge>
                 </div>
@@ -209,7 +224,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                       <Label htmlFor="relator-select" className="font-medium text-muted-foreground flex items-center gap-1.5"><User className="h-4 w-4" />Relator:</Label>
-                      <Select value={relator} onValueChange={setRelator}>
+                      <Select value={relator} onValueChange={setRelator} disabled>
                         <SelectTrigger id="relator-select">
                           <SelectValue placeholder="Selecione o relator" />
                         </SelectTrigger>
@@ -284,7 +299,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
               </Button>
                <Button onClick={handleComplete} disabled={isCompleting || isSaving} className="w-full bg-green-600 hover:bg-green-700">
                 {isCompleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                {isCompleting ? 'Concluindo...' : 'Concluir'}
+                {isCompleting ? 'Concluindo...' : 'Salvar e Concluir'}
               </Button>
             </div>
         </DialogFooter>

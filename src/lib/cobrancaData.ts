@@ -20,7 +20,8 @@ export const diretores: Diretor[] = [
   { name: 'DUNAMIS - ROGÉRIO BIDUSCHI', email: 'rogerio.biduschi@portovaleconsorcios.com.br' },
   { name: 'ZARA - CYNTHIA NOGUEIRA', email: 'cynthia.nogueira@portovaleconsorcios.com.br' },
   { name: 'ANJOS - SIMONE ANJOS', email: 'simone.anjos@portovaleconsorcios.com.br' },
-  { name: 'LUCIANA', email: 'luciana@portovaleconsorcios.com.br' },
+  { name: 'ABRAAO', email: 'abraao@portovaleconsorcios.com.br' },
+  // { name: 'LUCIANA', email: 'luciana@portovaleconsorcios.com.br' },
 ];
 
 export const gerentesPorDiretor: Record<string, Gerente[]> = {
@@ -81,9 +82,13 @@ export const gerentesPorDiretor: Record<string, Gerente[]> = {
     { name: 'PAULA MAROLLO', email: 'paula.marollo@portovaleconsorcios.com.br', celular: '+55 12 99219-0387' },
     { name: 'ROSEMARY RIBEIRO', email: 'rosemary.ribeiro@portovaleconsorcios.com.br', celular: '+55 12 99135-7506' },
   ],
-  'LUCIANA': [
-    { name: 'LUCIANA', email: 'luciana@portovaleconsorcios.com.br', celular: '+55 12 98815-8841' },
-  ]
+  // 'LUCIANA': [
+  //   { name: 'LUCIANA', email: 'luciana@portovaleconsorcios.com.br', celular: '+55 12 98815-8841' },
+  // ]
+  
+  'ABRAAO': [
+     { name: 'ABRAAO', email: 'abraao@portovaleconsorcios.com.br', celular: '+55 12 3600-3505' },
+   ]
 };
 
 export const motivosCobranca = [

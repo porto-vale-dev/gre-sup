@@ -18,6 +18,7 @@ interface CobrancaTicketContextType {
   error: string | null;
   addTicket: (ticketData: CreateCobrancaTicket) => Promise<boolean>;
   updateTicket: (ticketId: string, updates: Partial<CobrancaTicket>) => Promise<void>;
+  updateAndResolveTicket: (ticketId: string, details: { diretor: string; gerente: string; observacoes: string }) => Promise<boolean>;
   updateTicketDetailsAndRetorno: (
     ticketId: string,
     details: { diretor: string; gerente: string; observacoes: string },
@@ -243,7 +244,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       }
 
       // Webhook é disparado ao salvar detalhes, notificando como reabertura
-      const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/nvrjgvnrejbgeerespostaticket"; // ESTE É O WEBHOOK
+      const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/213124asd144das"; // ESTE É O WEBHOOK
       fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -265,6 +266,44 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       toast({ title: "Erro ao Salvar", description: err.message, variant: "destructive" });
       return false;
     }
+  };
+
+  const updateAndResolveTicket = async (
+    ticketId: string,
+    details: { diretor: string; gerente: string; observacoes: string },
+  ): Promise<boolean> => {
+      try {
+          const gerenteData = gerentesPorDiretor[details.diretor]?.find(g => g.name === details.gerente);
+          const gerenteEmail = gerenteData?.email || null;
+
+          const diretorData = diretores.find(d => d.name === details.diretor);
+          const diretorEmail = diretorData?.email || null;
+          
+          const updates = {
+              diretor: details.diretor,
+              gerente: details.gerente,
+              email_gerente: gerenteEmail,
+              email_diretor: diretorEmail,
+              observacoes: details.observacoes,
+              status: 'Resolvida' as CobrancaTicketStatus,
+          };
+
+          const { error } = await supabase
+              .from('tickets_cobranca')
+              .update(updates)
+              .eq('id', ticketId);
+
+          if (error) {
+              throw new Error(`Erro ao resolver o ticket: ${error.message}`);
+          }
+
+          toast({ title: "Ticket Resolvido!", description: "As informações foram salvas e o ticket foi marcado como resolvido." });
+          await fetchTickets();
+          return true;
+      } catch (err: any) {
+          toast({ title: "Erro ao Resolver", description: err.message, variant: "destructive" });
+          return false;
+      }
   };
 
   const saveUserResponse = async (
@@ -332,7 +371,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
               
               const creatorUsername = profileData?.username || null;
               
-              const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook-test/nvrjgvnrejbgeerespostaticket";
+              const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/nvrjgvnrejbgeerespostaticket";
 
               fetch(webhookUrl, {
                   method: 'POST',
@@ -374,6 +413,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
         error, 
         addTicket, 
         updateTicket,
+        updateAndResolveTicket,
         updateTicketDetailsAndRetorno,
         saveUserResponse,
         getTicketById,
