@@ -1,16 +1,16 @@
 
 'use client';
 
-import { ArchivedTicketsClient } from "@/components/ArchivedTicketsClient";
+import { ArchivedCobrancaTicketsClient } from "@/components/ArchivedCobrancaTicketsClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, ArrowLeft, Ticket } from 'lucide-react';
+import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function ArchivedTicketsPage() {
+export default function ArchivedCobrancaTicketsPage() {
     const { cargo } = useAuth();
-    const allowedRoles = ['adm', 'greadmin', 'gre', 'gre_apoio_admin'];
+    const allowedRoles = ['adm', 'greadmin', 'gre_apoio', 'gre_apoio_admin'];
 
     if (!cargo || !allowedRoles.includes(cargo)) {
         return (
@@ -42,10 +42,8 @@ export default function ArchivedTicketsPage() {
     
     return (
         <div>
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold font-headline text-primary">Tickets Arquivados</h1>
-          </div>
-          <ArchivedTicketsClient />
+        <h1 className="text-3xl font-bold font-headline mb-6 text-primary">Tickets de Apoio Jacareí Arquivados</h1>
+        <ArchivedCobrancaTicketsClient />
         </div>
     );
 }

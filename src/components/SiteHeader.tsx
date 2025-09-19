@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Home, LayoutDashboard, Settings, UserCircle } from 'lucide-react';
+import { LogOut, Home, LayoutDashboard, Settings, UserCircle, Handshake, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import React from 'react';
@@ -62,16 +62,35 @@ export function SiteHeader() {
   }
 
   // Check if we are in the ticket system area, accounting for rewrites
-  const isTicketSystemArea = pathname.startsWith('/suporte-gre') || pathname.startsWith('/dashboard');
+  const isTicketSystemArea = pathname.startsWith('/suporte-gre') || pathname.startsWith('/dashboard') || pathname.startsWith('/pos-contemplacao');
 
   if (isTicketSystemArea) {
     const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
+    const isCobrancaDashboardArea = pathname.startsWith('/suporte-gre/cobranca/dashboard');
+    const isCobrancaGestaoArea = pathname === '/suporte-gre/cobranca/gestao';
+    const isCobrancaArchivedArea = pathname.startsWith('/suporte-gre/cobranca/archived');
+    const isCobrancaNovoArea = pathname === '/suporte-gre/cobranca/novo';
     const isArchivedPage = pathname === '/suporte-gre/painel/archived' || pathname === '/dashboard/archived';
     const isGestaoPage = pathname === '/suporte-gre/gestao';
     const isConfiguracoesPage = pathname === '/suporte-gre/configuracoes';
+    
+    const isPosContemplacaoDashboard = pathname.startsWith('/pos-contemplacao/dashboard');
+    const isPosContemplacaoGestao = pathname === '/pos-contemplacao/gestao';
+    const isPosContemplacaoNovo = pathname === '/pos-contemplacao/novo';
+    const isPosContemplacaoArchived = pathname === '/pos-contemplacao/archived';
+    
     const allowedManagementRoles = ['adm', 'greadmin', 'gre'];
     const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
     const canViewSettings = cargo === 'adm' || cargo === 'greadmin';
+    
+    const posContemplacaoGestaoRoles = ['adm', 'greadmin', 'gre_con_admin'];
+    const canViewPosContemplacaoGestao = cargo && posContemplacaoGestaoRoles.includes(cargo);
+
+    const cobrancaGestaoRoles = ['adm', 'greadmin', 'gre_apoio_admin'];
+    const canViewCobrancaGestao = cargo && cobrancaGestaoRoles.includes(cargo);
+    
+    const isCobrancaArea = pathname.includes('/cobranca/');
+    const logoLink = isCobrancaArea ? '/suporte-gre/cobranca/dashboard' : isTicketDashboardArea ? '/suporte-gre/painel' : '/pos-contemplacao/dashboard';
 
 
     // Header for Ticket System (Dashboard, Form)
@@ -79,7 +98,7 @@ export function SiteHeader() {
       <header className="bg-card border-b sticky top-0 z-40 shadow-sm">
         <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 md:px-8">
           <Link
-            href={isAuthenticated ? "/suporte-gre/painel" : "/suporte-gre"}
+            href={logoLink}
             className="flex items-center gap-3 transition-colors"
             aria-label="TicketFlow Home"
           >
@@ -87,19 +106,42 @@ export function SiteHeader() {
               src={logoTicket}
               alt="TicketFlow Logo"
               width={149}
-              height={45}
               priority
-              style={{ height: 'auto' }}
+              style={{ height: 'auto', width: 'auto' }}
             />
           </Link>
 
           {!isLoading && isAuthenticated && (
             <nav className="flex items-center gap-1 sm:gap-2">
-              {(isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
-                <Link href="/suporte-gre/painel" passHref>
-                  <Button variant="ghost" size="sm" aria-label="Painel Principal">
+               {(isArchivedPage) && (
+                 <Link href="/dashboard" passHref>
+                  <Button variant="ghost" size="sm" aria-label="Painel de Tickets">
                     <TicketIcon className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Painel</span>
+                    <span className="hidden sm:inline">Painel de Tickets</span>
+                  </Button>
+                </Link>
+              )}
+               {(isCobrancaArchivedArea || isCobrancaNovoArea || isCobrancaGestaoArea) && (
+                 <Link href="/suporte-gre/cobranca/dashboard" passHref>
+                  <Button variant="ghost" size="sm" aria-label="Painel Apoio Jacareí">
+                    <Handshake className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Painel Apoio Jacareí</span>
+                  </Button>
+                </Link>
+              )}
+              {(isPosContemplacaoGestao || isPosContemplacaoNovo || isPosContemplacaoArchived) && (
+                  <Link href="/pos-contemplacao/dashboard" passHref>
+                      <Button variant="ghost" size="sm" aria-label="Painel Pós-Contemplação">
+                          <LayoutDashboard className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Painel Pós-Contemplação</span>
+                      </Button>
+                  </Link>
+              )}
+               {isCobrancaDashboardArea && canViewCobrancaGestao && (
+                 <Link href="/suporte-gre/cobranca/gestao" passHref>
+                  <Button variant="ghost" size="sm" aria-label="Gestão de Apoio">
+                    <BarChart2 className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Gestão de Apoio</span>
                   </Button>
                 </Link>
               )}
@@ -111,6 +153,14 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               )}
+              {isPosContemplacaoDashboard && canViewPosContemplacaoGestao && (
+                 <Link href="/pos-contemplacao/gestao" passHref>
+                  <Button variant="ghost" size="sm" aria-label="Gestão de Pós-Contemplação">
+                    <BarChart2 className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Gestão de Pós-Contemplação</span>
+                  </Button>
+                </Link>
+              )}
               {isTicketDashboardArea && canViewSettings && !isArchivedPage && (
                 <Link href="/suporte-gre/configuracoes" passHref>
                   <Button variant="ghost" size="sm" aria-label="Configurações">
@@ -119,13 +169,11 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               )}
-               {(isTicketDashboardArea || isGestaoPage || isConfiguracoesPage || isArchivedPage) && (
-                <Link href="/hub" passHref>
-                    <Button variant="ghost" size="icon" aria-label="Portal Principal">
-                      <Home className="h-5 w-5" />
-                    </Button>
-                </Link>
-              )}
+              <Link href="/hub" passHref>
+                  <Button variant="ghost" size="icon" aria-label="Portal Principal">
+                    <Home className="h-5 w-5" />
+                  </Button>
+              </Link>
             </nav>
           )}
         </div>

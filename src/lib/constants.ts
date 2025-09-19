@@ -29,7 +29,7 @@ export const TICKET_REASONS = [
   { value: "Tratativas de duplicidade de pagamento", label: "Tratativas de duplicidade de pagamento", responseTime: "10 a 15 dias úteis" },
 ];
 
-export const TICKET_STATUSES: TicketStatus[] = ["Novo", "Em Andamento", "Ativo", "Atrasado", "Concluído"];
+export const TICKET_STATUSES: TicketStatus[] = ["Novo", "Em Andamento", "Ativo", "Atrasado", "Porto Resolve", "Concluído"];
 
 export const ALLOWED_FILE_TYPES = [
   ".pdf",
@@ -58,6 +58,3 @@ export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 export const MAX_FILES_COUNT = 10;
 export const MAX_SOLUTION_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 export const MAX_OBSERVATIONS_LENGTH = 10000;
-
-
-

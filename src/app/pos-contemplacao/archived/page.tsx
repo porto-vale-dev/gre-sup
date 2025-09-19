@@ -1,18 +1,19 @@
 
 'use client';
 
-import { ArchivedTicketsClient } from "@/components/ArchivedTicketsClient";
+import { ArchivedPosContemplacaoTicketsClient } from "@/components/ArchivedPosContemplacaoTicketsClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, ArrowLeft, Ticket } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, BarChart2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function ArchivedTicketsPage() {
+export default function ArchivedPosContemplacaoTicketsPage() {
     const { cargo } = useAuth();
-    const allowedRoles = ['adm', 'greadmin', 'gre', 'gre_apoio_admin'];
+    const allowedRoles = ['adm', 'greadmin', 'gre_con', 'gre_con_admin'];
+    const canViewManagement = cargo && allowedRoles.includes(cargo);
 
-    if (!cargo || !allowedRoles.includes(cargo)) {
+    if (!canViewManagement) {
         return (
           <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
             <Card className="w-full max-w-md text-center shadow-xl">
@@ -43,9 +44,9 @@ export default function ArchivedTicketsPage() {
     return (
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold font-headline text-primary">Tickets Arquivados</h1>
+            <h1 className="text-3xl font-bold font-headline text-primary">Pós-Contemplação - Arquivados</h1>
           </div>
-          <ArchivedTicketsClient />
+          <ArchivedPosContemplacaoTicketsClient />
         </div>
     );
 }

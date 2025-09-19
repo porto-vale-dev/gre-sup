@@ -1,16 +1,16 @@
 
 'use client';
 
-import { DashboardClient } from "@/components/DashboardClient";
-import { useAuth } from "@/contexts/AuthContext";
 import Link from 'next/link';
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, ArrowLeft, Handshake } from 'lucide-react';
+import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PosContemplacaoGestaoClient } from '@/components/PosContemplacaoGestaoClient';
 
-export default function DashboardPage() {
+export default function GestaoPosContemplacaoPage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'greadmin', 'gre', 'gre_apoio_admin'];
+  const allowedRoles = ['adm', 'greadmin', 'gre_con', 'gre_con_admin'];
 
   if (!cargo || !allowedRoles.includes(cargo)) {
     return (
@@ -42,10 +42,8 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold font-headline text-primary">Painel de Tickets</h1>
-      </div>
-      <DashboardClient />
+      <h1 className="text-3xl font-bold font-headline mb-6 text-primary">Gestão de Pós-Contemplação</h1>
+      <PosContemplacaoGestaoClient />
     </div>
   );
 }

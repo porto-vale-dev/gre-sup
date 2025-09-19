@@ -19,10 +19,11 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, CheckCircle } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, CheckCircle, MessageCircle } from 'lucide-react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
+import { useAuth } from '@/contexts/AuthContext';
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -46,6 +47,7 @@ interface TicketDetailsModalProps {
   ticket: Ticket | null;
   isOpen: boolean;
   onClose: () => void;
+  isReadOnlyView?: boolean;
 }
 
 const FilePreviewItem: React.FC<{
@@ -93,19 +95,26 @@ const FilePreviewItem: React.FC<{
   );
 };
 
-export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: TicketDetailsModalProps) {
+export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isReadOnlyView = false }: TicketDetailsModalProps) {
   const { downloadFile, createPreviewUrl, updateTicketSolution, getTicketById, updateAndCompleteTicket } = useTickets();
   const { toast } = useToast();
+  const { cargo } = useAuth();
   
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
 
   const [solutionText, setSolutionText] = useState('');
+  const [comentarios, setComentarios] = useState('');
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+
+  const allowedRoles = ['adm', 'greadmin', 'gre'];
+  const canViewInternalComments = !isReadOnlyView && cargo && allowedRoles.includes(cargo);
+
 
   useEffect(() => {
     if (ticket) {
       setSolutionText(ticket.solution || '');
+      setComentarios(ticket.comentarios || '');
       setStagedFiles([]);
     }
   }, [ticket?.id, isOpen]); 
@@ -177,7 +186,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
   const handleSaveSolution = async () => {
     setIsSaving(true);
     try {
-      const success = await updateTicketSolution(ticket.id, solutionText, stagedFiles);
+      const success = await updateTicketSolution(ticket.id, solutionText, stagedFiles, comentarios);
       if (success) {
         setStagedFiles([]);
         onClose();
@@ -192,7 +201,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
   const handleSaveAndComplete = async () => {
     setIsSaving(true);
     try {
-        const success = await updateAndCompleteTicket(ticket.id, solutionText, stagedFiles);
+        const success = await updateAndCompleteTicket(ticket.id, solutionText, stagedFiles, comentarios);
         if (success) {
             setStagedFiles([]);
             onClose();
@@ -324,7 +333,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
 
             {/* Solution Section */}
             <div className="space-y-4">
-               <h3 className="font-headline text-lg text-primary flex items-center gap-2">
+              <h3 className="font-headline text-lg text-primary flex items-center gap-2">
                 <Edit className="h-5 w-5" /> Solução do Atendimento
               </h3>
 
@@ -336,7 +345,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
                   className="min-h-[120px] resize-y mt-1"
                   value={solutionText}
                   onChange={(e) => setSolutionText(e.target.value)}
-                  disabled={isSaving}
+                  disabled={isSaving || isReadOnlyView}
                 />
               </div>
 
@@ -351,7 +360,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     onChange={handleFileChange}
                     accept={ALLOWED_FILE_TYPES.join(',')}
-                    disabled={isSaving}
+                    disabled={isSaving || isReadOnlyView}
                   />
                   <Label
                     htmlFor="solution-files-upload"
@@ -386,13 +395,32 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
                   </div>
                 )}
               </div>
+              
+              {canViewInternalComments && (
+                <>
+                  <Separator className="my-6" />
+                  <div className="space-y-2">
+                    <h3 className="font-headline text-lg text-primary flex items-center gap-2">
+                      <MessageCircle className="h-5 w-5" /> Comentários Internos
+                    </h3>
+                    <Textarea
+                      id="comentarios"
+                      placeholder="Adicione anotações internas para a equipe. Este campo não é visível para o solicitante."
+                      className="min-h-[100px] resize-y"
+                      value={comentarios}
+                      onChange={(e) => setComentarios(e.target.value)}
+                      disabled={isSaving}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
         
         <DialogFooter className="px-6 pb-6 pt-4 border-t flex-wrap sm:flex-nowrap justify-center sm:justify-end items-center gap-2 shrink-0">
             <div className="w-full sm:w-auto">
-              <Button variant="secondary" onClick={handleWhatsAppClick} className="w-full">
+              <Button variant="secondary" onClick={handleWhatsAppClick} className="w-full" disabled={isReadOnlyView}>
                 <WhatsAppIcon className="mr-2 h-4 w-4"/>
                 Continuar no WhatsApp
               </Button>
@@ -400,11 +428,11 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: T
             <div className="flex-grow hidden sm:block" />
             <div className="flex gap-2 w-full sm:w-auto">
               <Button variant="outline" onClick={onClose} className="w-full">Fechar</Button>
-              <Button onClick={handleSaveSolution} disabled={isSaving} className="w-full">
+              <Button onClick={handleSaveSolution} disabled={isSaving || isReadOnlyView} className="w-full">
                 <Save className="mr-2 h-4 w-4" />
                 {isSaving ? 'Salvando...' : 'Salvar'}
               </Button>
-               <Button onClick={handleSaveAndComplete} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700">
+               <Button onClick={handleSaveAndComplete} disabled={isSaving || isReadOnlyView} className="w-full bg-green-600 hover:bg-green-700">
                 <CheckCircle className="mr-2 h-4 w-4" />
                 {isSaving ? 'Concluindo...' : 'Salvar e Concluir'}
               </Button>

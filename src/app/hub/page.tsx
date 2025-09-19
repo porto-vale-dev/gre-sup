@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trophy, ArrowRight, Ticket, Megaphone, FolderKanban, LayoutDashboard } from 'lucide-react';
+import { Trophy, ArrowRight, Ticket, Megaphone, FolderKanban, LayoutDashboard, FileSearch, Handshake, FileCheck } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Service {
@@ -17,11 +17,14 @@ interface Service {
 }
 
 const allServices: Service[] = [
-    { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "gre", "colaborador", "diretorseg"] },
-    { title: "Mural de Avisos - GRE", href: "/mural-de-aviso", Icon: Megaphone, description: "Veja os últimos avisos e comunicados.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre", "diretorseg"] },
+    { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "gerente1", "greadmin", "gre", "colaborador", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
+    { title: "Mural de Avisos - GRE", href: "/mural-de-aviso", Icon: Megaphone, description: "Veja os últimos avisos e comunicados.", allowedRoles: ["adm", "diretor", "gerente", "gerente1", "colaborador", "greadmin", "gre", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
     { title: "Documentos", href: "/documentos", Icon: FolderKanban, description: "Acesse os documentos da empresa.", allowedRoles: ["adm"] },
-    { title: "Painel de Suporte - GRE", href: "/suporte-gre/painel", Icon: FolderKanban, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm", "greadmin", "gre"] },
-    { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo chamado para o suporte.", allowedRoles: ["adm", "diretor", "gerente", "colaborador", "greadmin", "gre", "diretorseg"] },
+    { title: "Painel de Suporte - GRE", href: "/suporte-gre/painel", Icon: FolderKanban, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm", "greadmin", "gre", "gre_apoio_admin"] },
+    { title: "Painel de Apoio Jacareí", href: "/suporte-gre/cobranca/dashboard", Icon: Handshake, description: "Gerencie os tickets de apoio.", allowedRoles: ['adm', 'greadmin', 'gre_apoio', 'gre_apoio_admin'] },
+    { title: "Painel de Pós-Contemplação", href: "/pos-contemplacao/dashboard", Icon: FileCheck, description: "Gerencie os tickets de pós-contemplação.", allowedRoles: ['adm', 'greadmin', 'gre_con', 'gre_con_admin'] },
+    { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo chamado para o suporte.", allowedRoles: ["adm", "diretor", "gerente", "gerente1", "colaborador", "greadmin", "gre", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
+    { title: "Acompanhar Solicitação", href: "/suporte-gre/minhas-solicitacoes", Icon: FileSearch, description: "Acompanhe o andamento dos seus tickets.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "gre", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
 ];
 
 const ServiceCard = ({ service }: { service: Service }) => (
@@ -53,11 +56,11 @@ export default function HubPage() {
     }, [cargo]);
 
     const generalTools = useMemo(() => {
-      return accessibleServices.filter(s => s.title === "Rankings" || s.title === "Mural de Avisos - GRE" || s.title === "Novo ticket - GRE");
+      return accessibleServices.filter(s => s.title === "Rankings" || s.title === "Mural de Avisos - GRE" || s.title === "Novo ticket - GRE" || s.title === "Acompanhar Solicitação");
     }, [accessibleServices]);
 
     const adminTools = useMemo(() => {
-      return accessibleServices.filter(s => s.title === "Painel de Suporte - GRE" || s.title === "Documentos");
+      return accessibleServices.filter(s => s.title === "Painel de Suporte - GRE" || s.title === "Documentos" || s.title === "Painel de Apoio Jacareí" || s.title === "Painel de Pós-Contemplação");
     }, [accessibleServices]);
     
     return (

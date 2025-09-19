@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function GerentePage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'diretor', 'gerente', 'greadmin'];
+  const allowedRoles = ['adm', 'greadmin', 'diretor', 'gerente', 'gerente1'];
 
   if (!cargo || !allowedRoles.includes(cargo)) {
     return (

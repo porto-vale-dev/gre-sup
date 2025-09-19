@@ -1,16 +1,18 @@
 
 'use client';
 
-import { DashboardClient } from "@/components/DashboardClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, ArrowLeft, Handshake } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, PlusCircle, BarChart2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PosContemplacaoDashboardClient } from "@/components/PosContemplacaoDashboardClient";
 
-export default function DashboardPage() {
+
+export default function PosContemplacaoDashboardPage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'greadmin', 'gre', 'gre_apoio_admin'];
+  const allowedRoles = ['adm', 'greadmin', 'gre_con', 'gre_con_admin'];
+  const canViewManagement = cargo && allowedRoles.includes(cargo);
 
   if (!cargo || !allowedRoles.includes(cargo)) {
     return (
@@ -41,11 +43,20 @@ export default function DashboardPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold font-headline text-primary">Painel de Tickets</h1>
+        <h1 className="text-3xl font-bold font-headline text-primary">Painel Pós-Contemplação</h1>
+         <div className="flex gap-2">
+            <Button asChild>
+                <Link href="/pos-contemplacao/novo">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Abrir Ticket de Pós-Contemplação
+                </Link>
+            </Button>
+        </div>
       </div>
-      <DashboardClient />
+      
+      <PosContemplacaoDashboardClient />
     </div>
   );
 }

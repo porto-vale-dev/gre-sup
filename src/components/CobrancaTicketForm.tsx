@@ -23,7 +23,7 @@ import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Info, Send, Paperclip, UploadCloud, AlertTriangle, X } from 'lucide-react';
 
-export function TicketForm() {
+export function CobrancaTicketForm() {
   const [selectedReasonInfo, setSelectedReasonInfo] = useState<(typeof TICKET_REASONS)[0] | null>(null);
   const { addTicket } = useTickets();
   const { toast } = useToast();
@@ -162,6 +162,7 @@ export function TicketForm() {
       observations: data.observations,
       copy_email: data.copy_email,
       files: filesToUpload,
+      cobranca: true,
     };
 
     const success = await addTicket(ticketPayload);
@@ -188,8 +189,8 @@ export function TicketForm() {
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="font-headline text-3xl text-primary flex shrink-0 items-center gap-2">
-            <FileText className="h-8 w-8" /> Abrir Novo Ticket
+          <CardTitle className="font-headline text-3xl text-destructive flex shrink-0 items-center gap-2">
+            <FileText className="h-8 w-8" /> Abrir Ticket de Cobrança
           </CardTitle>
           <div className="flex w-full items-center gap-2 rounded-lg border border-accent/50 bg-accent/10 p-2 text-accent sm:w-auto">
             <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -444,3 +445,5 @@ export function TicketForm() {
     </Card>
   );
 }
+
+    
