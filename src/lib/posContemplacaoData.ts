@@ -7,7 +7,7 @@ export const RESPONSAVEIS = [
     { name: 'Pedro', email: 'apoioposcontemplacao2@portovaleconsorcios.com.br' }
 ];
 
-export const POS_CONTEMPLACAO_STATUSES: PosContemplacaoTicketStatus[] = ["Aberto", "Em Análise", "Concluído"];
+export const POS_CONTEMPLACAO_STATUSES: PosContemplacaoTicketStatus[] = ["Aberto", "Em Análise", "Urgente", "Retorno", "Concluído"];
 
 export const MOTIVOS_POS_CONTEMPLACAO = [
     'ANALISE DE CRÉDITO',
@@ -17,4 +17,5 @@ export const MOTIVOS_POS_CONTEMPLACAO = [
     'ASSEMBLEIA INAUGURAL',
     'CONFIRMAÇÃO DE CONTEMPLAÇÃO',
     'BANK RESOLVE',
+    'ASSESSORIA JURIDICA',
 ];

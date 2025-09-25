@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
@@ -123,6 +122,7 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
             file_path: filePath,
             file_name: fileName,
             data_limite: ticketData.data_limite,
+            susep: ticketData.susep,
         };
 
         const { error: insertError } = await supabase

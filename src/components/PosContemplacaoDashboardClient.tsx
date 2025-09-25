@@ -29,6 +29,8 @@ const statusColors: Record<PosContemplacaoTicketStatus, string> = {
   "Aberto": "bg-blue-500",
   "Em Análise": "bg-yellow-500",
   "Concluído": "bg-green-500",
+  "Urgente": "bg-red-500",
+  "Retorno": "bg-pink-500",
 };
 
 const PosContemplacaoTicketCard = ({ ticket, onOpenDetails, onStatusChange }: { ticket: PosContemplacaoTicket; onOpenDetails: (ticket: PosContemplacaoTicket) => void; onStatusChange: (ticketId: string, status: PosContemplacaoTicketStatus) => void; }) => {
@@ -415,5 +417,3 @@ export function PosContemplacaoDashboardClient() {
     </div>
   );
 }
-
-    

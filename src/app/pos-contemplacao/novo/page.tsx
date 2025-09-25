@@ -27,11 +27,12 @@ const posContemplacaoSchema = z.object({
     cpf: z.string().min(14, "CPF ou CNPJ inválido."),
     grupo: z.string().min(1, "Grupo é obrigatório."),
     cota: z.string().min(1, "Cota é obrigatória."),
-    telefone: z.string().min(14, { message: "Telefone inválido. Preencha o DDD e o número." }),
-    email: z.string().email({ message: "Formato de e-mail inválido." }),
+    telefone: z.string().optional(),
+    email: z.string().optional(),
     relator: z.string().min(1, "Relator é obrigatório."),
     responsavel: z.string().min(1, "Responsável é obrigatório."),
     motivo: z.string().min(1, "Motivo é obrigatório."),
+    susep: z.string().min(1, "SUSEP é obrigatório."),
     data_limite: z.date({
       required_error: "A data limite de resposta é obrigatória.",
     }),
@@ -89,6 +90,7 @@ export default function NovoTicketPosContemplacaoPage() {
       relator: "",
       responsavel: "",
       motivo: "",
+      susep: "",
       observacoes: "",
     },
   });
@@ -135,6 +137,8 @@ export default function NovoTicketPosContemplacaoPage() {
         relator: userEmail,
         observacoes: data.observacoes || '',
         data_limite: data.data_limite.toISOString(),
+        telefone: data.telefone || undefined,
+        email: data.email || undefined,
     }, data.files ? Array.from(data.files) : undefined);
     
     if (success) {
@@ -225,7 +229,7 @@ export default function NovoTicketPosContemplacaoPage() {
                                 name="telefone"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Telefone</FormLabel>
+                                    <FormLabel>Telefone (Opcional)</FormLabel>
                                     <FormControl>
                                         <Input 
                                           type="tel" 
@@ -243,7 +247,7 @@ export default function NovoTicketPosContemplacaoPage() {
                                 name="email"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>E-mail</FormLabel>
+                                    <FormLabel>E-mail (Opcional)</FormLabel>
                                     <FormControl>
                                         <Input 
                                           type="email" 
@@ -297,28 +301,52 @@ export default function NovoTicketPosContemplacaoPage() {
                               )}
                             />
                         </div>
-                         <FormField
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <FormField
+                              control={form.control}
+                              name="motivo"
+                              render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Motivo da Solicitação</FormLabel>
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione o motivo" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {MOTIVOS_POS_CONTEMPLACAO.map(motivo => (
+                                      <SelectItem key={motivo} value={motivo}>{motivo}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                  <FormMessage />
+                              </FormItem>
+                              )}
+                          />
+                          <FormField
                             control={form.control}
-                            name="motivo"
+                            name="susep"
                             render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Motivo da Solicitação</FormLabel>
+                              <FormItem>
+                                <FormLabel>SUSEP</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Selecione o motivo" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {MOTIVOS_POS_CONTEMPLACAO.map(motivo => (
-                                    <SelectItem key={motivo} value={motivo}>{motivo}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione o SUSEP" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="3SQ64J">3SQ64J</SelectItem>
+                                    <SelectItem value="R05KPJ">R05KPJ</SelectItem>
+                                    <SelectItem value="5194SJ">5194SJ</SelectItem>
+                                  </SelectContent>
+                                </Select>
                                 <FormMessage />
-                            </FormItem>
+                              </FormItem>
                             )}
-                        />
+                          />
+                        </div>
                          <FormField
                             control={form.control}
                             name="observacoes"
@@ -367,7 +395,7 @@ export default function NovoTicketPosContemplacaoPage() {
                                         selected={field.value}
                                         onSelect={field.onChange}
                                         disabled={(date) =>
-                                            date < new Date() || date < new Date("1900-01-01")
+                                            date < new Date(new Date().setHours(0, 0, 0, 0))
                                         }
                                         initialFocus
                                     />

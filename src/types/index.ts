@@ -2,7 +2,7 @@
 export type TicketStatus = "Novo" | "Em Andamento" | "Ativo" | "Atrasado" | "Concluído" | "Porto Resolve" | "Suporte";
 export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Respondida" | "Resolvida" | "Dentro do prazo" | "Fora do prazo" | "Reabertura";
 export type RetornoComercialStatus = 'Tirou dúvidas' | 'Tentando contato' | 'Em andamento' | 'Revertido' | 'Não Revertido' | 'Sem retorno';
-export type PosContemplacaoTicketStatus = "Aberto" | "Em Análise" | "Concluído";
+export type PosContemplacaoTicketStatus = "Aberto" | "Em Análise" | "Concluído" | "Urgente" | "Retorno";
 
 
 export interface SolutionFile {
@@ -95,13 +95,14 @@ export interface PosContemplacaoTicket {
   protocolo?: number;
   nome_cliente: string;
   cpf: string;
-  telefone: string;
-  email: string;
+  telefone?: string;
+  email?: string;
   cota: string;
   grupo: string;
   relator: string; // Should store the email of the creator
   responsavel: string; // Should store the email of the responsible person
   motivo: string;
+  susep: string;
   status: PosContemplacaoTicketStatus;
   observacoes?: string | null;
   file_path?: string | null;

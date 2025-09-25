@@ -200,14 +200,16 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                 </div>
                  <div>
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Phone className="h-4 w-4" />Telefone:</strong>
-                  <p>{ticket.telefone}</p>
+                  <p>{ticket.telefone || 'Não informado'}</p>
                 </div>
-                 {ticket.email && (
-                  <div>
-                    <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Mail className="h-4 w-4" />E-mail:</strong>
-                    <p>{ticket.email}</p>
-                  </div>
-                )}
+                <div>
+                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Mail className="h-4 w-4" />E-mail:</strong>
+                  <p>{ticket.email || 'Não informado'}</p>
+                </div>
+                <div>
+                    <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Tag className="h-4 w-4" />SUSEP:</strong>
+                    <p>{ticket.susep}</p>
+                </div>
                 <div>
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />Data de Abertura:</strong>
                   <p>{formattedDate}</p>
