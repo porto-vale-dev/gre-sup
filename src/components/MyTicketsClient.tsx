@@ -28,6 +28,7 @@ const statusColors: Record<TicketStatus | CobrancaTicketStatus, string> = {
   "Ativo": "bg-orange-500 hover:bg-orange-500",
   "Atrasado": "bg-red-500 hover:bg-red-500",
   "Porto Resolve": "bg-purple-600 hover:bg-purple-600",
+  "Suporte": "bg-gray-500 hover:bg-gray-500",
   "Concluído": "bg-green-500 hover:bg-green-500",
   // Cobrança
   "Aberta": "bg-blue-500 hover:bg-blue-500",
@@ -47,6 +48,7 @@ const statusIcons: Record<TicketStatus | CobrancaTicketStatus, React.ElementType
   "Ativo": Activity,
   "Atrasado": AlertCircle,
   "Porto Resolve": ShieldCheck,
+  "Suporte": Headset,
   "Concluído": CheckCircle2,
   // Cobrança
   "Aberta": FileText,
