@@ -1,5 +1,5 @@
 
-'use client';
+"use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
@@ -10,10 +10,10 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Users, Link as LinkIcon, Loader2, Trash2 } from 'lucide-react';
+import { AlertCircle, Users, Link as LinkIcon, Loader2, Trash2, ListChecks } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { TICKET_REASONS } from '@/lib/constants';
-import type { ReasonAssignment } from '@/types';
+import type { ReasonAssignment, TicketReasonConfig } from '@/types';
 import { Button } from './ui/button';
 import { MultiSelect, OptionType } from './ui/multi-select';
 
@@ -49,6 +49,28 @@ const AttendantRow = ({ profile, onStatusChange }: { profile: Profile; onStatusC
       />
     </div>
   );
+};
+
+const ReasonStatusRow = ({ reason, onStatusChange }: { reason: TicketReasonConfig; onStatusChange: (value: string, newStatus: boolean) => Promise<void> }) => {
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const handleToggle = async (checked: boolean) => {
+        setIsUpdating(true);
+        await onStatusChange(reason.value, checked);
+        setIsUpdating(false);
+    };
+
+    return (
+        <div className="flex items-center justify-between p-4 border-b last:border-b-0">
+            <span className="font-medium">{reason.label}</span>
+            <Switch
+                checked={reason.is_active}
+                onCheckedChange={handleToggle}
+                disabled={isUpdating}
+                aria-label={`Ativar ou desativar o motivo ${reason.label}`}
+            />
+        </div>
+    );
 };
 
 const AssignmentRow = ({
@@ -105,10 +127,11 @@ const AssignmentRow = ({
 export function ConfiguracoesClient() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [assignments, setAssignments] = useState<ReasonAssignment[]>([]);
+  const [reasonConfigs, setReasonConfigs] = useState<TicketReasonConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { fetchReasonAssignments, updateReasonAssignment } = useTickets();
+  const { fetchReasonAssignments, updateReasonAssignment, fetchTicketReasons, updateTicketReasonStatus } = useTickets();
 
   const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
@@ -121,13 +144,15 @@ export function ConfiguracoesClient() {
         .order('username', { ascending: true });
 
       const assignmentPromise = fetchReasonAssignments();
+      const reasonConfigPromise = fetchTicketReasons();
 
-      const [profileResult, assignmentResult] = await Promise.all([profilePromise, assignmentPromise]);
+      const [profileResult, assignmentResult, reasonConfigResult] = await Promise.all([profilePromise, assignmentPromise, reasonConfigPromise]);
       
       if (profileResult.error) throw profileResult.error;
       
       setProfiles(profileResult.data || []);
       setAssignments(assignmentResult || []);
+      setReasonConfigs(reasonConfigResult || []);
 
     } catch (err: any) {
       setError(err.message);
@@ -135,7 +160,7 @@ export function ConfiguracoesClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchReasonAssignments]);
+  }, [fetchReasonAssignments, fetchTicketReasons]);
 
   useEffect(() => {
     fetchInitialData();
@@ -173,9 +198,16 @@ export function ConfiguracoesClient() {
     }
   };
 
+  const handleReasonStatusChange = async (reasonValue: string, newStatus: boolean) => {
+    const success = await updateTicketReasonStatus(reasonValue, newStatus);
+    if (success) {
+      await fetchInitialData();
+    }
+  };
+
   if (isLoading) {
     return (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-6">
             <Card>
                 <CardHeader>
                     <Skeleton className="h-7 w-64" />
@@ -223,6 +255,7 @@ export function ConfiguracoesClient() {
   
   return (
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+      <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Users className="h-6 w-6"/> Fila de Atendimento</CardTitle>
@@ -242,33 +275,55 @@ export function ConfiguracoesClient() {
                 )}
             </CardContent>
         </Card>
-         <Card>
+        <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><LinkIcon className="h-6 w-6"/>Atribuição por Motivo</CardTitle>
+                <CardTitle className="flex items-center gap-2"><ListChecks className="h-6 w-6"/> Gerenciar Motivos de Ticket</CardTitle>
                 <CardDescription>
-                    Associe motivos de ticket específicos a um ou mais atendentes. Isso ignora o rodízio geral para aquele motivo.
+                    Ative ou desative os motivos que aparecem no formulário de abertura de ticket.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                 {TICKET_REASONS.length > 0 && profiles.length > 0 ? (
-                    <div className="border rounded-md">
-                      {TICKET_REASONS.map(reason => (
-                          <AssignmentRow
-                            key={reason.value}
-                            reason={reason}
-                            assignments={assignments}
-                            attendants={profiles}
-                            onAssignmentChange={handleAssignmentChange}
-                          />
-                      ))}
+                {reasonConfigs.length > 0 ? (
+                    <div className="border rounded-md max-h-[600px] overflow-y-auto">
+                        {reasonConfigs.map(reason => (
+                           <ReasonStatusRow key={reason.value} reason={reason} onStatusChange={handleReasonStatusChange} />
+                        ))}
                     </div>
-                 ) : (
-                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-md">
-                        <p className="text-sm text-muted-foreground text-center p-4">Nenhum motivo de ticket ou atendente encontrado para configurar.</p>
-                    </div>
-                 )}
+                ) : (
+                   <p className="text-sm text-muted-foreground text-center p-4">Nenhum motivo encontrado para configurar.</p>
+                )}
             </CardContent>
         </Card>
+      </div>
+      <div className="lg:col-span-2">
+        <Card>
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2"><LinkIcon className="h-6 w-6"/>Atribuição por Motivo</CardTitle>
+              <CardDescription>
+                  Associe motivos de ticket específicos a um ou mais atendentes. Isso ignora o rodízio geral para aquele motivo.
+              </CardDescription>
+          </CardHeader>
+          <CardContent>
+               {TICKET_REASONS.length > 0 && profiles.length > 0 ? (
+                  <div className="border rounded-md">
+                    {TICKET_REASONS.map(reason => (
+                        <AssignmentRow
+                          key={reason.value}
+                          reason={reason}
+                          assignments={assignments}
+                          attendants={profiles}
+                          onAssignmentChange={handleAssignmentChange}
+                        />
+                    ))}
+                  </div>
+               ) : (
+                  <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-md">
+                      <p className="text-sm text-muted-foreground text-center p-4">Nenhum motivo de ticket ou atendente encontrado para configurar.</p>
+                  </div>
+               )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

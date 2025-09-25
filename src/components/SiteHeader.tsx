@@ -90,7 +90,14 @@ export function SiteHeader() {
     const canViewCobrancaGestao = cargo && cobrancaGestaoRoles.includes(cargo);
     
     const isCobrancaArea = pathname.includes('/cobranca/');
-    const logoLink = isCobrancaArea ? '/suporte-gre/cobranca/dashboard' : isTicketDashboardArea ? '/suporte-gre/painel' : '/pos-contemplacao/dashboard';
+    const isPosContemplacaoArea = pathname.includes('/pos-contemplacao/');
+    
+    let logoLink = '/suporte-gre/painel'; // Default to GRE support panel
+    if (isCobrancaArea) {
+        logoLink = '/suporte-gre/cobranca/dashboard';
+    } else if (isPosContemplacaoArea) {
+        logoLink = '/pos-contemplacao/dashboard';
+    }
 
 
     // Header for Ticket System (Dashboard, Form)

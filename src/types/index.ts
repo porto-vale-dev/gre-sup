@@ -1,3 +1,4 @@
+
 export type TicketStatus = "Novo" | "Em Andamento" | "Ativo" | "Atrasado" | "Concluído" | "Porto Resolve" | "Suporte";
 export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Respondida" | "Resolvida" | "Dentro do prazo" | "Fora do prazo" | "Reabertura";
 export type RetornoComercialStatus = 'Tirou dúvidas' | 'Tentando contato' | 'Em andamento' | 'Revertido' | 'Não Revertido' | 'Sem retorno';
@@ -77,6 +78,13 @@ export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 's
 export interface ReasonAssignment {
   reason: string;
   username: string;
+}
+
+export interface TicketReasonConfig {
+  value: string;
+  label: string;
+  is_active: boolean;
+  responseTime: string;
 }
 
 

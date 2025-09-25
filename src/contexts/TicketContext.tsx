@@ -3,12 +3,12 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Ticket, TicketStatus, SolutionFile, ReasonAssignment } from '@/types';
+import type { Ticket, TicketStatus, SolutionFile, ReasonAssignment, TicketReasonConfig } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { supabaseAnon } from '@/lib/supabaseAnonClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
-import { MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
+import { MAX_SOLUTION_FILE_SIZE, TICKET_REASONS } from '@/lib/constants';
 
 const TICKET_FILES_BUCKET = 'ticket-files';
 const PAGE_SIZE = 1000;
@@ -41,6 +41,8 @@ interface TicketContextType {
   
   fetchReasonAssignments: () => Promise<ReasonAssignment[]>;
   updateReasonAssignment: (reason: string, usernames: string[]) => Promise<boolean>;
+  fetchTicketReasons: () => Promise<TicketReasonConfig[]>;
+  updateTicketReasonStatus: (reasonValue: string, isActive: boolean) => Promise<boolean>;
 }
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
@@ -405,6 +407,42 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       toast({ title: 'Atribuições atualizadas com sucesso!' });
       return true;
   };
+  
+  const fetchTicketReasons = async (): Promise<TicketReasonConfig[]> => {
+    const { data, error } = await supabase.from('ticket_reasons_config').select('*');
+
+    if (error) {
+      console.error('Error fetching reason configs:', error);
+      // Fallback to local constants if there's an error
+      return TICKET_REASONS;
+    }
+    
+    // Combine DB results with local constants to ensure all reasons are present
+    const combinedReasons = TICKET_REASONS.map(localReason => {
+        const dbReason = data.find(d => d.value === localReason.value);
+        return {
+            ...localReason,
+            is_active: dbReason ? dbReason.is_active : localReason.is_active,
+        };
+    });
+
+    return combinedReasons;
+  };
+  
+  const updateTicketReasonStatus = async (reasonValue: string, isActive: boolean): Promise<boolean> => {
+    const { error } = await supabase
+      .from('ticket_reasons_config')
+      .upsert({ value: reasonValue, is_active: isActive }, { onConflict: 'value' });
+
+    if (error) {
+      console.error('Error updating reason status:', error);
+      toast({ title: 'Erro ao atualizar status do motivo', description: error.message, variant: 'destructive' });
+      return false;
+    }
+
+    toast({ title: 'Status do motivo atualizado!' });
+    return true;
+  };
 
 
   return (
@@ -423,6 +461,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         createPreviewUrl,
         fetchReasonAssignments,
         updateReasonAssignment,
+        fetchTicketReasons,
+        updateTicketReasonStatus,
     }}>
       {children}
     </TicketContext.Provider>

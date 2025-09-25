@@ -18,16 +18,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ticketSchema, type TicketFormData } from '@/lib/schemas';
-import { TICKET_REASONS, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_COUNT } from '@/lib/constants';
+import { ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_COUNT } from '@/lib/constants';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Info, Send, Paperclip, UploadCloud, AlertTriangle, X } from 'lucide-react';
+import { FileText, Info, Send, Paperclip, UploadCloud, AlertTriangle, X, Loader2 } from 'lucide-react';
+import type { TicketReasonConfig } from '@/types';
 
 export function TicketForm() {
-  const [selectedReasonInfo, setSelectedReasonInfo] = useState<(typeof TICKET_REASONS)[0] | null>(null);
-  const { addTicket } = useTickets();
+  const [activeReasons, setActiveReasons] = useState<TicketReasonConfig[]>([]);
+  const [isLoadingReasons, setIsLoadingReasons] = useState(true);
+  const [selectedReasonInfo, setSelectedReasonInfo] = useState<TicketReasonConfig | null>(null);
+  const { addTicket, fetchTicketReasons } = useTickets();
   const { toast } = useToast();
   const previousEmailValue = useRef('');
+
+  useEffect(() => {
+    const loadReasons = async () => {
+        setIsLoadingReasons(true);
+        const reasons = await fetchTicketReasons();
+        const active = reasons.filter(r => r.is_active);
+        setActiveReasons(active);
+        setIsLoadingReasons(false);
+    };
+    loadReasons();
+  }, [fetchTicketReasons]);
 
   const form = useForm<TicketFormData>({
     resolver: zodResolver(ticketSchema),
@@ -82,7 +96,7 @@ export function TicketForm() {
 
 
   const handleReasonChange = (value: string) => {
-    const reason = TICKET_REASONS.find(r => r.value === value) || null;
+    const reason = activeReasons.find(r => r.value === value) || null;
     setSelectedReasonInfo(reason);
     form.setValue("reason", value, { shouldValidate: true });
   };
@@ -331,14 +345,14 @@ export function TicketForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Motivo do Ticket</FormLabel>
-                  <Select onValueChange={handleReasonChange} defaultValue={field.value}>
+                  <Select onValueChange={handleReasonChange} value={field.value} disabled={isLoadingReasons}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o motivo do seu contato" />
+                        <SelectValue placeholder={isLoadingReasons ? "Carregando motivos..." : "Selecione o motivo do seu contato"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {TICKET_REASONS.map(reason => (
+                      {activeReasons.map(reason => (
                         <SelectItem key={reason.value} value={reason.value}>
                           {reason.label}
                         </SelectItem>
@@ -430,7 +444,7 @@ export function TicketForm() {
               )}
             />
             <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
-              <Send className="mr-2 h-4 w-4" />
+              {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
               {form.formState.isSubmitting ? "Enviando..." : "Enviar Ticket"}
             </Button>
           </form>
