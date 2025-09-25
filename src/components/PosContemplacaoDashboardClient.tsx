@@ -208,10 +208,7 @@ export function PosContemplacaoDashboardClient() {
     updateTicket(ticketId, { status });
   };
 
-  const ticketStatusesForFilter = useMemo(() => {
-    const statuses = new Set(activeTickets.map(t => t.status));
-    return ["Todos", ...Array.from(statuses)];
-  }, [activeTickets]);
+  const ticketStatusesForFilter = ["Todos", ...POS_CONTEMPLACAO_STATUSES.filter(s => s !== 'Concluído')];
 
   const responsibleForFilter = useMemo(() => {
     return [...RESPONSAVEIS];
