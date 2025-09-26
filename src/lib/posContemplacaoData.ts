@@ -1,10 +1,16 @@
 import type { PosContemplacaoTicketStatus } from '@/types';
 
-export const RESPONSAVEIS = [
-    { name: 'Bruna', email: 'bruna@portovaleconsorcios.com.br' },
-    { name: 'Dominik', email: 'dominik.rocha@portovaleconsorcios.com.br' },
-    { name: 'Sara', email: 'apoioposcontemplacao1@portovaleconsorcios.com.br' },
-    { name: 'Pedro', email: 'apoioposcontemplacao2@portovaleconsorcios.com.br' }
+export interface Responsavel {
+    name: string;
+    email: string;
+    celular: string | null;
+}
+
+export const RESPONSAVEIS: Responsavel[] = [
+    { name: 'Bruna', email: 'bruna@portovaleconsorcios.com.br', celular: '+5512997289218' },
+    { name: 'Dominik', email: 'dominik.rocha@portovaleconsorcios.com.br', celular: '1235122064' },
+    { name: 'Sara', email: 'apoioposcontemplacao1@portovaleconsorcios.com.br', celular: '1220181191' },
+    { name: 'Pedro', email: 'apoioposcontemplacao2@portovaleconsorcios.com.br', celular: '1220181189' }
 ];
 
 export const POS_CONTEMPLACAO_STATUSES: PosContemplacaoTicketStatus[] = ["Aberto", "Em Análise", "Urgente", "Retorno", "Concluído"];
