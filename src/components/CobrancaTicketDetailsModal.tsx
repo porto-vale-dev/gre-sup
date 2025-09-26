@@ -50,6 +50,25 @@ const parseComments = (obs: string | RetornoComercialComment[] | null | undefine
     return [];
 }
 
+const formatProducaoDate = (dateString: string): string => {
+  try {
+    // Check if the date is already in dd/MM/yyyy format
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+      return dateString;
+    }
+    // Try to parse it as an ISO date
+    const date = parseISO(dateString);
+    if (isValid(date)) {
+      return format(date, 'dd/MM/yyyy', { locale: ptBR });
+    }
+  } catch (error) {
+    // If parsing fails, return the original string
+    return dateString;
+  }
+  return dateString;
+};
+
+
 export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isUserResponseView = false }: CobrancaTicketDetailsModalProps) {
   const { getTicketById, updateTicketDetailsAndRetorno, updateTicket, saveUserResponse, updateAndResolveTicket } = useCobrancaTickets();
   const { toast } = useToast();
@@ -193,8 +212,8 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                   <p>{ticket.cota}</p>
                 </div>
                 <div>
-                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><BarChartHorizontal className="h-4 w-4" />Produção:</strong>
-                  <p>{ticket.producao}</p>
+                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><BarChartHorizontal className="h-4 w-4" />Data de Venda:</strong>
+                  <p>{formatProducaoDate(ticket.producao)}</p>
                 </div>
                 <div>
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Phone className="h-4 w-4" />Telefone:</strong>

@@ -16,7 +16,7 @@ interface CobrancaTicketContextType {
   tickets: CobrancaTicket[];
   isLoading: boolean;
   error: string | null;
-  addTicket: (ticketData: CreateCobrancaTicket) => Promise<boolean>;
+  addTicket: (ticketData: CreateCobrancaTicket & { producao: string }) => Promise<boolean>;
   updateTicket: (ticketId: string, updates: Partial<CobrancaTicket>) => Promise<void>;
   updateAndResolveTicket: (ticketId: string, details: { diretor: string; gerente: string; observacoes: string }) => Promise<boolean>;
   updateTicketDetailsAndRetorno: (
@@ -98,7 +98,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, isAuthLoading, fetchTickets]);
 
 
-  const addTicket = async (ticketData: CreateCobrancaTicket): Promise<boolean> => {
+  const addTicket = async (ticketData: CreateCobrancaTicket & { producao: string }): Promise<boolean> => {
     setIsLoading(true);
     try {
       if (!user) throw new Error("Usuário não autenticado.");

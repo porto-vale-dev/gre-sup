@@ -24,12 +24,17 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'; // Renamed to avoid conflict
+import { cn } from '@/lib/utils';
 
 const cobrancaTicketSchema = z.object({
     nome_cliente: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
     cpf: z.string().min(14, { message: "CPF ou CNPJ inválido." }),
     cota: z.string().min(1, { message: "Número da cota é obrigatório." }),
-    producao: z.string().min(1, { message: "Produção é obrigatória." }),
+    producao: z.date({
+      required_error: "Data de venda é obrigatória.",
+    }),
     telefone: z.string().min(14, { message: "Telefone inválido. Preencha o DDD e o número." }),
     email: z.string().email({ message: "Formato de e-mail inválido." }),
     diretor: z.string().min(1, { message: "Selecione um diretor." }),
@@ -58,7 +63,6 @@ export default function CobrancaPage() {
       nome_cliente: "",
       cpf: "",
       cota: "",
-      producao: "",
       telefone: "",
       email: "",
       diretor: "",
@@ -131,6 +135,7 @@ export default function CobrancaPage() {
     
     const success = await addCobrancaTicket({
         ...data,
+        producao: format(data.producao, 'dd/MM/yyyy'),
         observacoes: data.observacoes || '',
         user_id: user.id,
     });
@@ -214,17 +219,42 @@ export default function CobrancaPage() {
                                     </FormItem>
                                 )}
                             />
-                            <FormField
+                             <FormField
                                 control={form.control}
                                 name="producao"
                                 render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Produção</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Produção" {...field} />
-                                    </FormControl>
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Data de Venda</FormLabel>
+                                    <Popover>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                        <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                            "w-full pl-3 text-left font-normal",
+                                            !field.value && "text-muted-foreground"
+                                            )}
+                                        >
+                                            {field.value ? (
+                                            format(field.value, "PPP", { locale: ptBR })
+                                            ) : (
+                                            <span>Escolha uma data</span>
+                                            )}
+                                            <Calendar className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <CalendarComponent
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                        />
+                                    </PopoverContent>
+                                    </Popover>
                                     <FormMessage />
-                                    </FormItem>
+                                </FormItem>
                                 )}
                             />
                             <FormField
