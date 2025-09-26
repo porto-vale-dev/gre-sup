@@ -140,7 +140,7 @@ export function ConfiguracoesClient() {
       const profilePromise = supabase
         .from('profiles')
         .select('id, username, is_active_in_queue')
-        .eq('cargo', 'gre')
+        .in('cargo', ['gre', 'gre_apoio_admin'])
         .order('username', { ascending: true });
 
       const assignmentPromise = fetchReasonAssignments();
