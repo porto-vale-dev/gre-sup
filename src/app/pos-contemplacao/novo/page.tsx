@@ -24,7 +24,7 @@ import { ptBR } from 'date-fns/locale';
 
 const posContemplacaoSchema = z.object({
     nome_cliente: z.string().min(1, "Nome do cliente é obrigatório."),
-    cpf: z.string().min(14, "CPF ou CNPJ inválido."),
+    cpf: z.string().optional(),
     grupo: z.string().min(1, "Grupo é obrigatório."),
     cota: z.string().min(1, "Cota é obrigatória."),
     telefone: z.string().optional(),
@@ -32,7 +32,7 @@ const posContemplacaoSchema = z.object({
     relator: z.string().min(1, "Relator é obrigatório."),
     responsavel: z.string().min(1, "Responsável é obrigatório."),
     motivo: z.string().min(1, "Motivo é obrigatório."),
-    susep: z.string().min(1, "SUSEP é obrigatório."),
+    susep: z.string().optional(),
     data_limite: z.date({
       required_error: "A data limite de resposta é obrigatória.",
     }),
@@ -134,11 +134,13 @@ export default function NovoTicketPosContemplacaoPage() {
     
     const success = await addTicket({
         ...data,
+        cpf: data.cpf || '',
         relator: userEmail,
         observacoes: data.observacoes || '',
         data_limite: data.data_limite.toISOString(),
         telefone: data.telefone || undefined,
         email: data.email || undefined,
+        susep: data.susep || '',
     }, data.files ? Array.from(data.files) : undefined);
     
     if (success) {
@@ -186,7 +188,7 @@ export default function NovoTicketPosContemplacaoPage() {
                                 name="cpf"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>CPF ou CNPJ</FormLabel>
+                                    <FormLabel>CPF ou CNPJ (Opcional)</FormLabel>
                                     <FormControl>
                                         <Input 
                                           placeholder="000.000.000-00" 
@@ -329,7 +331,7 @@ export default function NovoTicketPosContemplacaoPage() {
                             name="susep"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>SUSEP</FormLabel>
+                                <FormLabel>SUSEP (Opcional)</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
@@ -395,7 +397,7 @@ export default function NovoTicketPosContemplacaoPage() {
                                         selected={field.value}
                                         onSelect={field.onChange}
                                         disabled={(date) =>
-                                            date < new Date(new Date().setHours(0, 0, 0, 0))
+                                            date < new Date(new Date().toDateString())
                                         }
                                         initialFocus
                                     />
@@ -471,3 +473,5 @@ export default function NovoTicketPosContemplacaoPage() {
     </div>
   );
 }
+
+    

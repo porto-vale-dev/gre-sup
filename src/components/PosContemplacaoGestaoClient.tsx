@@ -7,7 +7,7 @@ import type { PosContemplacaoTicketStatus, PosContemplacaoTicket } from '@/types
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileText, Hourglass, CheckCircle2, User, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown, PieChart as PieChartIcon, Loader2, History, ChevronDown, Download, Filter } from 'lucide-react';
+import { FileText, Hourglass, CheckCircle2, User, AlertCircle, BarChart2, Calendar as CalendarIcon, X, FileDown, PieChart as PieChartIcon, Loader2, History, ChevronDown, Download, Filter, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -23,6 +23,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RESPONSAVEIS } from '@/lib/posContemplacaoData';
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 
 
 interface StatCardProps {
@@ -56,6 +57,19 @@ const StatCard = ({ title, value, Icon, description, className }: StatCardProps)
 
 const PIE_CHART_COLORS = ["#64B5F6", "#4DB6AC", "#FFD54F", "#FF8A65", "#A1887F", "#90A4AE", "#7986CB", "#E57373"];
 
+const NAME_COLOR_MAP: { [key: string]: string } = {
+    'Bruna': '#64B5F6',    // Blue
+    'Dominik': '#FFD54F', // Yellow
+    'Sara': '#4DB6AC',     // Teal
+    'Pedro': '#FF8A65',    // Orange
+};
+
+const findNameByEmail = (email: string) => {
+    const user = RESPONSAVEIS.find(r => r.email.toLowerCase() === email.toLowerCase());
+    return user ? user.name : email.split('@')[0];
+};
+
+
 export function PosContemplacaoGestaoClient() {
   const { tickets, isLoading: isLoadingTickets, error } = usePosContemplacaoTickets();
   const { toast } = useToast();
@@ -67,6 +81,8 @@ export function PosContemplacaoGestaoClient() {
     to: new Date(),
   });
   const [responsibleFilter, setResponsibleFilter] = useState<string>("Todos");
+  const [relatorFilter, setRelatorFilter] = useState<string>("Todos");
+  const [chartView, setChartView] = useState<'responsible' | 'relator'>('responsible');
   const [exportHistory, setExportHistory] = useLocalStorage<ExportHistoryItem[]>("posContemplacaoExportHistory", []);
   const [isHistoryVisible, setIsHistoryVisible] = useState(true);
 
@@ -85,12 +101,17 @@ export function PosContemplacaoGestaoClient() {
         });
     }
 
+    let responsibleFiltered = dateFilteredTickets;
     if (responsibleFilter !== "Todos") {
-        return dateFilteredTickets.filter(ticket => ticket.responsavel === responsibleFilter);
+        responsibleFiltered = dateFilteredTickets.filter(ticket => ticket.responsavel === responsibleFilter);
+    }
+    
+    if (relatorFilter !== "Todos") {
+      return responsibleFiltered.filter(ticket => ticket.relator === relatorFilter);
     }
 
-    return dateFilteredTickets;
-  }, [tickets, date, responsibleFilter]);
+    return responsibleFiltered;
+  }, [tickets, date, responsibleFilter, relatorFilter]);
 
   const handleExportXLSX = () => {
     if (filteredTickets.length === 0) {
@@ -114,8 +135,8 @@ export function PosContemplacaoGestaoClient() {
             "Cota": ticket.cota,
             "Telefone": ticket.telefone,
             "Email": ticket.email,
-            "Relator": ticket.relator,
-            "Responsável": ticket.responsavel,
+            "Relator": findNameByEmail(ticket.relator),
+            "Responsável": findNameByEmail(ticket.responsavel),
             "Motivo": ticket.motivo,
             "Observações": ticket.observacoes,
             "Status": ticket.status,
@@ -201,6 +222,15 @@ export function PosContemplacaoGestaoClient() {
     return exportHistory.filter(item => item.username === username).slice(0, 5);
   }, [exportHistory, username]);
 
+  const relatorsForFilter = useMemo(() => {
+    const uniqueRelatorEmails = [...new Set(tickets.map(t => t.relator))];
+    const relatorObjects = uniqueRelatorEmails.map(email => ({ 
+        email: email, 
+        name: findNameByEmail(email)
+    }));
+    return [{ email: 'Todos', name: 'Todos' }, ...relatorObjects];
+  }, [tickets]);
+
 
   const stats = useMemo(() => {
     if (!filteredTickets || filteredTickets.length === 0) {
@@ -210,6 +240,7 @@ export function PosContemplacaoGestaoClient() {
         emAnalise: 0,
         concluido: 0,
         byResponsible: [],
+        byRelator: [],
         byMotivo: [],
       };
     }
@@ -220,8 +251,14 @@ export function PosContemplacaoGestaoClient() {
     }, {} as Record<PosContemplacaoTicketStatus, number>);
 
     const responsibleCounts = filteredTickets.reduce((acc, ticket) => {
-        const responsible = ticket.responsavel || 'Não atribuído';
+        const responsible = findNameByEmail(ticket.responsavel || 'Não atribuído');
         acc[responsible] = (acc[responsible] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const relatorCounts = filteredTickets.reduce((acc, ticket) => {
+        const relator = findNameByEmail(ticket.relator || 'Não atribuído');
+        acc[relator] = (acc[relator] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
     
@@ -235,6 +272,10 @@ export function PosContemplacaoGestaoClient() {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
       
+    const byRelator = Object.entries(relatorCounts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+
     const byMotivo = Object.entries(motivoCounts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
@@ -245,6 +286,7 @@ export function PosContemplacaoGestaoClient() {
       emAnalise: statusCounts["Em Análise"] || 0,
       concluido: statusCounts["Concluído"] || 0,
       byResponsible,
+      byRelator,
       byMotivo,
     };
   }, [filteredTickets]);
@@ -253,7 +295,7 @@ export function PosContemplacaoGestaoClient() {
     return (
         <div className="space-y-6">
             <Card className="p-4"><Skeleton className="h-10 w-full" /></Card>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Skeleton className="h-[126px]" />
                 <Skeleton className="h-[126px]" />
                 <Skeleton className="h-[126px]" />
@@ -295,7 +337,7 @@ export function PosContemplacaoGestaoClient() {
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-    if (percent * 100 < 5) return null;
+    if (percent * 100 < 3) return null;
 
     return (
       <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
@@ -352,9 +394,21 @@ export function PosContemplacaoGestaoClient() {
                 <SelectValue placeholder="Filtrar por responsável" />
               </SelectTrigger>
               <SelectContent>
-                 <SelectItem value="Todos">Todos</SelectItem>
+                 <SelectItem value="Todos">Todos Responsáveis</SelectItem>
                   {RESPONSAVEIS.map(responsavel => (
                     <SelectItem key={responsavel.email} value={responsavel.email} className="capitalize">{responsavel.name}</SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={relatorFilter} onValueChange={setRelatorFilter}>
+              <SelectTrigger className="w-full sm:w-[250px]">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Filtrar por relator" />
+              </SelectTrigger>
+              <SelectContent>
+                 {relatorsForFilter.map(relator => (
+                    <SelectItem key={relator.email} value={relator.email} className="capitalize">{relator.name}</SelectItem>
                   ))}
               </SelectContent>
             </Select>
@@ -365,8 +419,9 @@ export function PosContemplacaoGestaoClient() {
                 onClick={() => {
                     setDate(undefined);
                     setResponsibleFilter("Todos");
+                    setRelatorFilter("Todos");
                 }}
-                disabled={!date && responsibleFilter === "Todos"}
+                disabled={!date && responsibleFilter === "Todos" && relatorFilter === "Todos"}
                 className="text-muted-foreground hover:text-foreground w-full sm:w-auto"
             >
                 <X className="mr-2 h-4 w-4" />
@@ -421,16 +476,35 @@ export function PosContemplacaoGestaoClient() {
             <div className="grid grid-cols-12 gap-4">
                 <Card className="col-span-12 lg:col-span-7">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <PieChartIcon className="h-5 w-5" />
-                            Tickets por Responsável
-                        </CardTitle>
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2">
+                                <PieChartIcon className="h-5 w-5" />
+                                {chartView === 'responsible' ? 'Tickets por Responsável' : 'Tickets por Relator'}
+                            </CardTitle>
+                             <ToggleGroup
+                                type="single"
+                                size="sm"
+                                value={chartView}
+                                onValueChange={(value: 'responsible' | 'relator') => {
+                                    if (value) setChartView(value);
+                                }}
+                            >
+                                <ToggleGroupItem value="responsible" aria-label="Ver por responsável">
+                                    <Users className="h-4 w-4 mr-2"/>
+                                    Responsável
+                                </ToggleGroupItem>
+                                <ToggleGroupItem value="relator" aria-label="Ver por relator">
+                                    <User className="h-4 w-4 mr-2"/>
+                                    Relator
+                                </ToggleGroupItem>
+                            </ToggleGroup>
+                        </div>
                     </CardHeader>
                     <CardContent className="pl-2">
                         <ResponsiveContainer width="100%" height={350}>
                             <PieChart>
                             <Pie
-                                data={stats.byResponsible}
+                                data={chartView === 'responsible' ? stats.byResponsible : stats.byRelator}
                                 dataKey="value"
                                 nameKey="name"
                                 cx="50%"
@@ -440,9 +514,10 @@ export function PosContemplacaoGestaoClient() {
                                 labelLine={false}
                                 label={stats.byResponsible.length > 0 ? renderCustomizedLabel : undefined}
                             >
-                                {stats.byResponsible.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
-                                ))}
+                                {(chartView === 'responsible' ? stats.byResponsible : stats.byRelator).map((entry, index) => {
+                                    const color = NAME_COLOR_MAP[entry.name] || PIE_CHART_COLORS[index % PIE_CHART_COLORS.length];
+                                    return <Cell key={`cell-${index}`} fill={color} />;
+                                })}
                             </Pie>
                             <Tooltip
                                 contentStyle={{ 
