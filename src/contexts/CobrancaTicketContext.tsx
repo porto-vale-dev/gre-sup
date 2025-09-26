@@ -183,19 +183,19 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
   };
 
   const updateTicket = async (ticketId: string, updates: Partial<CobrancaTicket>) => {
-    if (!('status' in updates) || !updates.status) {
-        toast({ title: "Erro Interno", description: "Nenhum status fornecido para atualização.", variant: "destructive" });
-        return;
-    }
-
-    const { error: rpcError } = await supabase.rpc('update_cobranca_ticket_status', {
-        p_ticket_id: ticketId,
-        p_new_status: updates.status,
-    });
-
-    if (rpcError) {
-      console.error('RPC Error updating status:', rpcError);
-      toast({ title: "Erro ao Atualizar", description: `Não foi possível atualizar o status. Detalhes: ${rpcError.message}`, variant: "destructive" });
+    // This function will now do a direct UPDATE, relying on RLS policies.
+    const { error } = await supabase
+      .from('tickets_cobranca')
+      .update(updates)
+      .eq('id', ticketId);
+      
+    if (error) {
+      console.error('Error updating ticket status:', error);
+      toast({ 
+        title: "Erro ao Atualizar", 
+        description: `Não foi possível atualizar o status. Detalhes: ${error.message}`, 
+        variant: "destructive" 
+      });
       return;
     }
 
