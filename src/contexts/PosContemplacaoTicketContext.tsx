@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -6,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
 import type { PosContemplacaoTicket, CreatePosContemplacaoTicket, PosContemplacaoTicketStatus } from '@/types';
+import { RESPONSAVEIS } from '@/lib/posContemplacaoData';
 
 const POS_CONTEMPLACAO_FILES_BUCKET = 'pos-contemplacao-files';
 const PAGE_SIZE = 1000;
@@ -29,7 +31,7 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { user, username, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const fetchTickets = useCallback(async () => {
     if (!isAuthenticated) {
@@ -125,12 +127,42 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
             susep: ticketData.susep,
         };
 
-        const { error: insertError } = await supabase
+        const { data: newTicketData, error: insertError } = await supabase
             .from('tickets_poscontemplacao')
-            .insert(payload);
+            .insert(payload)
+            .select()
+            .single();
 
         if (insertError) {
             throw new Error(`Erro ao salvar ticket: ${insertError.message}`);
+        }
+        
+        if (newTicketData) {
+            const responsavelData = RESPONSAVEIS.find(r => r.email === newTicketData.responsavel);
+            const responsavelNome = responsavelData?.name || newTicketData.responsavel;
+            const responsavelCelular = responsavelData?.celular || null;
+
+            const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/poscontemplacao";
+            fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo_evento: 'novo_ticket',
+                    motivo: newTicketData.motivo,
+                    relator: username || user.email.split('@')[0],
+                    protocolo: String(newTicketData.protocolo).padStart(4, '0'),
+                    responsavel: responsavelNome,
+                    celular_responsavel: responsavelCelular,
+                    cliente: newTicketData.nome_cliente,
+                }),
+            }).catch(webhookError => {
+                console.error("Webhook para N8N (Pós-Contemplação) falhou:", webhookError);
+                toast({
+                    title: "Aviso de Webhook",
+                    description: "O ticket foi criado, mas a notificação pode não ter sido enviada.",
+                    variant: "default",
+                });
+            });
         }
 
         toast({ title: "Ticket de Pós-Contemplação Criado", description: "Sua solicitação foi registrada com sucesso." });
@@ -152,17 +184,57 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
         return;
     }
 
-    const { error } = await supabase
+    const { data: currentTicket, error: fetchError } = await supabase
+      .from('tickets_poscontemplacao')
+      .select('*')
+      .eq('id', ticketId)
+      .single();
+
+    if(fetchError){
+      toast({ title: "Erro", description: "Não foi possível encontrar o ticket para atualizar.", variant: "destructive" });
+      return;
+    }
+
+    const { error: updateError } = await supabase
       .from('tickets_poscontemplacao')
       .update(updates)
       .eq('id', ticketId);
 
-    if (error) {
-      toast({ title: "Erro ao Atualizar", description: `Não foi possível atualizar o ticket. Detalhes: ${error.message}`, variant: "destructive" });
+    if (updateError) {
+      toast({ title: "Erro ao Atualizar", description: `Não foi possível atualizar o ticket. Detalhes: ${updateError.message}`, variant: "destructive" });
       return;
     }
     
     toast({ title: "Ticket Atualizado!", description: `As informações do ticket foram salvas.` });
+
+    if (updates.status && updates.status !== currentTicket.status) {
+        if (updates.status === 'Retorno' || updates.status === 'Concluído') {
+            const relatorData = RESPONSAVEIS.find(r => r.email === currentTicket.relator);
+            const relatorNome = relatorData?.name || currentTicket.relator.split('@')[0];
+            const relatorCelular = relatorData?.celular || null;
+
+            const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/poscontemplacao";
+            fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo_evento: updates.status === 'Retorno' ? 'retorno' : 'concluido',
+                    protocolo: String(currentTicket.protocolo).padStart(4, '0'),
+                    motivo: currentTicket.motivo,
+                    relator: relatorNome,
+                    celular_relator: relatorCelular,
+                    cliente: currentTicket.nome_cliente,
+                }),
+            }).catch(webhookError => {
+                console.error("Webhook de atualização de status (Pós-Contemplação) falhou:", webhookError);
+                toast({
+                    title: "Aviso de Webhook",
+                    description: `O status foi atualizado, mas a notificação para "${updates.status}" pode não ter sido enviada.`,
+                    variant: "default",
+                });
+            });
+        }
+    }
     
     await fetchTickets();
   };
