@@ -13,18 +13,30 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, Paperclip, Eye, Download, File, CalendarIcon as CalendarIconLucide } from 'lucide-react';
+import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, Paperclip, Eye, Download, File, CalendarIcon as CalendarIconLucide, Trash2 } from 'lucide-react';
 import { usePosContemplacaoTickets } from '@/contexts/PosContemplacaoTicketContext';
 import { MOTIVOS_POS_CONTEMPLACAO, RESPONSAVEIS } from '@/lib/posContemplacaoData';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 const FilePreviewItem: React.FC<{
@@ -79,7 +91,8 @@ interface PosContemplacaoTicketDetailsModalProps {
 }
 
 export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: PosContemplacaoTicketDetailsModalProps) {
-  const { getTicketById, updateTicket, downloadFile, createPreviewUrl } = usePosContemplacaoTickets();
+  const { getTicketById, updateTicket, downloadFile, createPreviewUrl, deleteTicket } = usePosContemplacaoTickets();
+  const { cargo } = useAuth();
   
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
 
@@ -91,6 +104,10 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   
   const [isSaving, setIsSaving] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const allowedDeleteRoles = ['adm', 'greadmin', 'gre_con_admin'];
+  const canDelete = cargo && allowedDeleteRoles.includes(cargo);
 
   useEffect(() => {
     if (ticket) {
@@ -126,6 +143,14 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
         status: 'Concluído' 
     });
     setIsCompleting(false);
+    onClose();
+  };
+
+  const handleDelete = async () => {
+    if (!ticket) return;
+    setIsDeleting(true);
+    await deleteTicket(ticket.id, ticket.file_path);
+    setIsDeleting(false);
     onClose();
   };
 
@@ -318,7 +343,33 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
           </div>
         </div>
         
-        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-wrap sm:flex-nowrap justify-end items-center gap-2 shrink-0">
+        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-wrap justify-between items-center gap-2 shrink-0">
+            <div>
+              {canDelete && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={isDeleting}>
+                      {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                      Excluir
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta ação não pode ser desfeita. Isso excluirá permanentemente o ticket e todos os seus anexos.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                        Sim, excluir ticket
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
             <div className="flex gap-2 w-full sm:w-auto">
               <Button variant="outline" onClick={onClose} className="w-full">Fechar</Button>
               <Button onClick={handleSave} disabled={isSaving || isCompleting} className="w-full">

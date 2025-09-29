@@ -18,6 +18,7 @@ interface PosContemplacaoTicketContextType {
   error: string | null;
   addTicket: (ticketData: CreatePosContemplacaoTicket, files?: File[]) => Promise<boolean>;
   updateTicket: (ticketId: string, updates: Partial<PosContemplacaoTicket>) => Promise<void>;
+  deleteTicket: (ticketId: string, filePath?: string | null) => Promise<void>;
   getTicketById: (ticketId: string) => PosContemplacaoTicket | undefined;
   fetchTickets: () => void;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
@@ -142,6 +143,10 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
             const responsavelNome = responsavelData?.name || newTicketData.responsavel;
             const responsavelCelular = responsavelData?.celular || null;
 
+            const relatorData = RESPONSAVEIS.find(r => r.email === newTicketData.relator);
+            const relatorNome = relatorData?.name || username || user.email.split('@')[0];
+            const relatorCelular = relatorData?.celular || null;
+
             const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/poscontemplacao";
             fetch(webhookUrl, {
                 method: 'POST',
@@ -149,7 +154,8 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
                 body: JSON.stringify({
                     tipo_evento: 'novo_ticket',
                     motivo: newTicketData.motivo,
-                    relator: username || user.email.split('@')[0],
+                    relator: relatorNome,
+                    telefoneRelator: relatorCelular,
                     protocolo: String(newTicketData.protocolo).padStart(4, '0'),
                     responsavel: responsavelNome,
                     celular_responsavel: responsavelCelular,
@@ -239,6 +245,51 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
     await fetchTickets();
   };
 
+  const deleteTicket = async (ticketId: string, filePath?: string | null) => {
+    try {
+      // 1. Delete associated files from storage, if they exist
+      if (filePath) {
+        const { data: files, error: listError } = await supabase.storage
+          .from(POS_CONTEMPLACAO_FILES_BUCKET)
+          .list(filePath);
+        
+        if (listError) {
+            console.error(`Error listing files for deletion in ${filePath}:`, listError);
+            toast({ title: "Erro ao Listar Arquivos", description: "Não foi possível listar os arquivos para exclusão, mas a exclusão do ticket continuará.", variant: "destructive" });
+        }
+
+        if (files && files.length > 0) {
+            const filePathsToDelete = files.map(file => `${filePath}/${file.name}`);
+            const { error: removeError } = await supabase.storage
+                .from(POS_CONTEMPLACAO_FILES_BUCKET)
+                .remove(filePathsToDelete);
+            
+            if (removeError) {
+                console.error(`Error deleting files in ${filePath}:`, removeError);
+                toast({ title: "Erro ao Excluir Arquivos", description: "Não foi possível remover os anexos, mas a exclusão do ticket continuará.", variant: "destructive" });
+            }
+        }
+      }
+
+      // 2. Delete the ticket from the database
+      const { error: deleteError } = await supabase
+        .from('tickets_poscontemplacao')
+        .delete()
+        .eq('id', ticketId);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+      
+      toast({ title: "Ticket Excluído", description: "O ticket foi removido com sucesso." });
+      await fetchTickets(); // Refresh the list
+
+    } catch (error: any) {
+        toast({ title: "Erro ao Excluir", description: `Não foi possível excluir o ticket: ${error.message}`, variant: "destructive" });
+        console.error("Error deleting ticket:", error);
+    }
+  };
+
   const getTicketById = (ticketId: string): PosContemplacaoTicket | undefined => {
     return tickets.find(ticket => ticket.id === ticketId);
   };
@@ -292,6 +343,7 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
         error, 
         addTicket, 
         updateTicket,
+        deleteTicket,
         getTicketById,
         fetchTickets,
         downloadFile,
