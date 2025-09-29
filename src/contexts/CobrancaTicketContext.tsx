@@ -16,7 +16,7 @@ interface CobrancaTicketContextType {
   tickets: CobrancaTicket[];
   isLoading: boolean;
   error: string | null;
-  addTicket: (ticketData: CreateCobrancaTicket & { producao: string }) => Promise<boolean>;
+  addTicket: (ticketData: CreateCobrancaTicket) => Promise<boolean>;
   updateTicket: (ticketId: string, updates: Partial<CobrancaTicket>) => Promise<void>;
   updateAndResolveTicket: (ticketId: string, details: { diretor: string; gerente: string; observacoes: string }) => Promise<boolean>;
   updateTicketDetailsAndRetorno: (
@@ -98,7 +98,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, isAuthLoading, fetchTickets]);
 
 
-  const addTicket = async (ticketData: CreateCobrancaTicket & { producao: string }): Promise<boolean> => {
+  const addTicket = async (ticketData: CreateCobrancaTicket): Promise<boolean> => {
     setIsLoading(true);
     try {
       if (!user) throw new Error("Usuário não autenticado.");
@@ -123,7 +123,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
         nome_cliente: ticketData.nome_cliente,
         cpf: ticketData.cpf,
         cota: ticketData.cota,
-        producao: ticketData.producao,
+        producao: ticketData.producao.toISOString(), // Send date in ISO format
         telefone: ticketData.telefone,
         email: ticketData.email,
         diretor: ticketData.diretor,

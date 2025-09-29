@@ -18,7 +18,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { diretores, gerentesPorDiretor, motivosCobranca, Gerente } from '@/lib/cobrancaData';
+import { diretores, gerentesPorDiretor, motivosCobranca, type Gerente } from '@/lib/cobrancaData';
 import { FileText, Send, Loader2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -135,7 +135,6 @@ export default function CobrancaPage() {
     
     const success = await addCobrancaTicket({
         ...data,
-        producao: format(data.producao, 'dd/MM/yyyy'),
         observacoes: data.observacoes || '',
         user_id: user.id,
     });

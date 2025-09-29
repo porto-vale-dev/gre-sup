@@ -25,12 +25,19 @@ import { FileText, Send, Loader2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext'; // Importar useAuth
+import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'; // Renamed to avoid conflict
+import { cn } from '@/lib/utils';
+
 
 const cobrancaTicketSchema = z.object({
     nome_cliente: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
     cpf: z.string().min(14, { message: "CPF ou CNPJ inválido." }),
     cota: z.string().min(1, { message: "Número da cota é obrigatório." }),
-    producao: z.string().min(1, { message: "Produção é obrigatória." }),
+    producao: z.date({
+      required_error: "Data de venda é obrigatória.",
+    }),
     telefone: z.string().min(14, { message: "Telefone inválido. Preencha o DDD e o número." }),
     email: z.string().email({ message: "Formato de e-mail inválido." }),
     diretor: z.string().min(1, { message: "Selecione um diretor." }),
@@ -44,6 +51,7 @@ type CobrancaTicketFormData = z.infer<typeof cobrancaTicketSchema>;
 export default function CobrancaPage() {
   const { toast } = useToast();
   const { user } = useAuth(); // Obter o usuário logado
+  const { addTicket: addCobrancaTicket, isLoading } = useCobrancaTickets();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableGerentes, setAvailableGerentes] = useState<Gerente[]>([]);
   const [currentDate, setCurrentDate] = useState('');
@@ -58,7 +66,6 @@ export default function CobrancaPage() {
       nome_cliente: "",
       cpf: "",
       cota: "",
-      producao: "",
       telefone: "",
       email: "",
       diretor: "",
@@ -128,43 +135,18 @@ export default function CobrancaPage() {
     }
       
     setIsSubmitting(true);
-    try {
-        const { error } = await supabase
-            .rpc('create_ticket_cobranca', {
-                p_nome_cliente: data.nome_cliente,
-                p_cpf: data.cpf,
-                p_cota: data.cota,
-                p_producao: data.producao,
-                p_telefone: data.telefone,
-                p_email: data.email,
-                p_diretor: data.diretor,
-                p_gerente: data.gerente,
-                p_motivo: data.motivo,
-                p_observacoes: data.observacoes || null,
-                p_user_id: user.id // Enviar o ID do usuário
-            });
-
-
-        if (error) {
-            throw error;
-        }
-
-        toast({
-            title: "Ticket de Cobrança Criado!",
-            description: "A solicitação foi registrada com sucesso.",
-        });
-        form.reset();
-        setAvailableGerentes([]);
-    } catch (error: any) {
-        toast({
-            title: "Erro ao criar ticket",
-            description: `Não foi possível salvar o ticket. Detalhes: ${error.message}`,
-            variant: "destructive",
-        });
-        console.error("Error creating cobranca ticket:", error);
-    } finally {
-        setIsSubmitting(false);
+     const success = await addCobrancaTicket({
+        ...data,
+        observacoes: data.observacoes || '',
+        user_id: user.id,
+    });
+    
+    if (success) {
+      form.reset();
+      setAvailableGerentes([]);
     }
+    
+    setIsSubmitting(false);
   }
 
   return (
@@ -242,13 +224,38 @@ export default function CobrancaPage() {
                                 control={form.control}
                                 name="producao"
                                 render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Produção</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Produção" {...field} />
-                                    </FormControl>
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Data de Venda</FormLabel>
+                                    <Popover>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                        <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                            "w-full pl-3 text-left font-normal",
+                                            !field.value && "text-muted-foreground"
+                                            )}
+                                        >
+                                            {field.value ? (
+                                            format(field.value, "PPP", { locale: ptBR })
+                                            ) : (
+                                            <span>Escolha uma data</span>
+                                            )}
+                                            <Calendar className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <CalendarComponent
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                        />
+                                    </PopoverContent>
+                                    </Popover>
                                     <FormMessage />
-                                    </FormItem>
+                                </FormItem>
                                 )}
                             />
                             <FormField
