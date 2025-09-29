@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
 import { gerentesPorDiretor, diretores } from '@/lib/cobrancaData';
+import { format } from 'date-fns';
 
 const PAGE_SIZE = 1000;
 
@@ -123,7 +124,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
         nome_cliente: ticketData.nome_cliente,
         cpf: ticketData.cpf,
         cota: ticketData.cota,
-        producao: ticketData.producao.toISOString(), // Send date in ISO format
+        producao: format(ticketData.producao, 'yyyy-MM-dd'),
         telefone: ticketData.telefone,
         email: ticketData.email,
         diretor: ticketData.diretor,

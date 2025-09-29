@@ -1,3 +1,4 @@
+
 export type TicketStatus = "Novo" | "Em Andamento" | "Ativo" | "Atrasado" | "Concluído" | "Porto Resolve" | "Suporte";
 export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Respondida" | "Resolvida" | "Dentro do prazo" | "Fora do prazo" | "Reabertura";
 export type RetornoComercialStatus = 'Tirou dúvidas' | 'Tentando contato' | 'Em andamento' | 'Revertido' | 'Não Revertido' | 'Sem retorno';
@@ -70,7 +71,7 @@ export interface CobrancaTicket {
   user_id?: string | null; // Who created the ticket
 }
 
-export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'status_retorno' | 'obs_retorno' | 'user_id' | 'email_gerente' | 'email_diretor' | 'protocolo' | 'created_at'> & { user_id: string };
+export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'status_retorno' | 'obs_retorno' | 'user_id' | 'email_gerente' | 'email_diretor' | 'protocolo' | 'created_at' | 'producao'> & { producao: Date; user_id: string };
 
 
 // Represents one row in the reason_assignments table for Suporte GRE
@@ -110,5 +111,3 @@ export interface PosContemplacaoTicket {
 }
 
 export type CreatePosContemplacaoTicket = Omit<PosContemplacaoTicket, 'id' | 'created_at' | 'protocolo' | 'status'> & { files?: FileList };
-
-    
