@@ -228,7 +228,7 @@ export function PosContemplacaoGestaoClient() {
         email: email, 
         name: findNameByEmail(email)
     }));
-    return [{ email: 'Todos', name: 'Todos' }, ...relatorObjects];
+    return [{ email: 'Todos', name: 'Todos os Relatores' }, ...relatorObjects];
   }, [tickets]);
 
 
