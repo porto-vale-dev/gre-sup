@@ -1,4 +1,5 @@
 
+
 export type TicketStatus = "Novo" | "Em Andamento" | "Ativo" | "Atrasado" | "Concluído" | "Porto Resolve" | "Suporte";
 export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Respondida" | "Resolvida" | "Dentro do prazo" | "Fora do prazo" | "Reabertura";
 export type RetornoComercialStatus = 'Tirou dúvidas' | 'Tentando contato' | 'Em andamento' | 'Revertido' | 'Não Revertido' | 'Sem retorno';
@@ -34,6 +35,7 @@ export interface Ticket {
   solution?: string | null;
   solution_files?: SolutionFile[] | null;
   comentarios?: string | null;
+  visualizado?: boolean;
 }
 
 export interface RetornoComercialComment {
@@ -111,3 +113,5 @@ export interface PosContemplacaoTicket {
 }
 
 export type CreatePosContemplacaoTicket = Omit<PosContemplacaoTicket, 'id' | 'created_at' | 'protocolo' | 'status'> & { files?: FileList };
+
+    

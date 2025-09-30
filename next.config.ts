@@ -15,9 +15,21 @@ const nextConfig: NextConfig = {
         destination: '/dashboard/archived',
       },
       {
+        source: '/suporte-gre/cobranca/dashboard',
+        destination: '/suporte-gre/cobranca/dashboard',
+      },
+      {
+        source: '/suporte-gre/cobranca/archived',
+        destination: '/suporte-gre/cobranca/archived',
+      },
+      {
+        source: '/pos-contemplacao/dashboard',
+        destination: '/pos-contemplacao/dashboard',
+      },
+      {
         source: '/pos-contemplacao/archived',
         destination: '/pos-contemplacao/archived',
-      }
+      },
     ];
   },
   typescript: {

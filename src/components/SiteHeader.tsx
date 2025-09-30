@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Ticket as TicketIcon } from 'lucide-react';
+import { NotificationBell } from './NotificationBell';
 
 
 // Import local images
@@ -63,6 +64,7 @@ export function SiteHeader() {
 
   // Check if we are in the ticket system area, accounting for rewrites
   const isTicketSystemArea = pathname.startsWith('/suporte-gre') || pathname.startsWith('/dashboard') || pathname.startsWith('/pos-contemplacao');
+
 
   if (isTicketSystemArea) {
     const isTicketDashboardArea = pathname.startsWith('/suporte-gre/painel') || pathname.startsWith('/dashboard');
@@ -120,6 +122,7 @@ export function SiteHeader() {
 
           {!isLoading && isAuthenticated && (
             <nav className="flex items-center gap-1 sm:gap-2">
+              <NotificationBell />
                {(isArchivedPage) && (
                  <Link href="/dashboard" passHref>
                   <Button variant="ghost" size="sm" aria-label="Painel de Tickets">
@@ -204,34 +207,37 @@ export function SiteHeader() {
         </Link>
 
         {!isLoading && isAuthenticated && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2">
-                <div className="text-right hidden sm:block">
-                  <p className="text-sm font-medium text-foreground -mb-1">{displayName}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{cargo}</p>
-                </div>
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback>{avatarFallback}</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <Link href="/atualizar-senha" passHref>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Redefinir Senha</span>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-sm font-medium text-foreground -mb-1">{displayName}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{cargo}</p>
+                  </div>
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback>{avatarFallback}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <Link href="/atualizar-senha" passHref>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Redefinir Senha</span>
+                  </DropdownMenuItem>
+                </Link>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
                 </DropdownMenuItem>
-              </Link>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Sair</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )}
       </div>
     </header>

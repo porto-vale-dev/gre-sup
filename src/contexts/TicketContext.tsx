@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -38,6 +39,7 @@ interface TicketContextType {
   fetchTickets: () => void;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
   createPreviewUrl: (filePath: string) => Promise<string | null>;
+  markTicketAsViewed: (ticketId: string) => Promise<void>;
   
   fetchReasonAssignments: () => Promise<ReasonAssignment[]>;
   updateReasonAssignment: (reason: string, usernames: string[]) => Promise<boolean>;
@@ -363,6 +365,23 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const markTicketAsViewed = async (ticketId: string) => {
+    const { error } = await supabase
+      .from('tickets')
+      .update({ visualizado: true })
+      .eq('id', ticketId);
+
+    if (error) {
+      console.error('Error marking ticket as viewed:', error.message);
+      toast({ title: 'Erro', description: 'Não foi possível marcar a notificação como lida.', variant: 'destructive'});
+    } else {
+      // Optimistically update the local state
+      setTickets(prevTickets => 
+        prevTickets.map(t => t.id === ticketId ? { ...t, visualizado: true } : t)
+      );
+    }
+  };
+
 
   const fetchReasonAssignments = async (): Promise<ReasonAssignment[]> => {
     const { data, error } = await supabase
@@ -459,6 +478,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         fetchTickets, 
         downloadFile,
         createPreviewUrl,
+        markTicketAsViewed,
         fetchReasonAssignments,
         updateReasonAssignment,
         fetchTicketReasons,
