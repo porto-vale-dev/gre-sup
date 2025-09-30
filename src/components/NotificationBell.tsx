@@ -1,8 +1,8 @@
 
 "use client";
 
-import React, { useMemo, useContext, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useMemo, useContext } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bell, Ticket, Briefcase, FileCheck, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,12 +68,11 @@ const getTicketDate = (ticket: CombinedTicket): string | null => {
             return ticket.created_at || ticket.data_atend;
         case 'pos-contemplacao':
             return ticket.created_at;
-        default:
-            return null;
     }
 }
 
 export function NotificationBell() {
+  const router = useRouter();
   const { user, username, email, cargo } = useAuth();
   const { tickets: supportTickets, markTicketAsViewed } = useTickets();
   const { tickets: cobrancaTickets } = useCobrancaTickets();
@@ -86,33 +85,26 @@ export function NotificationBell() {
     const combinedList: CombinedTicket[] = [];
 
     // Regra 1: Notificações de Suporte GRE
-    // Para o responsável, se o status for "Novo"
     supportTickets
-      .filter(t => t.responsible === username && t.status === 'Novo')
-      .forEach(t => combinedList.push({ ...t, type: 'support' }));
-    
-    // Para o criador do ticket, se o status for "Concluído" E `visualizado` for false ou nulo
-    supportTickets
-      .filter(t => t.user_id === user.id && t.status === 'Concluído' && (t.visualizado === false || t.visualizado === null))
+      .filter(t => 
+        // Para o responsável, se o status for "Novo"
+        (t.responsible === username && t.status === 'Novo') ||
+        // Para o criador, se o status for "Concluído" e não visualizado
+        (t.user_id === user.id && t.status === 'Concluído' && (t.visualizado === false || t.visualizado === null))
+      )
       .forEach(t => combinedList.push({ ...t, type: 'support' }));
 
-    // Regra 2: Notificações de Apoio Jacareí
-    // Para o criador do ticket, se o status for "Respondida"
+    // Regra 2: Notificações de Apoio Jacareí (Cobrança)
     cobrancaTickets
-      .filter(t => t.user_id === user.id && t.status === 'Respondida')
+      .filter(t => 
+        // Para o criador, se o status for "Respondida"
+        (t.user_id === user.id && t.status === 'Respondida') ||
+        // Para gerente/diretor, se o status for "Reabertura" OU "Aberta"
+        ((t.email_gerente === email || t.email_diretor === email) && (t.status === 'Reabertura' || t.status === 'Aberta'))
+      )
       .forEach(t => combinedList.push({ ...t, type: 'cobranca' }));
 
-    // Para gerente/diretor, se o status for "Reabertura"
-    cobrancaTickets
-        .filter(t => 
-            (t.email_gerente === email || t.email_diretor === email) &&
-            t.status === 'Reabertura'
-        )
-        .forEach(t => combinedList.push({ ...t, type: 'cobranca' }));
-
     // Regra 3: Notificações de Pós-Contemplação
-    // Para responsável, se status for "Aberto" ou "Urgente"
-    // Para relator, se status for "Retorno"
     posContemplacaoTickets
       .filter(t => 
           (t.responsavel === email && (t.status === 'Aberto' || t.status === 'Urgente')) ||
@@ -125,8 +117,8 @@ export function NotificationBell() {
         const dateAString = getTicketDate(a);
         const dateBString = getTicketDate(b);
 
-        if (!dateAString) return 1;
-        if (!dateBString) return -1;
+        if (!dateAString || !isValid(parseISO(dateAString))) return 1;
+        if (!dateBString || !isValid(parseISO(dateBString))) return -1;
         
         const dateA = new Date(dateAString).getTime();
         const dateB = new Date(dateBString).getTime();
@@ -143,8 +135,17 @@ export function NotificationBell() {
   const notificationCount = allNotifications.length;
   
   const handleTicketClick = (ticket: CombinedTicket) => {
-      const { type, ...ticketData } = ticket;
-      openModal(ticketData as any);
+    const managerRoles = ['gerente', 'gerente1', 'diretor'];
+    const isManager = cargo && managerRoles.includes(cargo);
+
+    // Redirect managers/directors to "My Tickets" for cobranca tickets
+    if (isManager && ticket.type === 'cobranca') {
+      router.push('/suporte-gre/minhas-solicitacoes');
+      return; 
+    }
+
+    const { type, ...ticketData } = ticket;
+    openModal(ticketData as any);
   };
 
   const dismissNotification = async (ticketId: string, event: React.MouseEvent) => {
@@ -173,7 +174,7 @@ export function NotificationBell() {
                 <ScrollArea className="h-[400px]">
                     {allNotifications.map((ticket) => {
                         const protocol = ticket.type === 'support' ? ticket.protocol : ticket.protocolo;
-                        const motivo = ticket.type === 'support' ? ticket.reason : ticket.motivo;
+                        const motivo = 'reason' in ticket ? ticket.reason : ticket.motivo;
                         const dateString = getTicketDate(ticket);
                         const formattedDate = dateString && isValid(parseISO(dateString)) ? format(parseISO(dateString), "dd/MM/yy 'às' HH:mm", { locale: ptBR }) : '';
                         const status = ticket.status as TicketStatus | CobrancaTicketStatus | PosContemplacaoTicketStatus;
