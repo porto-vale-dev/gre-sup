@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useMemo, useContext, useState } from 'react';
@@ -21,7 +20,7 @@ import {
 import { ScrollArea } from './ui/scroll-area';
 import { ModalContext } from './AppProviders';
 import type { Ticket as SupportTicket, CobrancaTicket, PosContemplacaoTicket, TicketStatus, CobrancaTicketStatus, PosContemplacaoTicketStatus } from '@/types';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from './ui/badge';
 
@@ -61,6 +60,12 @@ const panelInfo = {
     'pos-contemplacao': { icon: FileCheck, label: 'Pós-Contemplação', color: 'text-green-500' }
 };
 
+const getTicketDate = (ticket: CombinedTicket): string | null => {
+    if (ticket.type === 'support') return ticket.submission_date;
+    if (ticket.type === 'cobranca') return ticket.created_at || ticket.data_atend;
+    if (ticket.type === 'pos-contemplacao') return ticket.created_at;
+    return null;
+}
 
 export function NotificationBell() {
   const { user, username, email, cargo } = useAuth();
@@ -91,14 +96,13 @@ export function NotificationBell() {
       .filter(t => t.user_id === user.id && t.status === 'Respondida')
       .forEach(t => combinedList.push({ ...t, type: 'cobranca' }));
 
-    // Para gerente/diretor, se o status for "Aberta" ou "Reabertura"
+    // Para gerente/diretor, se o status for "Reabertura"
     cobrancaTickets
         .filter(t => 
             (t.email_gerente === email || t.email_diretor === email) &&
-            (t.status === 'Aberta' || t.status === 'Reabertura')
+            t.status === 'Reabertura'
         )
         .forEach(t => combinedList.push({ ...t, type: 'cobranca' }));
-
 
     // Regra 3: Notificações de Pós-Contemplação
     // Para responsável, se status for "Aberto" ou "Urgente"
@@ -112,8 +116,8 @@ export function NotificationBell() {
       
     // Sort by date, most recent first
     combinedList.sort((a, b) => {
-        const dateAString = 'created_at' in a ? (a.created_at || ('submission_date' in a ? a.submission_date : '')) : ('submission_date' in a ? a.submission_date : '');
-        const dateBString = 'created_at' in b ? (b.created_at || ('submission_date' in b ? b.submission_date : '')) : ('submission_date' in b ? b.submission_date : '');
+        const dateAString = getTicketDate(a);
+        const dateBString = getTicketDate(b);
 
         if (!dateAString) return 1;
         if (!dateBString) return -1;
@@ -164,8 +168,8 @@ export function NotificationBell() {
                     {allNotifications.map((ticket) => {
                         const protocol = 'protocolo' in ticket ? ticket.protocolo : ticket.protocol;
                         const motivo = 'motivo' in ticket ? ticket.motivo : ticket.reason;
-                        const dateString = 'created_at' in ticket ? (ticket.created_at || ('submission_date' in ticket ? ticket.submission_date : '')) : ticket.submission_date;
-                        const formattedDate = dateString ? format(parseISO(dateString), "dd/MM/yy 'às' HH:mm", { locale: ptBR }) : '';
+                        const dateString = getTicketDate(ticket);
+                        const formattedDate = dateString && isValid(parseISO(dateString)) ? format(parseISO(dateString), "dd/MM/yy 'às' HH:mm", { locale: ptBR }) : '';
                         const status = ticket.status as TicketStatus | CobrancaTicketStatus | PosContemplacaoTicketStatus;
                         
                         const isDismissable = ticket.type === 'support' && ticket.status === 'Concluído';
@@ -208,4 +212,3 @@ export function NotificationBell() {
     </DropdownMenu>
   );
 }
-
