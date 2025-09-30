@@ -61,10 +61,16 @@ const panelInfo = {
 };
 
 const getTicketDate = (ticket: CombinedTicket): string | null => {
-    if (ticket.type === 'support') return ticket.submission_date;
-    if (ticket.type === 'cobranca') return ticket.created_at || ticket.data_atend;
-    if (ticket.type === 'pos-contemplacao') return ticket.created_at;
-    return null;
+    switch(ticket.type) {
+        case 'support':
+            return ticket.submission_date;
+        case 'cobranca':
+            return ticket.created_at || ticket.data_atend;
+        case 'pos-contemplacao':
+            return ticket.created_at;
+        default:
+            return null;
+    }
 }
 
 export function NotificationBell() {
@@ -166,8 +172,8 @@ export function NotificationBell() {
              ) : (
                 <ScrollArea className="h-[400px]">
                     {allNotifications.map((ticket) => {
-                        const protocol = 'protocolo' in ticket ? ticket.protocolo : ticket.protocol;
-                        const motivo = 'motivo' in ticket ? ticket.motivo : ticket.reason;
+                        const protocol = ticket.type === 'support' ? ticket.protocol : ticket.protocolo;
+                        const motivo = ticket.type === 'support' ? ticket.reason : ticket.motivo;
                         const dateString = getTicketDate(ticket);
                         const formattedDate = dateString && isValid(parseISO(dateString)) ? format(parseISO(dateString), "dd/MM/yy 'às' HH:mm", { locale: ptBR }) : '';
                         const status = ticket.status as TicketStatus | CobrancaTicketStatus | PosContemplacaoTicketStatus;
