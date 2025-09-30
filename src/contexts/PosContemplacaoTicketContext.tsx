@@ -23,6 +23,7 @@ interface PosContemplacaoTicketContextType {
   fetchTickets: () => void;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
   createPreviewUrl: (filePath: string) => Promise<string | null>;
+  markTicketAsViewed: (ticketId: string) => Promise<void>;
 }
 
 const PosContemplacaoTicketContext = createContext<PosContemplacaoTicketContextType | undefined>(undefined);
@@ -271,11 +272,10 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
         }
       }
 
-      // 2. Delete the ticket from the database
-      const { error: deleteError } = await supabase
-        .from('tickets_poscontemplacao')
-        .delete()
-        .eq('id', ticketId);
+      // 2. Call the RPC function to delete the ticket from the database
+      const { error: deleteError } = await supabase.rpc('delete_pos_contemplacao_ticket', {
+        ticket_id_to_delete: ticketId
+      });
 
       if (deleteError) {
         throw deleteError;
@@ -334,6 +334,23 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
       return null;
     }
   };
+  
+  const markTicketAsViewed = async (ticketId: string) => {
+    const { error } = await supabase
+      .from('tickets_poscontemplacao')
+      .update({ visualizado: true })
+      .eq('id', ticketId);
+
+    if (error) {
+      console.error('Error marking Pós-Contemplação ticket as viewed:', error.message);
+      toast({ title: 'Erro', description: 'Não foi possível marcar a notificação como lida.', variant: 'destructive'});
+    } else {
+      // Optimistically update the local state
+      setTickets(prevTickets => 
+        prevTickets.map(t => t.id === ticketId ? { ...t, visualizado: true } : t)
+      );
+    }
+  };
 
 
   return (
@@ -347,7 +364,8 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
         getTicketById,
         fetchTickets,
         downloadFile,
-        createPreviewUrl
+        createPreviewUrl,
+        markTicketAsViewed,
     }}>
       {children}
     </PosContemplacaoTicketContext.Provider>

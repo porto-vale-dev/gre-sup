@@ -110,6 +110,7 @@ export interface PosContemplacaoTicket {
   file_path?: string | null;
   file_name?: string | null;
   data_limite?: string | null;
+  visualizado?: boolean | null;
 }
 
 export type CreatePosContemplacaoTicket = Omit<PosContemplacaoTicket, 'id' | 'created_at' | 'protocolo' | 'status'> & { files?: FileList };

@@ -74,9 +74,9 @@ const getTicketDate = (ticket: CombinedTicket): string | null => {
 export function NotificationBell() {
   const router = useRouter();
   const { user, username, email, cargo } = useAuth();
-  const { tickets: supportTickets, markTicketAsViewed } = useTickets();
+  const { tickets: supportTickets, markTicketAsViewed: markSupportTicketAsViewed } = useTickets();
   const { tickets: cobrancaTickets } = useCobrancaTickets();
-  const { tickets: posContemplacaoTickets } = usePosContemplacaoTickets();
+  const { tickets: posContemplacaoTickets, markTicketAsViewed: markPosContemplacaoTicketAsViewed } = usePosContemplacaoTickets();
   const { openModal } = useContext(ModalContext);
 
   const allNotifications = useMemo(() => {
@@ -108,7 +108,8 @@ export function NotificationBell() {
     posContemplacaoTickets
       .filter(t => 
           (t.responsavel === email && (t.status === 'Aberto' || t.status === 'Urgente')) ||
-          (t.relator === email && t.status === 'Retorno')
+          (t.relator === email && t.status === 'Retorno') ||
+          (t.relator === email && t.status === 'Concluído' && (t.visualizado === false || t.visualizado === null))
       )
       .forEach(t => combinedList.push({ ...t, type: 'pos-contemplacao' }));
       
@@ -138,19 +139,32 @@ export function NotificationBell() {
     const managerRoles = ['gerente', 'gerente1', 'diretor'];
     const isManager = cargo && managerRoles.includes(cargo);
 
-    // Redirect managers/directors to "My Tickets" for cobranca tickets
     if (isManager && ticket.type === 'cobranca') {
       router.push('/suporte-gre/minhas-solicitacoes');
       return; 
+    }
+    
+    if (ticket.type === 'pos-contemplacao' && ticket.status === 'Concluído') {
+        router.push('/pos-contemplacao/archived');
+        return;
+    }
+
+    if (isManager && ticket.type === 'support' && ticket.status === 'Concluído') {
+      router.push('/suporte-gre/minhas-solicitacoes');
+      return;
     }
 
     const { type, ...ticketData } = ticket;
     openModal(ticketData as any);
   };
 
-  const dismissNotification = async (ticketId: string, event: React.MouseEvent) => {
+  const dismissNotification = async (ticket: CombinedTicket, event: React.MouseEvent) => {
     event.stopPropagation();
-    await markTicketAsViewed(ticketId);
+    if(ticket.type === 'support') {
+      await markSupportTicketAsViewed(ticket.id);
+    } else if (ticket.type === 'pos-contemplacao') {
+      await markPosContemplacaoTicketAsViewed(ticket.id);
+    }
   }
   
   return (
@@ -179,7 +193,9 @@ export function NotificationBell() {
                         const formattedDate = dateString && isValid(parseISO(dateString)) ? format(parseISO(dateString), "dd/MM/yy 'às' HH:mm", { locale: ptBR }) : '';
                         const status = ticket.status as TicketStatus | CobrancaTicketStatus | PosContemplacaoTicketStatus;
                         
-                        const isDismissable = ticket.type === 'support' && ticket.status === 'Concluído';
+                        const isDismissable = 
+                          (ticket.type === 'support' && ticket.status === 'Concluído') || 
+                          (ticket.type === 'pos-contemplacao' && ticket.status === 'Concluído');
 
                         const PanelIcon = panelInfo[ticket.type].icon;
 
@@ -204,7 +220,7 @@ export function NotificationBell() {
                                         variant="ghost"
                                         size="icon"
                                         className="h-6 w-6 shrink-0"
-                                        onClick={(e) => dismissNotification(ticket.id, e)}
+                                        onClick={(e) => dismissNotification(ticket, e)}
                                         aria-label="Dispensar notificação"
                                     >
                                         <X className="h-4 w-4" />
