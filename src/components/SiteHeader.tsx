@@ -122,7 +122,7 @@ export function SiteHeader() {
 
           {!isLoading && isAuthenticated && (
             <nav className="flex items-center gap-1 sm:gap-2">
-              {!['gerente1', 'diretor'].includes(cargo || '') && <NotificationBell />}
+              {!['gerente1', 'diretor', 'colaborador'].includes(cargo || '') && <NotificationBell />}
                {(isArchivedPage) && (
                  <Link href="/dashboard" passHref>
                   <Button variant="ghost" size="sm" aria-label="Painel de Tickets">
@@ -208,7 +208,7 @@ export function SiteHeader() {
 
         {!isLoading && isAuthenticated && (
           <div className="flex items-center gap-2">
-            {!['gerente1', 'diretor'].includes(cargo || '') && <NotificationBell />}
+            {!['gerente1', 'diretor', 'colaborador'].includes(cargo || '') && <NotificationBell />}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
