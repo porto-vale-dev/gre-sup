@@ -106,7 +106,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
 
   const managerRoles = ['gerente', 'gerente1', 'diretor'];
   const effectiveCargo = userCargo || cargo;
-  const isManagerView = (isUserResponseView || (effectiveCargo && managerRoles.includes(effectiveCargo)));
+  const isManagerView = !!(isUserResponseView || (effectiveCargo && managerRoles.includes(effectiveCargo)));
   
   const allowedDeleteRoles = ['adm', 'greadmin'];
   const canDelete = cargo && allowedDeleteRoles.includes(cargo);
