@@ -423,6 +423,10 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteTicket = async (ticketId: string, filePath?: string | null) => {
+    const originalTickets = tickets;
+    // Optimistic update
+    setTickets(prevTickets => prevTickets.filter(t => t.id !== ticketId));
+
     try {
       if (filePath) {
         const { error: removeError } = await supabase.storage.from(COBRANCA_FILES_BUCKET).remove([filePath]);
@@ -441,9 +445,9 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       }
       
       toast({ title: "Ticket Excluído", description: "O ticket de apoio foi removido com sucesso." });
-      await fetchTickets();
 
     } catch (error: any) {
+      setTickets(originalTickets);
       toast({ title: "Erro ao Excluir", description: `Não foi possível excluir o ticket: ${error.message}`, variant: "destructive" });
       console.error("Error deleting cobranca ticket:", error);
     }

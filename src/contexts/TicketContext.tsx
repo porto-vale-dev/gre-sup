@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type { ReactNode } from 'react';
@@ -321,6 +320,10 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   };
   
   const deleteTicket = async (ticketId: string, filePaths?: { solution_files?: SolutionFile[] | null, file_path?: string | null, file_name?: string | null }) => {
+    const originalTickets = tickets;
+    // Optimistic update: remove the ticket from the UI immediately
+    setTickets(prevTickets => prevTickets.filter(t => t.id !== ticketId));
+
     try {
       // 1. Delete associated files
       const pathsToDelete: string[] = [];
@@ -345,6 +348,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
           .remove(pathsToDelete);
         
         if (removeError) {
+          // Log error but don't block ticket deletion
           console.error(`Error deleting files for ticket ${ticketId}:`, removeError);
           toast({ title: "Erro ao Excluir Arquivos", description: "Não foi possível remover os anexos, mas a exclusão do ticket continuará.", variant: "destructive" });
         }
@@ -356,13 +360,15 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       });
 
       if (deleteError) {
-        throw deleteError;
+        throw deleteError; // This will be caught by the catch block
       }
       
       toast({ title: "Ticket Excluído", description: "O ticket foi removido com sucesso." });
-      await fetchTickets();
+      // No need to fetchTickets here, UI is already updated.
 
     } catch (error: any) {
+        // If an error occurs, revert the optimistic update
+        setTickets(originalTickets);
         toast({ title: "Erro ao Excluir", description: `Não foi possível excluir o ticket: ${error.message}`, variant: "destructive" });
         console.error("Error deleting ticket:", error);
     }
