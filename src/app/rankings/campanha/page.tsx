@@ -51,7 +51,7 @@ export default function CampanhaPage() {
       <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden">
         <iframe
           title="Ranking Campanhas"
-          src="https://app.powerbi.com/view?r=eyJrIjoiNGNjNzFlMTctZWUzNS00MTRhLWFjN2QtYjdjZGQ5MDU2YTY1IiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
+          src="https://app.powerbi.com/view?r=eyJrIjoiMDk5YWVjYzQtM2YxMi00OTQ4LTg0NmEtOTk4ZDY1YjhmY2QzIiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
           allowFullScreen
           className="absolute top-0 left-0 w-full h-full border-0"
         ></iframe>
