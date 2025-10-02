@@ -35,6 +35,7 @@ interface TicketContextType {
   updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
   updateTicketSolution: (ticketId: string, solution: string, newFiles: File[], comentarios?: string) => Promise<boolean>;
   updateAndCompleteTicket: (ticketId: string, solution: string, newFiles: File[], comentarios?: string) => Promise<boolean>;
+  deleteTicket: (ticketId: string, filePaths?: { solution_files?: SolutionFile[] | null, file_path?: string | null, file_name?: string | null }) => Promise<void>;
   getTicketById: (ticketId: string) => Ticket | undefined;
   fetchTickets: () => void;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
@@ -318,6 +319,54 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         return false;
     }
   };
+  
+  const deleteTicket = async (ticketId: string, filePaths?: { solution_files?: SolutionFile[] | null, file_path?: string | null, file_name?: string | null }) => {
+    try {
+      // 1. Delete associated files
+      const pathsToDelete: string[] = [];
+      if (filePaths?.solution_files) {
+        pathsToDelete.push(...filePaths.solution_files.map(f => f.file_path));
+      }
+      if (filePaths?.file_path && filePaths?.file_name) {
+          try {
+            const originalFileNames = JSON.parse(filePaths.file_name);
+            if(Array.isArray(originalFileNames)) {
+              originalFileNames.forEach(name => pathsToDelete.push(`${filePaths.file_path}/${name}`));
+            }
+          } catch(e) {
+            // Fallback for single file
+            pathsToDelete.push(filePaths.file_path);
+          }
+      }
+
+      if (pathsToDelete.length > 0) {
+        const { error: removeError } = await supabase.storage
+          .from(TICKET_FILES_BUCKET)
+          .remove(pathsToDelete);
+        
+        if (removeError) {
+          console.error(`Error deleting files for ticket ${ticketId}:`, removeError);
+          toast({ title: "Erro ao Excluir Arquivos", description: "Não foi possível remover os anexos, mas a exclusão do ticket continuará.", variant: "destructive" });
+        }
+      }
+
+      // 2. Call RPC to delete the ticket
+      const { error: deleteError } = await supabase.rpc('delete_ticket_gre', {
+        ticket_id_to_delete: ticketId
+      });
+
+      if (deleteError) {
+        throw deleteError;
+      }
+      
+      toast({ title: "Ticket Excluído", description: "O ticket foi removido com sucesso." });
+      await fetchTickets();
+
+    } catch (error: any) {
+        toast({ title: "Erro ao Excluir", description: `Não foi possível excluir o ticket: ${error.message}`, variant: "destructive" });
+        console.error("Error deleting ticket:", error);
+    }
+  };
 
 
   const getTicketById = (ticketId: string): Ticket | undefined => {
@@ -474,6 +523,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         updateTicketResponsible,
         updateTicketSolution,
         updateAndCompleteTicket,
+        deleteTicket,
         getTicketById, 
         fetchTickets, 
         downloadFile,

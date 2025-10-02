@@ -18,8 +18,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { diretores, gerentesPorDiretor, motivosCobranca, type Gerente } from '@/lib/cobrancaData';
-import { FileText, Send, Loader2, Calendar } from 'lucide-react';
+import { diretores, gerentesPorDiretor, type Gerente } from '@/lib/cobrancaData';
+import { FileText, Send, Loader2, Calendar, UploadCloud, Paperclip, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +27,7 @@ import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'; // Renamed to avoid conflict
 import { cn } from '@/lib/utils';
+import { motivosCobranca } from '@/lib/cobrancaData';
 
 const cobrancaTicketSchema = z.object({
     nome_cliente: z.string().min(1, { message: "Nome do cliente é obrigatório." }),
@@ -41,6 +42,7 @@ const cobrancaTicketSchema = z.object({
     gerente: z.string().min(1, { message: "Selecione um gerente." }),
     motivo: z.string().min(1, { message: "Selecione um motivo." }),
     observacoes: z.string().optional(),
+    files: z.custom<FileList>().optional(),
 });
 
 type CobrancaTicketFormData = z.infer<typeof cobrancaTicketSchema>;
@@ -137,6 +139,7 @@ export default function CobrancaPage() {
         ...data,
         observacoes: data.observacoes || '',
         user_id: user.id,
+        files: data.files ? Array.from(data.files) : undefined,
     });
     
     if (success) {
@@ -146,6 +149,25 @@ export default function CobrancaPage() {
     
     setIsSubmitting(false);
   }
+  
+  const selectedFiles = form.watch("files");
+  const selectedFilesArray = selectedFiles ? Array.from(selectedFiles) : [];
+  
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+        form.setValue("files", files, { shouldValidate: true });
+    }
+  };
+
+  const removeFile = (indexToRemove: number) => {
+    const currentFiles = selectedFilesArray;
+    const updatedFiles = currentFiles.filter((_, index) => index !== indexToRemove);
+    const dataTransfer = new DataTransfer();
+    updatedFiles.forEach(file => dataTransfer.items.add(file));
+    form.setValue("files", dataTransfer.files, { shouldValidate: true });
+  };
+
 
   return (
     <div className="py-8">
@@ -389,6 +411,53 @@ export default function CobrancaPage() {
                                 </FormItem>
                             )}
                         />
+                         <FormField
+                            control={form.control}
+                            name="files" 
+                            render={({ fieldState }) => ( 
+                                <FormItem>
+                                <FormLabel>Anexar Arquivos (Opcional)</FormLabel>
+                                <FormControl>
+                                    <div className="relative">
+                                        <Input 
+                                        id="file-upload" 
+                                        type="file" 
+                                        multiple
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        onChange={handleFileChange}
+                                        />
+                                        <Label 
+                                        htmlFor="file-upload"
+                                        className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-muted rounded-md cursor-pointer hover:border-primary transition-colors"
+                                        >
+                                        <UploadCloud className="h-6 w-6 text-muted-foreground" />
+                                        <span className="text-muted-foreground">
+                                            Clique para selecionar ou arraste os arquivos
+                                        </span>
+                                        </Label>
+                                    </div>
+                                </FormControl>
+                                {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
+                                
+                                {selectedFilesArray.length > 0 && (
+                                    <div className="space-y-2 pt-2">
+                                        <p className="text-sm font-medium text-muted-foreground">Arquivos selecionados:</p>
+                                        {selectedFilesArray.map((file, index) => (
+                                        <div key={index} className="flex items-center justify-between p-2 text-sm border rounded-md bg-muted/50">
+                                            <div className="flex items-center gap-2 truncate">
+                                                <Paperclip className="h-4 w-4 shrink-0" />
+                                                <span className="truncate">{file.name}</span>
+                                            </div>
+                                            <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeFile(index)}>
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        ))}
+                                    </div>
+                                )}
+                                </FormItem>
+                            )}
+                            />
                     </div>
                     <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting || isLoading}>
                         {(isSubmitting || isLoading) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}

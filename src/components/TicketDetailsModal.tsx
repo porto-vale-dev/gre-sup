@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Ticket, SolutionFile } from '@/types';
@@ -13,13 +14,24 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, CheckCircle, MessageCircle } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, CheckCircle, MessageCircle, Trash2, Loader2 } from 'lucide-react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
@@ -96,7 +108,7 @@ const FilePreviewItem: React.FC<{
 };
 
 export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isReadOnlyView = false }: TicketDetailsModalProps) {
-  const { downloadFile, createPreviewUrl, updateTicketSolution, getTicketById, updateAndCompleteTicket } = useTickets();
+  const { downloadFile, createPreviewUrl, updateTicketSolution, getTicketById, updateAndCompleteTicket, deleteTicket } = useTickets();
   const { toast } = useToast();
   const { cargo } = useAuth();
   
@@ -106,9 +118,13 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
   const [comentarios, setComentarios] = useState('');
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const allowedRoles = ['adm', 'greadmin', 'gre'];
   const canViewInternalComments = !isReadOnlyView && cargo && allowedRoles.includes(cargo);
+  
+  const allowedDeleteRoles = ['adm', 'greadmin'];
+  const canDelete = cargo && allowedDeleteRoles.includes(cargo);
 
 
   useEffect(() => {
@@ -211,6 +227,18 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
     } finally {
         setIsSaving(false);
     }
+  };
+
+  const handleDelete = async () => {
+    if (!ticket) return;
+    setIsDeleting(true);
+    await deleteTicket(ticket.id, {
+      solution_files: ticket.solution_files,
+      file_path: ticket.file_path,
+      file_name: ticket.file_name,
+    });
+    setIsDeleting(false);
+    onClose();
   };
 
 
@@ -418,24 +446,50 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
           </div>
         </div>
         
-        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-wrap sm:flex-nowrap justify-center sm:justify-end items-center gap-2 shrink-0">
-            <div className="w-full sm:w-auto">
-              <Button variant="secondary" onClick={handleWhatsAppClick} className="w-full" disabled={isReadOnlyView}>
+        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-wrap justify-between items-center gap-2 shrink-0">
+            <div className="flex gap-2">
+              {canDelete && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="icon" disabled={isDeleting || isSaving}>
+                        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não pode ser desfeita. Isso excluirá permanentemente o ticket e todos os seus anexos.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                          Sim, excluir ticket
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+              )}
+               <Button variant="secondary" onClick={handleWhatsAppClick} disabled={isReadOnlyView}>
                 <WhatsAppIcon className="mr-2 h-4 w-4"/>
                 Continuar no WhatsApp
               </Button>
             </div>
-            <div className="flex-grow hidden sm:block" />
             <div className="flex gap-2 w-full sm:w-auto">
               <Button variant="outline" onClick={onClose} className="w-full">Fechar</Button>
-              <Button onClick={handleSaveSolution} disabled={isSaving || isReadOnlyView} className="w-full">
-                <Save className="mr-2 h-4 w-4" />
-                {isSaving ? 'Salvando...' : 'Salvar'}
-              </Button>
-               <Button onClick={handleSaveAndComplete} disabled={isSaving || isReadOnlyView} className="w-full bg-green-600 hover:bg-green-700">
-                <CheckCircle className="mr-2 h-4 w-4" />
-                {isSaving ? 'Concluindo...' : 'Salvar e Concluir'}
-              </Button>
+              {!isReadOnlyView && (
+                <>
+                  <Button onClick={handleSaveSolution} disabled={isSaving} className="w-full">
+                    <Save className="mr-2 h-4 w-4" />
+                    {isSaving ? 'Salvando...' : 'Salvar'}
+                  </Button>
+                  <Button onClick={handleSaveAndComplete} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700">
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    {isSaving ? 'Concluindo...' : 'Salvar e Concluir'}
+                  </Button>
+                </>
+              )}
             </div>
         </DialogFooter>
       </DialogContent>

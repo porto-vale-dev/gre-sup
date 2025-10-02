@@ -14,13 +14,24 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, MessageCircle } from 'lucide-react';
+import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, MessageCircle, Trash2 } from 'lucide-react';
 import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { RETORNO_COMERCIAL_STATUSES, diretores, gerentesPorDiretor, type Gerente } from '@/lib/cobrancaData';
@@ -32,6 +43,7 @@ interface CobrancaTicketDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   isUserResponseView?: boolean;
+  userCargo?: string | null;
 }
 
 const parseComments = (obs: string | RetornoComercialComment[] | null | undefined): RetornoComercialComment[] => {
@@ -69,10 +81,10 @@ const formatProducaoDate = (dateString: string): string => {
 };
 
 
-export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isUserResponseView = false }: CobrancaTicketDetailsModalProps) {
-  const { getTicketById, updateTicketDetailsAndRetorno, updateTicket, saveUserResponse, updateAndResolveTicket } = useCobrancaTickets();
+export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isUserResponseView = false, userCargo }: CobrancaTicketDetailsModalProps) {
+  const { getTicketById, updateTicketDetailsAndRetorno, updateAndResolveTicket, saveUserResponse, deleteTicket } = useCobrancaTickets();
   const { toast } = useToast();
-  const { username } = useAuth();
+  const { username, cargo } = useAuth();
   
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
 
@@ -90,6 +102,15 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
   
   const [isSaving, setIsSaving] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const managerRoles = ['gerente', 'gerente1', 'diretor'];
+  const effectiveCargo = userCargo || cargo;
+  const isManagerView = (isUserResponseView || (effectiveCargo && managerRoles.includes(effectiveCargo)));
+  
+  const allowedDeleteRoles = ['adm', 'greadmin'];
+  const canDelete = cargo && allowedDeleteRoles.includes(cargo);
+
 
   useEffect(() => {
     if (ticket) {
@@ -172,10 +193,20 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
     setIsResolving(false);
   };
 
+  const handleDelete = async () => {
+    if (!ticket) return;
+    setIsDeleting(true);
+    await deleteTicket(ticket.id, ticket.file_path);
+    setIsDeleting(false);
+    onClose();
+  };
+
   if (!ticket) return null;
 
   const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
-  const isRetornoDisabled = isSaving || !isUserResponseView;
+  const isRetornoDisabled = isSaving;
+  const isDetailsDisabled = isSaving || isResolving || isManagerView;
+  
   const submissionDateString = ticket.created_at || ticket.data_atend;
   const submissionDate = submissionDateString ? parseISO(submissionDateString) : null;
   const formattedDate = submissionDate && isValid(submissionDate) 
@@ -227,7 +258,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                 )}
                  <div className="space-y-1">
                   <Label htmlFor="diretor-select" className="font-medium text-muted-foreground flex items-center gap-1.5"><User className="h-4 w-4" />Diretor:</Label>
-                  <Select value={diretor} onValueChange={handleDiretorChange} disabled={isUserResponseView}>
+                  <Select value={diretor} onValueChange={handleDiretorChange} disabled={isDetailsDisabled}>
                     <SelectTrigger id="diretor-select">
                       <SelectValue placeholder="Selecione o diretor" />
                     </SelectTrigger>
@@ -240,7 +271,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                 </div>
                  <div className="space-y-1">
                   <Label htmlFor="gerente-select" className="font-medium text-muted-foreground flex items-center gap-1.5"><Users className="h-4 w-4" />Gerente:</Label>
-                  <Select value={gerente} onValueChange={setGerente} disabled={availableGerentes.length === 0 || isUserResponseView}>
+                  <Select value={gerente} onValueChange={setGerente} disabled={availableGerentes.length === 0 || isDetailsDisabled}>
                     <SelectTrigger id="gerente-select">
                       <SelectValue placeholder="Selecione o gerente" />
                     </SelectTrigger>
@@ -274,7 +305,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                   className="whitespace-pre-wrap break-words bg-background p-3 rounded-md min-h-[100px] resize-y"
                   value={observacoes}
                   onChange={(e) => setObservacoes(e.target.value)}
-                  disabled={isUserResponseView}
+                  disabled={isDetailsDisabled}
                 />
               </div>
 
@@ -334,7 +365,33 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
         </div>
         
         <DialogFooter className="px-6 pb-6 pt-4 border-t flex-wrap sm:flex-nowrap justify-between items-center gap-2 shrink-0">
-            {isUserResponseView ? (
+            <div>
+              {canDelete && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={isDeleting}>
+                      {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                      Excluir
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta ação não pode ser desfeita. Isso excluirá permanentemente o ticket e todos os seus anexos.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                        Sim, excluir ticket
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+            {isManagerView ? (
                 <>
                     <div className="flex-grow" />
                     <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">Fechar</Button>
@@ -349,8 +406,8 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                     <div className="flex gap-2 w-full sm:w-auto">
                       <Button variant="outline" onClick={onClose} className="w-full">Fechar</Button>
                       <Button onClick={handleSave} disabled={isSaving || isResolving} className="w-full">
-                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        {isSaving ? 'Salvando...' : 'Salvar Detalhes'}
+                        {isSaving && !isResolving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {isSaving && !isResolving ? 'Salvando...' : 'Salvar Detalhes'}
                       </Button>
                        <Button onClick={handleMarkAsResolved} disabled={isResolving || isSaving} className="w-full bg-green-600 hover:bg-green-700">
                         {isResolving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}

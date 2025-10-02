@@ -11,6 +11,7 @@ import { useAuth } from './AuthContext';
 import { gerentesPorDiretor, diretores } from '@/lib/cobrancaData';
 import { format } from 'date-fns';
 
+const COBRANCA_FILES_BUCKET = 'cobranca-files';
 const PAGE_SIZE = 1000;
 
 interface CobrancaTicketContextType {
@@ -30,6 +31,7 @@ interface CobrancaTicketContextType {
     commentText: string,
     author: string
   ) => Promise<boolean>;
+  deleteTicket: (ticketId: string, filePath?: string | null) => Promise<void>;
   getTicketById: (ticketId: string) => CobrancaTicket | undefined;
   fetchTickets: () => void;
 }
@@ -119,22 +121,41 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
 
       const gerenteEmail = gerenteData.email;
       const celularGerente = gerenteData.celular;
+
+      let filePath: string | null = null;
+      let fileName: string | null = null;
+      
+      if (ticketData.files && ticketData.files.length > 0) {
+          const folderPath = `public/${crypto.randomUUID()}`;
+          const uploadedFileNames: string[] = [];
+          
+          for (const file of ticketData.files) {
+              const pathInBucket = `${folderPath}/${file.name}`;
+              const { error: uploadError } = await supabase.storage
+                  .from(COBRANCA_FILES_BUCKET)
+                  .upload(pathInBucket, file);
+              
+              if (uploadError) {
+                  throw new Error(`Erro no upload do arquivo ${file.name}: ${uploadError.message}`);
+              }
+              uploadedFileNames.push(file.name);
+          }
+          
+          filePath = folderPath;
+          fileName = JSON.stringify(uploadedFileNames);
+      }
+
+      const { files: _, ...restOfTicketData } = ticketData;
       
       const payload = {
-        nome_cliente: ticketData.nome_cliente,
-        cpf: ticketData.cpf,
-        cota: ticketData.cota,
+        ...restOfTicketData,
         producao: format(ticketData.producao, 'yyyy-MM-dd'),
-        telefone: ticketData.telefone,
-        email: ticketData.email,
-        diretor: ticketData.diretor,
-        gerente: ticketData.gerente,
-        motivo: ticketData.motivo,
-        observacoes: ticketData.observacoes,
         user_id: user.id,
         email_gerente: gerenteEmail,
         email_diretor: diretorEmail,
         status: 'Aberta' as CobrancaTicketStatus,
+        file_path: filePath,
+        file_name: fileName,
       };
 
       const { data: newTicketData, error: insertError } = await supabase
@@ -401,6 +422,33 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       }
   };
 
+  const deleteTicket = async (ticketId: string, filePath?: string | null) => {
+    try {
+      if (filePath) {
+        const { error: removeError } = await supabase.storage.from(COBRANCA_FILES_BUCKET).remove([filePath]);
+        if (removeError) {
+          console.error(`Error deleting files for ticket ${ticketId}:`, removeError);
+          toast({ title: "Erro ao Excluir Arquivos", description: "Não foi possível remover os anexos, mas a exclusão do ticket continuará.", variant: "destructive" });
+        }
+      }
+
+      const { error: deleteError } = await supabase.rpc('delete_ticket_cobranca', {
+        ticket_id_to_delete: ticketId
+      });
+
+      if (deleteError) {
+        throw deleteError;
+      }
+      
+      toast({ title: "Ticket Excluído", description: "O ticket de apoio foi removido com sucesso." });
+      await fetchTickets();
+
+    } catch (error: any) {
+      toast({ title: "Erro ao Excluir", description: `Não foi possível excluir o ticket: ${error.message}`, variant: "destructive" });
+      console.error("Error deleting cobranca ticket:", error);
+    }
+  };
+
 
   const getTicketById = (ticketId: string): CobrancaTicket | undefined => {
     return tickets.find(ticket => ticket.id === ticketId);
@@ -417,6 +465,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
         updateAndResolveTicket,
         updateTicketDetailsAndRetorno,
         saveUserResponse,
+        deleteTicket,
         getTicketById,
         fetchTickets, 
     }}>

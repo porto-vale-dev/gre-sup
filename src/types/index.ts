@@ -71,9 +71,11 @@ export interface CobrancaTicket {
   // Controle
   status: CobrancaTicketStatus;
   user_id?: string | null; // Who created the ticket
+  file_path?: string | null;
+  file_name?: string | null;
 }
 
-export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'status_retorno' | 'obs_retorno' | 'user_id' | 'email_gerente' | 'email_diretor' | 'protocolo' | 'created_at' | 'producao'> & { producao: Date; user_id: string };
+export type CreateCobrancaTicket = Omit<CobrancaTicket, 'id' | 'data_atend' | 'status' | 'status_retorno' | 'obs_retorno' | 'user_id' | 'email_gerente' | 'email_diretor' | 'protocolo' | 'created_at' | 'producao' | 'file_path' | 'file_name'> & { producao: Date; user_id: string; files?: File[] };
 
 
 // Represents one row in the reason_assignments table for Suporte GRE
