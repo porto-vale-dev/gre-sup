@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type { CobrancaTicket, RetornoComercialStatus, RetornoComercialComment } from '@/types';
@@ -31,11 +30,56 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, MessageCircle, Trash2 } from 'lucide-react';
+import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, MessageCircle, Trash2, Paperclip, File, Eye, Download } from 'lucide-react';
 import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { RETORNO_COMERCIAL_STATUSES, diretores, gerentesPorDiretor, type Gerente } from '@/lib/cobrancaData';
 import { useAuth } from '@/contexts/AuthContext';
+
+const FilePreviewItem: React.FC<{
+  file: { file_path: string; file_name: string; };
+  onDownload: (filePath: string, fileName: string) => Promise<void>;
+  onPreview: (filePath: string) => Promise<string | null>;
+}> = ({ file, onDownload, onPreview }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+
+  const isPreviewable = file.file_name && /\.(pdf|jpg|jpeg|png|gif|txt)$/i.test(file.file_name);
+
+  const handlePreviewClick = async () => {
+    setIsPreviewing(true);
+    const url = await onPreview(file.file_path);
+    setIsPreviewing(false);
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleDownloadClick = async () => {
+    setIsDownloading(true);
+    await onDownload(file.file_path, file.file_name);
+    setIsDownloading(false);
+  };
+
+  return (
+    <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+      <div className="flex items-center gap-2 truncate">
+        <File className="h-4 w-4 shrink-0" />
+        <span className="truncate" title={file.file_name}>{file.file_name}</span>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        {isPreviewable && (
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handlePreviewClick} disabled={isPreviewing}>
+            <Eye className="h-4 w-4" />
+          </Button>
+        )}
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDownloadClick} disabled={isDownloading}>
+          <Download className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 
 interface CobrancaTicketDetailsModalProps {
@@ -82,7 +126,7 @@ const formatProducaoDate = (dateString: string): string => {
 
 
 export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isUserResponseView = false, userCargo }: CobrancaTicketDetailsModalProps) {
-  const { getTicketById, updateTicketDetailsAndRetorno, updateAndResolveTicket, saveUserResponse, deleteTicket } = useCobrancaTickets();
+  const { getTicketById, updateTicketDetailsAndRetorno, updateAndResolveTicket, saveUserResponse, deleteTicket, downloadFile, createPreviewUrl } = useCobrancaTickets();
   const { toast } = useToast();
   const { username, cargo } = useAuth();
   
@@ -202,6 +246,33 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
   };
 
   if (!ticket) return null;
+  
+  const renderAttachments = () => {
+    if (!ticket.file_path || !ticket.file_name) {
+      return null;
+    }
+
+    try {
+      const fileNames = JSON.parse(ticket.file_name);
+      if (Array.isArray(fileNames) && typeof ticket.file_path === 'string') {
+        return (
+          <div className="space-y-2">
+            {fileNames.map((name: string, index: number) => (
+              <FilePreviewItem 
+                key={index}
+                file={{ file_path: `${ticket.file_path}/${name}`, file_name: name }}
+                onDownload={downloadFile} 
+                onPreview={createPreviewUrl} 
+              />
+            ))}
+          </div>
+        );
+      }
+    } catch (e) {
+       // Fallback for non-JSON or other errors (e.g., old single file format)
+    }
+    return null;
+  };
 
   const protocolDisplay = ticket.protocolo ? String(ticket.protocolo).padStart(4, '0') : ticket.id.substring(0, 8);
   const isRetornoDisabled = isSaving;
@@ -308,6 +379,16 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                   disabled={isDetailsDisabled}
                 />
               </div>
+
+               {ticket.file_path && ticket.file_name && (
+                <>
+                  <Separator />
+                  <div>
+                    <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Paperclip className="h-4 w-4" />Arquivos Anexados:</strong>
+                    {renderAttachments()}
+                  </div>
+                </>
+              )}
 
             </div>
 

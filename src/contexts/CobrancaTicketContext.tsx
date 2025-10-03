@@ -34,6 +34,8 @@ interface CobrancaTicketContextType {
   deleteTicket: (ticketId: string, filePath?: string | null) => Promise<void>;
   getTicketById: (ticketId: string) => CobrancaTicket | undefined;
   fetchTickets: () => void;
+  downloadFile: (filePath: string, fileName: string) => Promise<void>;
+  createPreviewUrl: (filePath: string) => Promise<string | null>;
 }
 
 const CobrancaTicketContext = createContext<CobrancaTicketContextType | undefined>(undefined);
@@ -452,6 +454,47 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       console.error("Error deleting cobranca ticket:", error);
     }
   };
+  
+  const downloadFile = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage.from(COBRANCA_FILES_BUCKET).download(filePath);
+      if (error) throw error;
+      
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast({ title: "Download Iniciado", description: `Baixando ${fileName}...` });
+    } catch (error: any) {
+        toast({ title: "Erro no Download", description: `Não foi possível baixar o arquivo: ${error.message || "Erro desconhecido."}`, variant: "destructive" });
+        console.error("Error downloading file:", error);
+    }
+  };
+
+  const createPreviewUrl = async (filePath: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.storage
+        .from(COBRANCA_FILES_BUCKET)
+        .createSignedUrl(filePath, 300); // 5 minute link
+
+      if (error) {
+        throw error;
+      }
+      return data.signedUrl;
+    } catch (error: any) {
+      console.error("Error creating signed URL:", error);
+      toast({
+        title: "Erro ao Gerar Link",
+        description: `Não foi possível criar o link de visualização: ${error.message}`,
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
 
 
   const getTicketById = (ticketId: string): CobrancaTicket | undefined => {
@@ -472,6 +515,8 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
         deleteTicket,
         getTicketById,
         fetchTickets, 
+        downloadFile,
+        createPreviewUrl,
     }}>
       {children}
     </CobrancaTicketContext.Provider>
