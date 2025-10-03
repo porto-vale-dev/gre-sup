@@ -28,13 +28,17 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, MessageCircle, Trash2, Paperclip, File, Eye, Download } from 'lucide-react';
+import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, MessageCircle, Trash2, Paperclip, File, Eye, Download, Calendar as CalendarIconLucide } from 'lucide-react';
 import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { RETORNO_COMERCIAL_STATUSES, diretores, gerentesPorDiretor, type Gerente } from '@/lib/cobrancaData';
 import { useAuth } from '@/contexts/AuthContext';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 const FilePreviewItem: React.FC<{
   file: { file_path: string; file_name: string; };
@@ -106,24 +110,24 @@ const parseComments = (obs: string | RetornoComercialComment[] | null | undefine
     return [];
 }
 
-const formatProducaoDate = (dateString: string): string => {
-  try {
-    // Check if the date is already in dd/MM/yyyy format
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
-      return dateString;
-    }
-    // Try to parse it as an ISO date
-    const date = parseISO(dateString);
-    if (isValid(date)) {
-      return format(date, 'dd/MM/yyyy', { locale: ptBR });
-    }
-  } catch (error) {
-    // If parsing fails, return the original string
-    return dateString;
+const formatCpfCnpj = (value: string) => {
+  const cleanedValue = value.replace(/\D/g, '');
+  if (cleanedValue.length <= 11) {
+    return cleanedValue.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  } else {
+    return cleanedValue.substring(0, 14).replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2');
   }
-  return dateString;
 };
 
+const formatPhone = (value: string) => {
+  const cleanedValue = value.replace(/\D/g, '');
+  const length = cleanedValue.length;
+  if (length <= 2) return `(${cleanedValue}`;
+  let formatted = `(${cleanedValue.substring(0, 2)}) `;
+  if (length <= 6) return formatted + cleanedValue.substring(2);
+  if (length <= 10) return formatted + `${cleanedValue.substring(2, 6)}-${cleanedValue.substring(6)}`;
+  return formatted + `${cleanedValue.substring(2, 7)}-${cleanedValue.substring(7, 11)}`;
+};
 
 export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isUserResponseView = false, userCargo }: CobrancaTicketDetailsModalProps) {
   const { getTicketById, updateTicketDetailsAndRetorno, updateAndResolveTicket, saveUserResponse, deleteTicket, downloadFile, createPreviewUrl } = useCobrancaTickets();
@@ -133,6 +137,13 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
 
   // State for editable fields
+  const [nomeCliente, setNomeCliente] = useState(ticket?.nome_cliente || '');
+  const [cpf, setCpf] = useState(ticket?.cpf || '');
+  const [cota, setCota] = useState(ticket?.cota || '');
+  const [producao, setProducao] = useState<Date | undefined>(undefined);
+  const [telefone, setTelefone] = useState(ticket?.telefone || '');
+  const [email, setEmail] = useState(ticket?.email || '');
+
   const [diretor, setDiretor] = useState(ticket?.diretor || '');
   const [gerente, setGerente] = useState(ticket?.gerente || '');
   const [observacoes, setObservacoes] = useState(ticket?.observacoes || '');
@@ -158,6 +169,13 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
 
   useEffect(() => {
     if (ticket) {
+      setNomeCliente(ticket.nome_cliente);
+      setCpf(ticket.cpf);
+      setCota(ticket.cota);
+      setProducao(ticket.producao ? parseISO(ticket.producao) : undefined);
+      setTelefone(ticket.telefone);
+      setEmail(ticket.email);
+
       setDiretor(ticket.diretor);
       setGerente(ticket.gerente);
       setObservacoes(ticket.observacoes || '');
@@ -188,7 +206,17 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
 
     const success = await updateTicketDetailsAndRetorno(
         ticket.id, 
-        { diretor, gerente, observacoes },
+        { 
+          diretor, 
+          gerente, 
+          observacoes,
+          nome_cliente: nomeCliente,
+          cpf,
+          cota,
+          producao: producao ? format(producao, 'yyyy-MM-dd') : null,
+          telefone,
+          email
+        },
     );
 
     if(success) {
@@ -228,6 +256,12 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
         diretor,
         gerente,
         observacoes,
+        nome_cliente: nomeCliente,
+        cpf,
+        cota,
+        producao: producao ? format(producao, 'yyyy-MM-dd') : null,
+        telefone,
+        email
     });
     
     if (success) {
@@ -301,32 +335,53 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
             {/* Ticket Information */}
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><UserSquare className="h-4 w-4" />Nome do Cliente:</strong>
-                  <p>{ticket.nome_cliente}</p>
+                <div className="space-y-1">
+                  <Label htmlFor="nome_cliente" className="font-medium text-muted-foreground flex items-center gap-1.5"><UserSquare className="h-4 w-4" />Nome do Cliente:</Label>
+                  <Input id="nome_cliente" value={nomeCliente} onChange={(e) => setNomeCliente(e.target.value)} disabled={isDetailsDisabled} />
                 </div>
-                 <div>
-                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Fingerprint className="h-4 w-4" />CPF ou CNPJ do Cliente:</strong>
-                  <p>{ticket.cpf}</p>
+                 <div className="space-y-1">
+                  <Label htmlFor="cpf_cnpj" className="font-medium text-muted-foreground flex items-center gap-1.5"><Fingerprint className="h-4 w-4" />CPF ou CNPJ do Cliente:</Label>
+                  <Input id="cpf_cnpj" value={cpf} onChange={(e) => setCpf(formatCpfCnpj(e.target.value))} disabled={isDetailsDisabled} />
                 </div>
-                 <div>
-                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Tag className="h-4 w-4" />Cota:</strong>
-                  <p>{ticket.cota}</p>
+                 <div className="space-y-1">
+                  <Label htmlFor="cota" className="font-medium text-muted-foreground flex items-center gap-1.5"><Tag className="h-4 w-4" />Cota:</Label>
+                  <Input id="cota" value={cota} onChange={(e) => setCota(e.target.value)} disabled={isDetailsDisabled} />
                 </div>
-                <div>
-                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><BarChartHorizontal className="h-4 w-4" />Data de Venda:</strong>
-                  <p>{formatProducaoDate(ticket.producao)}</p>
+                 <div className="space-y-1 flex flex-col">
+                  <Label htmlFor="data_venda" className="font-medium text-muted-foreground flex items-center gap-1.5"><BarChartHorizontal className="h-4 w-4" />Data de Venda:</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !producao && "text-muted-foreground"
+                        )}
+                        disabled={isDetailsDisabled}
+                      >
+                        <CalendarIconLucide className="mr-2 h-4 w-4" />
+                        {producao ? format(producao, "dd/MM/yyyy") : <span>Escolha uma data</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={producao}
+                        onSelect={setProducao}
+                        initialFocus
+                        disabled={isDetailsDisabled}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
-                <div>
-                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Phone className="h-4 w-4" />Telefone:</strong>
-                  <p>{ticket.telefone}</p>
+                <div className="space-y-1">
+                  <Label htmlFor="telefone" className="font-medium text-muted-foreground flex items-center gap-1.5"><Phone className="h-4 w-4" />Telefone:</Label>
+                  <Input id="telefone" value={telefone} onChange={(e) => setTelefone(formatPhone(e.target.value))} disabled={isDetailsDisabled} />
                 </div>
-                 {ticket.email && (
-                  <div>
-                    <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Mail className="h-4 w-4" />E-mail do Cliente:</strong>
-                    <p>{ticket.email}</p>
-                  </div>
-                )}
+                <div className="space-y-1">
+                    <Label htmlFor="email" className="font-medium text-muted-foreground flex items-center gap-1.5"><Mail className="h-4 w-4" />E-mail do Cliente:</Label>
+                    <Input id="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isDetailsDisabled} />
+                </div>
                  <div className="space-y-1">
                   <Label htmlFor="diretor-select" className="font-medium text-muted-foreground flex items-center gap-1.5"><User className="h-4 w-4" />Diretor:</Label>
                   <Select value={diretor} onValueChange={handleDiretorChange} disabled={isDetailsDisabled}>

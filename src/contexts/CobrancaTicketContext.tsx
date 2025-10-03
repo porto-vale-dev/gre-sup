@@ -20,10 +20,10 @@ interface CobrancaTicketContextType {
   error: string | null;
   addTicket: (ticketData: CreateCobrancaTicket) => Promise<boolean>;
   updateTicket: (ticketId: string, updates: Partial<CobrancaTicket>) => Promise<void>;
-  updateAndResolveTicket: (ticketId: string, details: { diretor: string; gerente: string; observacoes: string }) => Promise<boolean>;
+  updateAndResolveTicket: (ticketId: string, details: Partial<CobrancaTicket>) => Promise<boolean>;
   updateTicketDetailsAndRetorno: (
     ticketId: string,
-    details: { diretor: string; gerente: string; observacoes: string },
+    details: Partial<CobrancaTicket>,
   ) => Promise<boolean>;
   saveUserResponse: (
     ticketId: string, 
@@ -229,7 +229,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
   
   const updateTicketDetailsAndRetorno = async (
     ticketId: string,
-    details: { diretor: string; gerente: string; observacoes: string },
+    details: Partial<CobrancaTicket>,
   ): Promise<boolean> => {
     try {
       const { data: currentTicket, error: fetchError } = await supabase
@@ -242,7 +242,7 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
         throw new Error("Não foi possível encontrar o ticket para atualização.");
       }
 
-      const gerenteData = gerentesPorDiretor[details.diretor]?.find(g => g.name === details.gerente);
+      const gerenteData = gerentesPorDiretor[details.diretor || '']?.find(g => g.name === details.gerente);
       const gerenteEmail = gerenteData?.email || null;
       const celularGerente = gerenteData?.celular || null;
 
@@ -250,11 +250,9 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       const diretorEmail = diretorData?.email || null;
 
       const updates: { [key: string]: any } = {
-        diretor: details.diretor,
-        gerente: details.gerente,
+        ...details,
         email_gerente: gerenteEmail,
         email_diretor: diretorEmail,
-        observacoes: details.observacoes,
         status: 'Reabertura', // Altera o status para 'Reabertura' sempre
       };
       
@@ -294,21 +292,19 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
 
   const updateAndResolveTicket = async (
     ticketId: string,
-    details: { diretor: string; gerente: string; observacoes: string },
+    details: Partial<CobrancaTicket>,
   ): Promise<boolean> => {
       try {
-          const gerenteData = gerentesPorDiretor[details.diretor]?.find(g => g.name === details.gerente);
+          const gerenteData = gerentesPorDiretor[details.diretor || '']?.find(g => g.name === details.gerente);
           const gerenteEmail = gerenteData?.email || null;
 
           const diretorData = diretores.find(d => d.name === details.diretor);
           const diretorEmail = diretorData?.email || null;
           
           const updates = {
-              diretor: details.diretor,
-              gerente: details.gerente,
+              ...details,
               email_gerente: gerenteEmail,
               email_diretor: diretorEmail,
-              observacoes: details.observacoes,
               status: 'Resolvida' as CobrancaTicketStatus,
           };
 
