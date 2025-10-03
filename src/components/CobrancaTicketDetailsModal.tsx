@@ -213,7 +213,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
           nome_cliente: nomeCliente,
           cpf,
           cota,
-          producao: producao ? format(producao, 'yyyy-MM-dd') : null,
+          producao: producao ? format(producao, 'yyyy-MM-dd') : undefined,
           telefone,
           email
         },
@@ -259,7 +259,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
         nome_cliente: nomeCliente,
         cpf,
         cota,
-        producao: producao ? format(producao, 'yyyy-MM-dd') : null,
+        producao: producao ? format(producao, 'yyyy-MM-dd') : undefined,
         telefone,
         email
     });
