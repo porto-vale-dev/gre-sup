@@ -81,14 +81,16 @@ export function SiteHeader() {
     const isPosContemplacaoNovo = pathname === '/pos-contemplacao/novo';
     const isPosContemplacaoArchived = pathname === '/pos-contemplacao/archived';
     
-    const allowedManagementRoles = ['adm', 'greadmin', 'gre'];
+    const allowedManagementRoles = ['adm', 'greadmin', 'greadminsa', 'gre'];
     const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
-    const canViewSettings = cargo === 'adm' || cargo === 'greadmin';
+
+    const allowedSettingsRoles = ['adm', 'greadmin', 'greadminsa'];
+    const canViewSettings = cargo && allowedSettingsRoles.includes(cargo);
     
     const posContemplacaoGestaoRoles = ['adm', 'greadmin', 'gre_con_admin'];
     const canViewPosContemplacaoGestao = cargo && posContemplacaoGestaoRoles.includes(cargo);
 
-    const cobrancaGestaoRoles = ['adm', 'greadmin', 'gre_apoio_admin'];
+    const cobrancaGestaoRoles = ['adm', 'greadmin', 'greadminsa', 'gre_apoio_admin'];
     const canViewCobrancaGestao = cargo && cobrancaGestaoRoles.includes(cargo);
     
     const isCobrancaArea = pathname.includes('/cobranca/');

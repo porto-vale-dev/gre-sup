@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function ArchivedTicketsPage() {
     const { cargo } = useAuth();
-    const allowedRoles = ['adm', 'greadmin', 'gre', 'gre_apoio_admin'];
+    const allowedRoles = ['adm', 'greadmin', 'greadminsa', 'gre', 'gre_apoio_admin'];
 
     if (!cargo || !allowedRoles.includes(cargo)) {
         return (

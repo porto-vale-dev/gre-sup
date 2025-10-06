@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { PosContemplacaoTicket, PosContemplacaoTicketStatus } from '@/types';
@@ -106,7 +107,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   const [isCompleting, setIsCompleting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const allowedDeleteRoles = ['adm', 'greadmin', 'gre_con_admin'];
+  const allowedDeleteRoles = ['adm', 'greadmin', 'gre_con_admin', 'greadminsa'];
   const canDelete = cargo && allowedDeleteRoles.includes(cargo);
 
   useEffect(() => {

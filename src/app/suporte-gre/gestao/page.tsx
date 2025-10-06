@@ -10,7 +10,7 @@ import { GestaoClient } from '@/components/GestaoClient';
 
 export default function GestaoSuportePage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'greadmin', 'gre'];
+  const allowedRoles = ['adm', 'greadmin', 'greadminsa', 'gre'];
 
   if (!cargo || !allowedRoles.includes(cargo)) {
     return (

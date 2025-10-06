@@ -71,7 +71,7 @@ export function ArchivedTicketsClient() {
                             (ticket.responsible && ticket.responsible.toLowerCase().includes(cleanedSearchTerm));
         
         const responsibleMatch = (() => {
-          if (cargo === 'gre' || cargo === 'gre_apoio_admin') return true;
+          if (cargo === 'gre' || cargo === 'gre_apoio_admin' || cargo === 'greadminsa') return true;
           if (responsibleFilter === "Todos") return true;
           if (responsibleFilter === "não atribuído") return !ticket.responsible;
           return ticket.responsible?.toLowerCase() === responsibleFilter.toLowerCase();
@@ -247,8 +247,8 @@ export function ArchivedTicketsClient() {
           <Info className="h-5 w-5 text-primary" />
           <AlertTitle className="text-primary">Nenhum Ticket Arquivado</AlertTitle>
           <AlertDescription>
-             {(cargo === 'gre' || cargo === 'gre_apoio_admin')
-                ? "Não há tickets concluídos atribuídos a você."
+             {(cargo === 'gre' || cargo === 'gre_apoio_admin' || cargo === 'greadminsa')
+                ? "Não há tickets concluídos atribuídos a você (ou ao seu filtro)."
                 : "Não há tickets concluídos para exibir aqui que correspondam aos seus filtros."
              }
           </AlertDescription>

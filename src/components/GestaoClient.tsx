@@ -70,13 +70,15 @@ export function GestaoClient() {
   const [isHistoryVisible, setIsHistoryVisible] = useState(true);
 
   const responsibleList = useMemo(() => {
-    return ["Todos", "mayara", "luana"];
+    return ["Todos", "mayara", "luana", "leticia", "regiane"];
   }, []);
 
   const filteredTickets = useMemo(() => {
     let baseTickets = tickets;
 
-    if (cargo === 'gre' && username) {
+    if (cargo === 'greadminsa') {
+        baseTickets = tickets.filter(ticket => ticket.responsible === 'leticia' || ticket.responsible === 'regiane');
+    } else if (cargo === 'gre' && username) {
         baseTickets = tickets.filter(ticket => ticket.responsible === username);
     }
     
@@ -305,7 +307,7 @@ export function GestaoClient() {
     );
   };
   
-  const canViewDashboards = cargo === 'adm' || cargo === 'greadmin';
+  const canViewDashboards = cargo && ['adm', 'greadmin', 'greadminsa'].includes(cargo);
 
   return (
     <div className="space-y-6">
@@ -415,7 +417,8 @@ export function GestaoClient() {
         </Card>
       )}
 
-      {canViewDashboards && (
+      {/* Show full dashboard for adm, greadmin, greadminsa, or if the user is gre and has tickets */}
+      {(canViewDashboards || (cargo === 'gre' && filteredTickets.length > 0)) && (
         <>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard title="Tickets no Período" value={stats.total} Icon={FileText} description="Total de tickets no período." />

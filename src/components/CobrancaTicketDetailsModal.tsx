@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { CobrancaTicket, RetornoComercialStatus, RetornoComercialComment, SolutionFile } from '@/types';
@@ -165,7 +166,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
   const effectiveCargo = userCargo || cargo;
   const isManagerView = !!(isUserResponseView || (effectiveCargo && managerRoles.includes(effectiveCargo)));
   
-  const allowedDeleteRoles = ['adm', 'greadmin'];
+  const allowedDeleteRoles = ['adm', 'greadmin', 'greadminsa'];
   const canDelete = cargo && allowedDeleteRoles.includes(cargo);
 
 

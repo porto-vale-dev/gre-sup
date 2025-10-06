@@ -1,3 +1,4 @@
+
 'use client';
 
 import { CobrancaDashboardClient } from "@/components/CobrancaDashboardClient";
@@ -9,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function CobrancaDashboardPage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'greadmin', 'gre_apoio', 'gre_apoio_admin'];
+  const allowedRoles = ['adm', 'greadmin', 'greadminsa', 'gre_apoio', 'gre_apoio_admin'];
 
   if (!cargo || !allowedRoles.includes(cargo)) {
     return (

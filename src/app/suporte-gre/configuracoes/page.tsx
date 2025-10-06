@@ -10,7 +10,7 @@ import { ConfiguracoesClient } from '@/components/ConfiguracoesClient';
 
 export default function ConfiguracoesPage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'greadmin'];
+  const allowedRoles = ['adm', 'greadmin', 'greadminsa'];
 
   if (!cargo || !allowedRoles.includes(cargo)) {
     return (

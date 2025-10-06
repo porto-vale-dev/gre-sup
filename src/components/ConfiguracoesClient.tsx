@@ -16,6 +16,7 @@ import { TICKET_REASONS } from '@/lib/constants';
 import type { ReasonAssignment, TicketReasonConfig } from '@/types';
 import { Button } from './ui/button';
 import { MultiSelect, OptionType } from './ui/multi-select';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 interface Profile {
@@ -132,6 +133,7 @@ export function ConfiguracoesClient() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { fetchReasonAssignments, updateReasonAssignment, fetchTicketReasons, updateTicketReasonStatus } = useTickets();
+  const { cargo } = useAuth();
 
   const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
@@ -149,8 +151,15 @@ export function ConfiguracoesClient() {
       const [profileResult, assignmentResult, reasonConfigResult] = await Promise.all([profilePromise, assignmentPromise, reasonConfigPromise]);
       
       if (profileResult.error) throw profileResult.error;
+
+      let fetchedProfiles = profileResult.data || [];
+      if (cargo === 'greadminsa') {
+        fetchedProfiles = fetchedProfiles.filter(p => 
+          p.username.toLowerCase() === 'leticia' || p.username.toLowerCase() === 'regiane'
+        );
+      }
       
-      setProfiles(profileResult.data || []);
+      setProfiles(fetchedProfiles);
       setAssignments(assignmentResult || []);
       setReasonConfigs(reasonConfigResult || []);
 
@@ -160,7 +169,7 @@ export function ConfiguracoesClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchReasonAssignments, fetchTicketReasons]);
+  }, [fetchReasonAssignments, fetchTicketReasons, cargo]);
 
   useEffect(() => {
     fetchInitialData();
