@@ -125,7 +125,7 @@ export function SiteHeader() {
           {!isLoading && isAuthenticated && (
             <nav className="flex items-center gap-1 sm:gap-2">
               {!['gerente1', 'diretor', 'colaborador'].includes(cargo || '') && <NotificationBell />}
-               {(isArchivedPage) && (
+               {(isArchivedPage || isGestaoPage || isConfiguracoesPage) && (
                  <Link href="/dashboard" passHref>
                   <Button variant="ghost" size="sm" aria-label="Painel de Tickets">
                     <TicketIcon className="h-4 w-4 sm:mr-2" />
@@ -157,7 +157,7 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               )}
-              {isTicketDashboardArea && canViewManagement && !isArchivedPage && (
+              {isTicketDashboardArea && canViewManagement && !isArchivedPage && !isGestaoPage && !isConfiguracoesPage && (
                 <Link href="/suporte-gre/gestao" passHref>
                   <Button variant="ghost" size="sm" aria-label="Gestão de Suporte">
                     <LayoutDashboard className="h-4 w-4 sm:mr-2" />
@@ -173,7 +173,7 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               )}
-              {isTicketDashboardArea && canViewSettings && !isArchivedPage && (
+              {isTicketDashboardArea && canViewSettings && !isArchivedPage && !isGestaoPage && !isConfiguracoesPage && (
                 <Link href="/suporte-gre/configuracoes" passHref>
                   <Button variant="ghost" size="sm" aria-label="Configurações">
                     <Settings className="h-4 w-4 sm:mr-2" />
