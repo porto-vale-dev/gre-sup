@@ -4,7 +4,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { CobrancaTicket, CobrancaTicketStatus, CreateCobrancaTicket, RetornoComercialStatus, RetornoComercialComment } from '@/types';
+import type { CobrancaTicket, CobrancaTicketStatus, CreateCobrancaTicket, RetornoComercialStatus, RetornoComercialComment, SolutionFile } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
@@ -29,7 +29,8 @@ interface CobrancaTicketContextType {
     ticketId: string, 
     status: RetornoComercialStatus, 
     commentText: string,
-    author: string
+    author: string,
+    files: File[]
   ) => Promise<boolean>;
   deleteTicket: (ticketId: string, filePath?: string | null) => Promise<void>;
   getTicketById: (ticketId: string) => CobrancaTicket | undefined;
@@ -330,16 +331,17 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
       ticketId: string,
       statusRetorno: RetornoComercialStatus,
       commentText: string,
-      author: string
+      author: string,
+      files: File[]
   ): Promise<boolean> => {
       try {
           const { data: currentTicket, error: fetchError } = await supabase
             .from('tickets_cobranca')
-            .select('obs_retorno, protocolo, motivo, user_id, gerente')
+            .select('obs_retorno, protocolo, motivo, user_id, gerente, comercial_files')
             .eq('id', ticketId)
             .single();
 
-          if (fetchError) {
+          if (fetchError || !currentTicket) {
               throw new Error(`Não foi possível buscar o ticket: ${fetchError.message}`);
           }
           
@@ -356,21 +358,44 @@ export function CobrancaTicketProvider({ children }: { children: ReactNode }) {
                   }
               }
           }
-          
-          const newComment: RetornoComercialComment = {
-              text: commentText,
-              author: author,
-              timestamp: new Date().toISOString(),
-          };
 
-          const updatedComments = [...existingComments, newComment];
+          const updatedComments = [...existingComments];
+          if(commentText.trim()) {
+            const newComment: RetornoComercialComment = {
+                text: commentText,
+                author: author,
+                timestamp: new Date().toISOString(),
+            };
+            updatedComments.push(newComment);
+          }
+          
+          let uploadedFiles: SolutionFile[] = [];
+          if(files.length > 0) {
+            const folderPath = `public/${ticketId}/comercial/${crypto.randomUUID()}`;
+            for (const file of files) {
+                const pathInBucket = `${folderPath}/${file.name}`;
+                const { error: uploadError } = await supabase.storage
+                    .from(COBRANCA_FILES_BUCKET)
+                    .upload(pathInBucket, file);
+                
+                if (uploadError) {
+                    throw new Error(`Erro no upload do arquivo ${file.name}: ${uploadError.message}`);
+                }
+                uploadedFiles.push({ file_path: pathInBucket, file_name: file.name });
+            }
+          }
+          
+          const existingComercialFiles = currentTicket.comercial_files || [];
+          const updatedComercialFiles = [...existingComercialFiles, ...uploadedFiles];
+
 
           const { error } = await supabase
               .from('tickets_cobranca')
               .update({
                   status_retorno: statusRetorno,
                   obs_retorno: updatedComments,
-                  status: 'Respondida'
+                  status: 'Respondida',
+                  comercial_files: updatedComercialFiles,
               })
               .eq('id', ticketId);
 

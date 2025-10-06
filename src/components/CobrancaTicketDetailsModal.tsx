@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { CobrancaTicket, RetornoComercialStatus, RetornoComercialComment } from '@/types';
+import type { CobrancaTicket, RetornoComercialStatus, RetornoComercialComment, SolutionFile } from '@/types';
 import { format, parseISO, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import React, { useState, useEffect } from 'react';
@@ -31,7 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, MessageCircle, Trash2, Paperclip, File, Eye, Download, Calendar as CalendarIconLucide } from 'lucide-react';
+import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, MessageCircle, Trash2, Paperclip, File, Eye, Download, Calendar as CalendarIconLucide, UploadCloud, X } from 'lucide-react';
 import { useCobrancaTickets } from '@/contexts/CobrancaTicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { RETORNO_COMERCIAL_STATUSES, diretores, gerentesPorDiretor, type Gerente } from '@/lib/cobrancaData';
@@ -39,6 +39,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
 
 const FilePreviewItem: React.FC<{
   file: { file_path: string; file_name: string; };
@@ -74,11 +75,11 @@ const FilePreviewItem: React.FC<{
       <div className="flex items-center gap-1 shrink-0">
         {isPreviewable && (
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handlePreviewClick} disabled={isPreviewing}>
-            <Eye className="h-4 w-4" />
+            {isPreviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
           </Button>
         )}
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDownloadClick} disabled={isDownloading}>
-          <Download className="h-4 w-4" />
+          {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
         </Button>
       </div>
     </div>
@@ -153,6 +154,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
   const [retornoStatus, setRetornoStatus] = useState<RetornoComercialStatus | undefined>(ticket?.status_retorno || undefined);
   const [newRetornoObs, setNewRetornoObs] = useState("");
   const [comments, setComments] = useState<RetornoComercialComment[]>([]);
+  const [stagedComercialFiles, setStagedComercialFiles] = useState<File[]>([]);
 
   
   const [isSaving, setIsSaving] = useState(false);
@@ -184,6 +186,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
       const parsedComments = parseComments(ticket.obs_retorno);
       setComments(parsedComments);
       setNewRetornoObs("");
+      setStagedComercialFiles([]);
       
       if (ticket.diretor && gerentesPorDiretor[ticket.diretor]) {
         setAvailableGerentes(gerentesPorDiretor[ticket.diretor]);
@@ -232,16 +235,17 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
         toast({ title: "Campo Obrigatório", description: "Por favor, selecione um status para a sua resposta.", variant: 'destructive' });
         return;
     }
-     if (!newRetornoObs.trim()) {
-      toast({ title: "Campo Obrigatório", description: "Por favor, escreva uma observação.", variant: 'destructive' });
+     if (!newRetornoObs.trim() && stagedComercialFiles.length === 0) {
+      toast({ title: "Campo Obrigatório", description: "Por favor, escreva uma observação ou anexe um arquivo.", variant: 'destructive' });
       return;
     }
 
 
     setIsSaving(true);
-    const success = await saveUserResponse(ticket.id, retornoStatus, newRetornoObs, username || 'Usuário');
+    const success = await saveUserResponse(ticket.id, retornoStatus, newRetornoObs, username || 'Usuário', stagedComercialFiles);
     if (success) {
       setNewRetornoObs("");
+      setStagedComercialFiles([]);
       onClose();
     }
     setIsSaving(false);
@@ -279,31 +283,82 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
     onClose();
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      let validFiles = [...stagedComercialFiles];
+      let error = false;
+      for (const file of newFiles) {
+        if (file.size > MAX_SOLUTION_FILE_SIZE) {
+          toast({ variant: 'destructive', title: 'Arquivo muito grande', description: `O arquivo ${file.name} excede o limite de 100MB.` });
+          error = true;
+          continue;
+        }
+        validFiles.push(file);
+      }
+      setStagedComercialFiles(validFiles);
+      if(error) {
+        event.target.value = "";
+      }
+    }
+  };
+
+  const removeStagedFile = (index: number) => {
+    setStagedComercialFiles(stagedComercialFiles.filter((_, i) => i !== index));
+  };
+
+
   if (!ticket) return null;
   
-  const renderAttachments = () => {
+  const renderAttachments = (files: SolutionFile[] | undefined | null) => {
+    if (!files || files.length === 0) {
+      return null;
+    }
+    return (
+      <div className="space-y-2">
+        {files.map((file, index) => (
+          <FilePreviewItem 
+            key={index}
+            file={file}
+            onDownload={downloadFile} 
+            onPreview={createPreviewUrl} 
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const renderInitialAttachments = () => {
     if (!ticket.file_path || !ticket.file_name) {
       return null;
     }
-
     try {
+      // New multi-file format: file_name is a JSON array of strings
       const fileNames = JSON.parse(ticket.file_name);
       if (Array.isArray(fileNames) && typeof ticket.file_path === 'string') {
         return (
           <div className="space-y-2">
             {fileNames.map((name: string, index: number) => (
-              <FilePreviewItem 
+              <FilePreviewItem
                 key={index}
                 file={{ file_path: `${ticket.file_path}/${name}`, file_name: name }}
-                onDownload={downloadFile} 
-                onPreview={createPreviewUrl} 
+                onDownload={downloadFile}
+                onPreview={createPreviewUrl}
               />
             ))}
           </div>
         );
       }
     } catch (e) {
-       // Fallback for non-JSON or other errors (e.g., old single file format)
+      // Fallback for old single-file format (or if file_name is not a JSON array)
+      return (
+        <FilePreviewItem
+          file={{ file_path: ticket.file_path, file_name: ticket.file_name }}
+          onDownload={downloadFile}
+          onPreview={createPreviewUrl}
+        />
+      );
     }
     return null;
   };
@@ -440,7 +495,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                   <Separator />
                   <div>
                     <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Paperclip className="h-4 w-4" />Arquivos Anexados:</strong>
-                    {renderAttachments()}
+                    {renderInitialAttachments()}
                   </div>
                 </>
               )}
@@ -494,6 +549,50 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                   onChange={(e) => setNewRetornoObs(e.target.value)}
                   disabled={isRetornoDisabled}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="comercial-files-upload">Anexos do Comercial</Label>
+                <div className="relative">
+                  <Input
+                    id="comercial-files-upload"
+                    type="file"
+                    multiple
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={handleFileChange}
+                    accept={ALLOWED_FILE_TYPES.join(',')}
+                    disabled={isRetornoDisabled}
+                  />
+                  <Label
+                    htmlFor="comercial-files-upload"
+                    className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-muted rounded-md cursor-pointer hover:border-primary transition-colors"
+                  >
+                    <UploadCloud className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-muted-foreground">Clique para adicionar arquivos</span>
+                  </Label>
+                </div>
+                 <p className="text-xs text-muted-foreground">Tamanho máximo por arquivo: 100MB.</p>
+                
+                {stagedComercialFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Novos arquivos para upload:</p>
+                    {stagedComercialFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 border rounded-md">
+                        <span className="text-sm truncate">{file.name}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeStagedFile(index)} disabled={isRetornoDisabled}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {ticket.comercial_files && ticket.comercial_files.length > 0 && (
+                    <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Arquivos já anexados:</p>
+                        {renderAttachments(ticket.comercial_files)}
+                    </div>
+                )}
               </div>
 
             </div>
