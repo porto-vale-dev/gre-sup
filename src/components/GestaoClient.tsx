@@ -77,7 +77,10 @@ export function GestaoClient() {
     let baseTickets = tickets;
 
     if (cargo === 'greadminsa') {
-        baseTickets = tickets.filter(ticket => ticket.responsible === 'leticia' || ticket.responsible === 'regiane');
+        const excludedResponsibles = ['luana', 'mayara'];
+        baseTickets = tickets.filter(ticket => 
+            !ticket.responsible || !excludedResponsibles.includes(ticket.responsible.toLowerCase())
+        );
     } else if (cargo === 'gre' && username) {
         baseTickets = tickets.filter(ticket => ticket.responsible === username);
     }

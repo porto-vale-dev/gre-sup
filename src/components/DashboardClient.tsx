@@ -51,7 +51,10 @@ export function DashboardClient() {
     const baseTickets = tickets.filter(ticket => ticket.status !== "Concluído");
 
     if (cargo === 'greadminsa') {
-      return baseTickets.filter(ticket => ticket.responsible === 'leticia' || ticket.responsible === 'regiane');
+      const excludedResponsibles = ['luana', 'mayara'];
+      return baseTickets.filter(ticket => 
+        !ticket.responsible || !excludedResponsibles.includes(ticket.responsible.toLowerCase())
+      );
     }
 
     // If user has role 'gre' or 'gre_apoio_admin', filter tickets assigned to them
