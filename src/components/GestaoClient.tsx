@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from './ui/scroll-area';
 
 
 interface StatCardProps {
@@ -491,27 +492,29 @@ export function GestaoClient() {
                      <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-base">
                             <BarChart2 className="h-5 w-5" />
-                            Top 5 Motivos
+                            Motivos dos Tickets
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-3">
-                            {stats.byMotivo.slice(0, 5).map((motivo, index) => (
-                                <div key={index} className="space-y-1">
-                                    <div className="flex justify-between text-xs">
-                                        <span className="font-medium text-muted-foreground">{motivo.name}</span>
-                                        <span>{motivo.value}</span>
+                       <ScrollArea className="h-[200px]">
+                            <div className="space-y-3 pr-4">
+                                {stats.byMotivo.map((motivo, index) => (
+                                    <div key={index} className="space-y-1">
+                                        <div className="flex justify-between text-xs">
+                                            <span className="font-medium text-muted-foreground">{motivo.name}</span>
+                                            <span>{motivo.value}</span>
+                                        </div>
+                                        <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-primary" 
+                                                style={{width: `${(motivo.value / stats.total) * 100}%`}}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                                        <div 
-                                            className="h-full bg-primary" 
-                                            style={{width: `${(motivo.value / stats.total) * 100}%`}}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                            {stats.byMotivo.length === 0 && <p className="text-xs text-muted-foreground text-center">Nenhum dado para exibir.</p>}
-                        </div>
+                                ))}
+                                {stats.byMotivo.length === 0 && <p className="text-xs text-muted-foreground text-center">Nenhum dado para exibir.</p>}
+                            </div>
+                        </ScrollArea>
                     </CardContent>
                   </Card>
                 </div>
@@ -521,3 +524,4 @@ export function GestaoClient() {
     </div>
   );
 }
+
