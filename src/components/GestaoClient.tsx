@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -223,6 +224,7 @@ export function GestaoClient() {
         atrasado: 0,
         concluido: 0,
         byResponsible: [],
+        byMotivo: [],
         uniqueResponsibles: 0,
       };
     }
@@ -237,11 +239,21 @@ export function GestaoClient() {
         acc[responsible] = (acc[responsible] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
+    
+    const motivoCounts = filteredTickets.reduce((acc, ticket) => {
+        const motivo = ticket.reason || 'Não especificado';
+        acc[motivo] = (acc[motivo] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
 
     const byResponsible = Object.entries(responsibleCounts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
       
+    const byMotivo = Object.entries(motivoCounts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+
     const uniqueResponsibles = new Set(filteredTickets.map(t => t.responsible).filter(Boolean)).size;
 
     return {
@@ -251,6 +263,7 @@ export function GestaoClient() {
       atrasado: statusCounts["Atrasado"] || 0,
       concluido: statusCounts["Concluído"] || 0,
       byResponsible,
+      byMotivo,
       uniqueResponsibles,
     };
   }, [filteredTickets]);
@@ -302,6 +315,8 @@ export function GestaoClient() {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    if (percent * 100 < 5) return null;
 
     return (
       <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
@@ -425,13 +440,13 @@ export function GestaoClient() {
         <>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard title="Tickets no Período" value={stats.total} Icon={FileText} description="Total de tickets no período." />
-                <StatCard title="Em Andamento" value={stats.emAndamento} Icon={Hourglass} className="border-yellow-500/50" />
+                <StatCard title="Em Andamento" value={stats.emAndamento} Icon={Hourglass} />
                 <StatCard title="Atrasados" value={stats.atrasado} Icon={AlertTriangle} className="border-red-500/50 text-red-600" />
-                <StatCard title="Concluídos" value={stats.concluido} Icon={CheckCircle2} className="border-green-500/50" />
+                <StatCard title="Concluídos" value={stats.concluido} Icon={CheckCircle2} />
             </div>
 
             <div className="grid grid-cols-12 gap-4">
-                <Card className="col-span-12 lg:col-span-8">
+                <Card className="col-span-12 lg:col-span-7">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <PieChartIcon className="h-5 w-5" />
@@ -469,9 +484,36 @@ export function GestaoClient() {
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
-                <div className="col-span-12 lg:col-span-4 space-y-4">
-                    <StatCard title="Tickets Novos" value={stats.novo} Icon={FileText} className="border-blue-500/50" />
-                    <StatCard title="Responsáveis Ativos" value={stats.uniqueResponsibles} Icon={Users} description="Usuários com tickets no período." />
+                <div className="col-span-12 lg:col-span-5 space-y-4">
+                  <StatCard title="Tickets Novos" value={stats.novo} Icon={FileText} />
+                  <StatCard title="Responsáveis Ativos" value={stats.uniqueResponsibles} Icon={Users} description="Usuários com tickets no período." />
+                  <Card>
+                     <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <BarChart2 className="h-5 w-5" />
+                            Top 5 Motivos
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3">
+                            {stats.byMotivo.slice(0, 5).map((motivo, index) => (
+                                <div key={index} className="space-y-1">
+                                    <div className="flex justify-between text-xs">
+                                        <span className="font-medium text-muted-foreground">{motivo.name}</span>
+                                        <span>{motivo.value}</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-primary" 
+                                            style={{width: `${(motivo.value / stats.total) * 100}%`}}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                            {stats.byMotivo.length === 0 && <p className="text-xs text-muted-foreground text-center">Nenhum dado para exibir.</p>}
+                        </div>
+                    </CardContent>
+                  </Card>
                 </div>
             </div>
         </>
