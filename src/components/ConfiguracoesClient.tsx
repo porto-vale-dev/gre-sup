@@ -154,8 +154,9 @@ export function ConfiguracoesClient() {
 
       let fetchedProfiles = profileResult.data || [];
       if (cargo === 'greadminsa') {
+        const excludedUsernames = ['luana', 'mayara'];
         fetchedProfiles = fetchedProfiles.filter(p => 
-          p.username.toLowerCase() === 'leticia' || p.username.toLowerCase() === 'regiane'
+          !excludedUsernames.includes(p.username.toLowerCase())
         );
       }
       
