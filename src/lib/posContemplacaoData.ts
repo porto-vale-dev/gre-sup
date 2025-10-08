@@ -1,3 +1,4 @@
+
 import type { PosContemplacaoTicketStatus } from '@/types';
 
 export interface Responsavel {
@@ -24,4 +25,6 @@ export const MOTIVOS_POS_CONTEMPLACAO = [
     'CONFIRMAÇÃO DE CONTEMPLAÇÃO',
     'BANK RESOLVE',
     'ASSESSORIA JURIDICA',
+    'INFORMAÇÕES DA COTA',
+    'VALIDAÇÃO DE DADOS',
 ];
