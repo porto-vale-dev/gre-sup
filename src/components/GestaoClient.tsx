@@ -55,7 +55,7 @@ const StatCard = ({ title, value, Icon, description, className }: StatCardProps)
   </Card>
 );
 
-const PIE_CHART_COLORS = ["#64B5F6", "#4DB6AC", "#FFD54F", "#FF8A65", "#A1887F", "#90A4AE"];
+const PIE_CHART_COLORS = ["#64B5F6", "#4DB6AC", "#FFD54F", "#FF8A65", "#A1887F", "#90A4AE", "#7986CB", "#E57373", "#BA68C8", "#4DD0E1", "#FFF176", "#FFB74D"];
 
 export function GestaoClient() {
   const { tickets, isLoadingTickets, error } = useTickets();
@@ -71,11 +71,7 @@ export function GestaoClient() {
   const [exportHistory, setExportHistory] = useLocalStorage<ExportHistoryItem[]>("exportHistory", []);
   const [isHistoryVisible, setIsHistoryVisible] = useState(true);
 
-  const responsibleList = useMemo(() => {
-    return ["Todos", "mayara", "luana", "leticia", "regiane"];
-  }, []);
-
-  const filteredTickets = useMemo(() => {
+  const dateFilteredTickets = useMemo(() => {
     let baseTickets = tickets;
 
     if (cargo === 'greadminsa') {
@@ -89,22 +85,36 @@ export function GestaoClient() {
     
     if (!baseTickets) return [];
 
-    let dateFilteredTickets = baseTickets;
     if (date?.from) {
         const fromDate = date.from;
         const toDate = date.to ? new Date(date.to.setHours(23, 59, 59, 999)) : new Date(fromDate.setHours(23, 59, 59, 999));
-        dateFilteredTickets = baseTickets.filter(ticket => {
+        return baseTickets.filter(ticket => {
             const submissionDate = new Date(ticket.submission_date);
             return submissionDate >= fromDate && submissionDate <= toDate;
         });
     }
 
+    return baseTickets;
+  }, [tickets, date, cargo, username]);
+
+  const responsibleList = useMemo(() => {
+    const allResponsibles = new Set(dateFilteredTickets.map(t => t.responsible).filter(Boolean) as string[]);
+    return ["Todos", ...Array.from(allResponsibles).sort()];
+  }, [dateFilteredTickets]);
+
+  useEffect(() => {
+    if (!responsibleList.includes(responsibleFilter)) {
+      setResponsibleFilter("Todos");
+    }
+  }, [responsibleList, responsibleFilter]);
+
+
+  const filteredTickets = useMemo(() => {
     if (responsibleFilter !== "Todos") {
         return dateFilteredTickets.filter(ticket => ticket.responsible === responsibleFilter);
     }
-
     return dateFilteredTickets;
-  }, [tickets, date, cargo, username, responsibleFilter]);
+  }, [dateFilteredTickets, responsibleFilter]);
 
   const handleExportXLSX = () => {
     if (filteredTickets.length === 0) {
@@ -289,7 +299,6 @@ export function GestaoClient() {
                     </CardContent>
                 </Card>
                  <div className="col-span-12 lg:col-span-3 space-y-4">
-                    <Skeleton className="h-[126px]" />
                     <Skeleton className="h-[126px]" />
                     <Skeleton className="h-[126px]" />
                  </div>
@@ -485,10 +494,10 @@ export function GestaoClient() {
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
-                <div className="col-span-12 lg:col-span-5 space-y-4">
+                 <div className="col-span-12 lg:col-span-5 flex flex-col gap-4">
                   <StatCard title="Tickets Novos" value={stats.novo} Icon={FileText} />
                   <StatCard title="Responsáveis Ativos" value={stats.uniqueResponsibles} Icon={Users} description="Usuários com tickets no período." />
-                  <Card>
+                   <Card>
                      <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-base">
                             <BarChart2 className="h-5 w-5" />
@@ -524,4 +533,3 @@ export function GestaoClient() {
     </div>
   );
 }
-
