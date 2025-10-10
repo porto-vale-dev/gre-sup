@@ -23,9 +23,10 @@ import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Info, Send, Paperclip, UploadCloud, AlertTriangle, X, Loader2 } from 'lucide-react';
 import type { TicketReasonConfig } from '@/types';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 export function TicketForm() {
-  const [activeReasons, setActiveReasons] = useState<TicketReasonConfig[]>([]);
+  const [allReasons, setAllReasons] = useState<TicketReasonConfig[]>([]);
   const [isLoadingReasons, setIsLoadingReasons] = useState(true);
   const [selectedReasonInfo, setSelectedReasonInfo] = useState<TicketReasonConfig | null>(null);
   const { addTicket, fetchTicketReasons } = useTickets();
@@ -36,8 +37,7 @@ export function TicketForm() {
     const loadReasons = async () => {
         setIsLoadingReasons(true);
         const reasons = await fetchTicketReasons();
-        const active = reasons.filter(r => r.is_active);
-        setActiveReasons(active);
+        setAllReasons(reasons);
         setIsLoadingReasons(false);
     };
     loadReasons();
@@ -96,7 +96,7 @@ export function TicketForm() {
 
 
   const handleReasonChange = (value: string) => {
-    const reason = activeReasons.find(r => r.value === value) || null;
+    const reason = allReasons.find(r => r.value === value) || null;
     setSelectedReasonInfo(reason);
     form.setValue("reason", value, { shouldValidate: true });
   };
@@ -197,6 +197,8 @@ export function TicketForm() {
         variant: "destructive"
     });
   }
+
+  const isSubmitDisabled = form.formState.isSubmitting || (selectedReasonInfo?.is_active === false);
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
@@ -352,18 +354,27 @@ export function TicketForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {activeReasons.map(reason => (
+                      {allReasons.map(reason => (
                         <SelectItem key={reason.value} value={reason.value}>
                           {reason.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {selectedReasonInfo && (
+                  {selectedReasonInfo && selectedReasonInfo.is_active && (
                     <FormDescription className="mt-2 text-destructive flex items-center gap-1.5">
                       <Info className="h-4 w-4" />
                       Previsão de resposta: {selectedReasonInfo.responseTime}
                     </FormDescription>
+                  )}
+                  {selectedReasonInfo && !selectedReasonInfo.is_active && (
+                    <Alert variant="destructive" className="mt-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Serviço Indisponível</AlertTitle>
+                        <AlertDescription>
+                            Sistema bloqueado para trocas de crédito, retorne após o período: 2 dias úteis após a assembleia.
+                        </AlertDescription>
+                    </Alert>
                   )}
                   <FormMessage />
                 </FormItem>
@@ -443,7 +454,7 @@ export function TicketForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitDisabled}>
               {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
               {form.formState.isSubmitting ? "Enviando..." : "Enviar Ticket"}
             </Button>
