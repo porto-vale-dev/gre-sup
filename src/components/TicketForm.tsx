@@ -372,7 +372,7 @@ export function TicketForm() {
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle>Serviço Indisponível</AlertTitle>
                         <AlertDescription>
-                            Sistema bloqueado para trocas de crédito, retorne após o período: 2 dias úteis após a assembleia.
+                            Sistema bloqueado para trocas de crédito entre 4 dias antes do vencimento e 2 dias úteis após a assembleia. Por favor, retorne após esse período.
                         </AlertDescription>
                     </Alert>
                   )}
