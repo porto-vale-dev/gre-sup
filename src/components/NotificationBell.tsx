@@ -167,6 +167,11 @@ export function NotificationBell() {
     }
   }
   
+  const noNotificationRoles = ['gerente1', 'diretor', 'colaborador'];
+  if (cargo && noNotificationRoles.includes(cargo)) {
+      return null;
+  }
+
   return (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>

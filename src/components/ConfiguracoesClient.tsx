@@ -18,6 +18,7 @@ import type { ReasonAssignment, TicketReasonConfig } from '@/types';
 import { Button } from './ui/button';
 import { MultiSelect, OptionType } from './ui/multi-select';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 
 
 interface Profile {
@@ -135,6 +136,8 @@ export function ConfiguracoesClient() {
   const { toast } = useToast();
   const { fetchReasonAssignments, updateReasonAssignment, fetchTicketReasons, updateTicketReasonStatus } = useTickets();
   const { cargo } = useAuth();
+  
+  const canManageReasons = cargo === 'adm' || cargo === 'greadmin';
 
   const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
@@ -143,7 +146,7 @@ export function ConfiguracoesClient() {
       const profilePromise = supabase
         .from('profiles')
         .select('id, username, is_active_in_queue')
-        .in('cargo', ['gre', 'gre_apoio_admin'])
+        .in('cargo', ['gre', 'grea', 'gre_apoio_admin'])
         .order('username', { ascending: true });
 
       const assignmentPromise = fetchReasonAssignments();
@@ -154,10 +157,16 @@ export function ConfiguracoesClient() {
       if (profileResult.error) throw profileResult.error;
 
       let fetchedProfiles = profileResult.data || [];
+      
       if (cargo === 'greadminsa') {
         const excludedUsernames = ['luana', 'mayara'];
         fetchedProfiles = fetchedProfiles.filter(p => 
           !excludedUsernames.includes(p.username.toLowerCase())
+        );
+      } else if (cargo === 'grea') {
+        const allowedUsernames = ['atendente1', 'atendente2', 'atendente3'];
+         fetchedProfiles = fetchedProfiles.filter(p => 
+          allowedUsernames.includes(p.username.toLowerCase())
         );
       }
       
@@ -266,8 +275,11 @@ export function ConfiguracoesClient() {
   
   return (
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-      <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+      <div className={cn(
+          "grid grid-cols-1 gap-6",
+          canManageReasons ? "lg:col-span-2 lg:grid-cols-2" : "lg:col-span-1"
+      )}>
+        <Card className={cn(!canManageReasons && "lg:col-span-2")}>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Users className="h-6 w-6"/> Fila de Atendimento</CardTitle>
                 <CardDescription>
@@ -282,31 +294,34 @@ export function ConfiguracoesClient() {
                         ))}
                     </div>
                 ) : (
-                    <p className="text-sm text-muted-foreground text-center p-4">Nenhum atendente com o cargo 'gre' encontrado.</p>
+                    <p className="text-sm text-muted-foreground text-center p-4">Nenhum atendente com o cargo 'gre' ou 'grea' encontrado.</p>
                 )}
             </CardContent>
         </Card>
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><ListChecks className="h-6 w-6"/> Gerenciar Motivos de Ticket</CardTitle>
-                <CardDescription>
-                    Ative ou desative os motivos que aparecem no formulário de abertura de ticket.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                {reasonConfigs.length > 0 ? (
-                    <div className="border rounded-md max-h-[600px] overflow-y-auto">
-                        {reasonConfigs.map(reason => (
-                           <ReasonStatusRow key={reason.value} reason={reason} onStatusChange={handleReasonStatusChange} />
-                        ))}
-                    </div>
-                ) : (
-                   <p className="text-sm text-muted-foreground text-center p-4">Nenhum motivo encontrado para configurar.</p>
-                )}
-            </CardContent>
-        </Card>
+        
+        {canManageReasons && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><ListChecks className="h-6 w-6"/> Gerenciar Motivos de Ticket</CardTitle>
+                    <CardDescription>
+                        Ative ou desative os motivos que aparecem no formulário de abertura de ticket.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {reasonConfigs.length > 0 ? (
+                        <div className="border rounded-md max-h-[600px] overflow-y-auto">
+                            {reasonConfigs.map(reason => (
+                               <ReasonStatusRow key={reason.value} reason={reason} onStatusChange={handleReasonStatusChange} />
+                            ))}
+                        </div>
+                    ) : (
+                       <p className="text-sm text-muted-foreground text-center p-4">Nenhum motivo encontrado para configurar.</p>
+                    )}
+                </CardContent>
+            </Card>
+        )}
       </div>
-      <div className="lg:col-span-2">
+      <div className={cn(canManageReasons ? "lg:col-span-2" : "lg:col-span-1")}>
         <Card>
           <CardHeader>
               <CardTitle className="flex items-center gap-2"><LinkIcon className="h-6 w-6"/>Atribuição por Motivo</CardTitle>

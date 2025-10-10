@@ -120,7 +120,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const allowedRoles = ['adm', 'greadmin', 'gre'];
+  const allowedRoles = ['adm', 'greadmin', 'gre', 'grea'];
   const canViewInternalComments = !isReadOnlyView && cargo && allowedRoles.includes(cargo);
   
   const allowedDeleteRoles = ['adm', 'greadmin', 'greadminsa'];

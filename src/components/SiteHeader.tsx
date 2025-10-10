@@ -81,10 +81,10 @@ export function SiteHeader() {
     const isPosContemplacaoNovo = pathname === '/pos-contemplacao/novo';
     const isPosContemplacaoArchived = pathname === '/pos-contemplacao/archived';
     
-    const allowedManagementRoles = ['adm', 'greadmin', 'greadminsa', 'gre'];
+    const allowedManagementRoles = ['adm', 'greadmin', 'greadminsa', 'gre', 'grea'];
     const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
 
-    const allowedSettingsRoles = ['adm', 'greadmin', 'greadminsa'];
+    const allowedSettingsRoles = ['adm', 'greadmin', 'greadminsa', 'gre', 'grea'];
     const canViewSettings = cargo && allowedSettingsRoles.includes(cargo);
     
     const posContemplacaoGestaoRoles = ['adm', 'greadmin', 'gre_con_admin'];
@@ -124,7 +124,7 @@ export function SiteHeader() {
 
           {!isLoading && isAuthenticated && (
             <nav className="flex items-center gap-1 sm:gap-2">
-              {!['gerente1', 'diretor', 'colaborador'].includes(cargo || '') && <NotificationBell />}
+              <NotificationBell />
                {(isArchivedPage || isGestaoPage || isConfiguracoesPage) && (
                  <Link href="/dashboard" passHref>
                   <Button variant="ghost" size="sm" aria-label="Painel de Tickets">
@@ -210,7 +210,7 @@ export function SiteHeader() {
 
         {!isLoading && isAuthenticated && (
           <div className="flex items-center gap-2">
-            {!['gerente1', 'diretor', 'colaborador'].includes(cargo || '') && <NotificationBell />}
+            <NotificationBell />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">

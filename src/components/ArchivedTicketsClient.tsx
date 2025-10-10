@@ -56,6 +56,13 @@ export function ArchivedTicketsClient() {
       );
     }
 
+    if (cargo === 'grea' && username) {
+        const allowedResponsibles = [username.toLowerCase(), 'atendente1', 'atendente2', 'atendente3'];
+        return baseTickets.filter(ticket => 
+            ticket.responsible && allowedResponsibles.includes(ticket.responsible.toLowerCase())
+        );
+    }
+
     // Filter tickets for 'gre' and 'gre_apoio_admin' roles
     if ((cargo === 'gre' || cargo === 'gre_apoio_admin') && username) {
         return baseTickets.filter(ticket => ticket.responsible === username);
@@ -213,7 +220,7 @@ export function ArchivedTicketsClient() {
               </PopoverContent>
             </Popover>
             
-            {(cargo === 'adm' || cargo === 'greadmin' || cargo === 'greadminsa') && (
+            {(cargo === 'adm' || cargo === 'greadmin' || cargo === 'greadminsa' || cargo === 'grea') && (
               <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
                 <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por responsável">
                   <User className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -254,7 +261,7 @@ export function ArchivedTicketsClient() {
           <Info className="h-5 w-5 text-primary" />
           <AlertTitle className="text-primary">Nenhum Ticket Arquivado</AlertTitle>
           <AlertDescription>
-             {(cargo === 'gre' || cargo === 'gre_apoio_admin' || cargo === 'greadminsa')
+             {(cargo === 'gre' || cargo === 'grea' || cargo === 'gre_apoio_admin' || cargo === 'greadminsa')
                 ? "Não há tickets concluídos atribuídos a você (ou ao seu filtro)."
                 : "Não há tickets concluídos para exibir aqui que correspondam aos seus filtros."
              }

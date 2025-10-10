@@ -37,7 +37,7 @@ const allRankings: Ranking[] = [
     href: "/rankings/campanha",
     Icon: Trophy,
     description: "Confira os resultados da campanha atual.",
-    allowedRoles: ['adm', 'greadmin', 'greadminsa', 'diretor', 'gerente', 'gerente1', 'gre', 'gre_con', 'gre_con_admin', 'gre_apoio_admin', 'gre_apoio', 'colaborador'],
+    allowedRoles: ['adm', 'greadmin', 'greadminsa', 'diretor', 'gerente', 'gerente1', 'gre', 'grea', 'gre_con', 'gre_con_admin', 'gre_apoio_admin', 'gre_apoio', 'colaborador'],
   },
    {
     title: "Ranking Campanha Seguros",

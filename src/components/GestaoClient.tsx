@@ -79,6 +79,11 @@ export function GestaoClient() {
         baseTickets = tickets.filter(ticket => 
             !ticket.responsible || !excludedResponsibles.includes(ticket.responsible.toLowerCase())
         );
+    } else if (cargo === 'grea' && username) {
+        const allowedResponsibles = [username.toLowerCase(), 'atendente1', 'atendente2', 'atendente3'];
+        baseTickets = tickets.filter(ticket => 
+            ticket.responsible && allowedResponsibles.includes(ticket.responsible.toLowerCase())
+        );
     } else if (cargo === 'gre' && username) {
         baseTickets = tickets.filter(ticket => ticket.responsible === username);
     }
@@ -335,7 +340,7 @@ export function GestaoClient() {
     );
   };
   
-  const canViewDashboards = cargo && ['adm', 'greadmin', 'greadminsa'].includes(cargo);
+  const canViewDashboards = cargo && ['adm', 'greadmin', 'greadminsa', 'grea'].includes(cargo);
 
   return (
     <div className="space-y-6">
@@ -445,8 +450,8 @@ export function GestaoClient() {
         </Card>
       )}
 
-      {/* Show full dashboard for adm, greadmin, greadminsa, or if the user is gre and has tickets */}
-      {(canViewDashboards || (cargo === 'gre' && filteredTickets.length > 0)) && (
+      {/* Show full dashboard for adm, greadmin, greadminsa, or if the user is gre/grea and has tickets */}
+      {(canViewDashboards || ((cargo === 'gre' || cargo === 'grea') && filteredTickets.length > 0)) && (
         <>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard title="Tickets no Período" value={stats.total} Icon={FileText} description="Total de tickets no período." />

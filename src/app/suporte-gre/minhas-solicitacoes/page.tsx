@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 export default function MinhasSolicitacoesPage() {
   const { cargo } = useAuth();
   
-  const deniedRoles = ['diretor', 'colaborador', 'gerente1'];
+  const deniedRoles = ['colaborador', 'gerente1'];
 
   if (cargo && deniedRoles.includes(cargo)) {
     return (
