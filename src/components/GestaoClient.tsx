@@ -75,7 +75,7 @@ export function GestaoClient() {
     let baseTickets = tickets;
 
     if (cargo === 'greadminsa') {
-        const excludedResponsibles = ['luana', 'mayara'];
+        const excludedResponsibles = ['marcelo', 'abraao / marcelo', 'luana', 'mayara'];
         baseTickets = tickets.filter(ticket => 
             !ticket.responsible || !excludedResponsibles.includes(ticket.responsible.toLowerCase())
         );

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -48,6 +49,13 @@ export function ArchivedTicketsClient() {
   const archivedTickets = useMemo(() => {
     const baseTickets = tickets.filter(ticket => ticket.status === "Concluído");
 
+    if (cargo === 'greadminsa') {
+      const excludedResponsibles = ['marcelo', 'abraao / marcelo', 'luana', 'mayara'];
+      return baseTickets.filter(ticket => 
+        !ticket.responsible || !excludedResponsibles.includes(ticket.responsible.toLowerCase())
+      );
+    }
+
     // Filter tickets for 'gre' and 'gre_apoio_admin' roles
     if ((cargo === 'gre' || cargo === 'gre_apoio_admin') && username) {
         return baseTickets.filter(ticket => ticket.responsible === username);
@@ -57,9 +65,9 @@ export function ArchivedTicketsClient() {
   }, [tickets, cargo, username]);
 
   const responsibleNamesForFilter = useMemo(() => {
-    const allResponsibles = new Set(tickets.map(t => t.responsible).filter(Boolean) as string[]);
+    const allResponsibles = new Set(archivedTickets.map(t => t.responsible).filter(Boolean) as string[]);
     return ["Todos", ...Array.from(allResponsibles), "não atribuído"];
-  }, [tickets]);
+  }, [archivedTickets]);
 
   const filteredAndSortedTickets = useMemo(() => {
     return archivedTickets
@@ -71,7 +79,6 @@ export function ArchivedTicketsClient() {
                             (ticket.responsible && ticket.responsible.toLowerCase().includes(cleanedSearchTerm));
         
         const responsibleMatch = (() => {
-          if (cargo === 'gre' || cargo === 'gre_apoio_admin' || cargo === 'greadminsa') return true;
           if (responsibleFilter === "Todos") return true;
           if (responsibleFilter === "não atribuído") return !ticket.responsible;
           return ticket.responsible?.toLowerCase() === responsibleFilter.toLowerCase();
@@ -96,7 +103,7 @@ export function ArchivedTicketsClient() {
         const dateB = new Date(b.submission_date).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
-  }, [archivedTickets, searchTerm, responsibleFilter, sortOrder, date, cargo]);
+  }, [archivedTickets, searchTerm, responsibleFilter, sortOrder, date]);
 
   const handleOpenDetails = (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -206,11 +213,11 @@ export function ArchivedTicketsClient() {
               </PopoverContent>
             </Popover>
             
-            {(cargo === 'adm' || cargo === 'greadmin') && (
+            {(cargo === 'adm' || cargo === 'greadmin' || cargo === 'greadminsa') && (
               <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
                 <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por responsável">
                   <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <SelectValue placeholder="Filtrar por responsável" />
+                  <SelectValue placeholder="Responsável" />
                 </SelectTrigger>
                 <SelectContent>
                   {responsibleNamesForFilter.map(name => (

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -11,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle, Archive, Calendar as CalendarIcon, X } from 'lucide-react';
+import { Search, ListFilter, Info, LayoutGrid, List, User, AlertCircle, Archive, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from './ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import Link from 'next/link';
@@ -51,7 +52,7 @@ export function DashboardClient() {
     const baseTickets = tickets.filter(ticket => ticket.status !== "Concluído");
 
     if (cargo === 'greadminsa') {
-      const excludedResponsibles = ['luana', 'mayara'];
+      const excludedResponsibles = ['marcelo', 'abraao / marcelo', 'luana', 'mayara'];
       return baseTickets.filter(ticket => 
         !ticket.responsible || !excludedResponsibles.includes(ticket.responsible.toLowerCase())
       );
@@ -77,9 +78,11 @@ export function DashboardClient() {
 
         const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
         
-        const responsibleMatch = (cargo === 'adm' || cargo === 'greadmin') 
-            ? (responsibleFilter === "Todos" || ticket.responsible === responsibleFilter)
-            : true;
+        const responsibleMatch = (() => {
+          if (responsibleFilter === "Todos") return true;
+          if (responsibleFilter === "não atribuído") return !ticket.responsible;
+          return ticket.responsible?.toLowerCase() === responsibleFilter.toLowerCase();
+        })();
 
         let dateMatch = true;
         if (date?.from) {
@@ -100,7 +103,7 @@ export function DashboardClient() {
         const dateB = new Date(b.submission_date).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
-  }, [activeTickets, searchTerm, statusFilter, responsibleFilter, sortOrder, cargo, date]);
+  }, [activeTickets, searchTerm, statusFilter, responsibleFilter, sortOrder, date]);
 
   const handleOpenDetails = (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -117,8 +120,10 @@ export function DashboardClient() {
   }, [activeTickets]);
 
   const responsibleNamesForFilter = useMemo(() => {
-    return ["Todos", ...new Set(activeTickets.map(t => t.responsible).filter(Boolean) as string[])];
+    const allResponsibles = new Set(activeTickets.map(t => t.responsible).filter(Boolean) as string[]);
+    return ["Todos", ...Array.from(allResponsibles), "não atribuído"];
   }, [activeTickets]);
+
 
   if (isLoadingTickets) {
     return (
@@ -222,7 +227,7 @@ export function DashboardClient() {
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por status">
                         <ListFilter className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <SelectValue placeholder="Filtrar por status" />
+                        <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
                         {ticketStatusesForFilter.map(status => (
@@ -231,15 +236,15 @@ export function DashboardClient() {
                     </SelectContent>
                 </Select>
 
-                {(cargo === 'adm' || cargo === 'greadmin') && (
+                {(cargo === 'adm' || cargo === 'greadmin' || cargo === 'greadminsa') && (
                   <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
                       <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filtrar por responsável">
                           <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <SelectValue placeholder="Filtrar por responsável" />
+                          <SelectValue placeholder="Responsável" />
                       </SelectTrigger>
                       <SelectContent>
                           {responsibleNamesForFilter.map(name => (
-                              <SelectItem key={name} value={name}>{name}</SelectItem>
+                              <SelectItem key={name} value={name} className="capitalize">{name}</SelectItem>
                           ))}
                       </SelectContent>
                   </Select>
