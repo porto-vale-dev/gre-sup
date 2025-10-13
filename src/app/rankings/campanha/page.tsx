@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, ShieldAlert, Trophy } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -40,21 +40,47 @@ export default function CampanhaPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-10rem)]">
-      <div>
+    <div className="space-y-8">
+      <div className="flex items-center gap-4">
         <Link href="/rankings" passHref>
           <Button variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" /> Voltar aos Rankings
           </Button>
         </Link>
       </div>
-      <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden">
-        <iframe
-          title="Ranking Campanhas"
-          src="https://app.powerbi.com/view?r=eyJrIjoiMDk5YWVjYzQtM2YxMi00OTQ4LTg0NmEtOTk4ZDY1YjhmY2QzIiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
-          allowFullScreen
-          className="absolute top-0 left-0 w-full h-full border-0"
-        ></iframe>
+
+      <div className="space-y-12">
+        {/* First Report */}
+        <div className="flex flex-col gap-4">
+            <h2 className="text-2xl font-semibold flex items-center gap-2 text-primary">
+                <Trophy className="h-6 w-6"/>
+                Ranking Campanha - Day Use Hotel Fazenda
+            </h2>
+            <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden h-[calc(100vh-18rem)] min-h-[600px]">
+                <iframe
+                title="Ranking Day Use Hotel Fazenda"
+                src="https://app.powerbi.com/view?r=eyJrIjoiMzY5Y2Q2NmUtMjYyZC00NWM4LTkxZmItMjNhZjIxN2VjMDk0IiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
+                allowFullScreen
+                className="absolute top-0 left-0 w-full h-full border-0"
+                ></iframe>
+            </div>
+        </div>
+
+        {/* Second Report */}
+         <div className="flex flex-col gap-4">
+            <h2 className="text-2xl font-semibold flex items-center gap-2 text-primary">
+                <Trophy className="h-6 w-6"/>
+                Ranking Campanha - Zeca Pagodinho
+            </h2>
+            <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden h-[calc(100vh-18rem)] min-h-[600px]">
+                <iframe
+                title="Ranking Campanha Zeca Pagodinho"
+                src="https://app.powerbi.com/view?r=eyJrIjoiNTAwMTM0MmEtZjllYy00NWVkLWIxODQtNmQwNWE3YjhmNjJjIiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
+                allowFullScreen
+                className="absolute top-0 left-0 w-full h-full border-0"
+                ></iframe>
+            </div>
+        </div>
       </div>
     </div>
   );
