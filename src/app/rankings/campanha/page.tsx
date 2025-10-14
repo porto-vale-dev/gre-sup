@@ -54,7 +54,7 @@ export default function CampanhaPage() {
         <div className="flex flex-col gap-4">
             <h2 className="text-2xl font-semibold flex items-center gap-2 text-primary">
                 <Trophy className="h-6 w-6"/>
-                Ranking Campanha - Day Use Hotel Fazenda
+                Ranking Campanha - Hotel Fazenda Vale do Sol
             </h2>
             <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden h-[calc(100vh-18rem)] min-h-[600px]">
                 <iframe
