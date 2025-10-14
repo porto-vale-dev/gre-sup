@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
         source: '/suporte-gre/painel/archived',
         destination: '/dashboard/archived',
       },
+      {
+        source: '/pos-contemplacao/archived',
+        destination: '/pos-contemplacao/archived',
+      }
     ];
   },
   typescript: {
