@@ -40,6 +40,7 @@ const cobrancaTicketSchema = z.object({
     email: z.string().email({ message: "Formato de e-mail inválido." }),
     diretor: z.string().min(1, { message: "Selecione um diretor." }),
     gerente: z.string().min(1, { message: "Selecione um gerente." }),
+    vendedor: z.string().min(1, { message: "Nome do vendedor é obrigatório." }),
     motivo: z.string().min(1, { message: "Selecione um motivo." }),
     observacoes: z.string().optional(),
     files: z.custom<FileList>().optional(),
@@ -69,6 +70,7 @@ export default function CobrancaPage() {
       email: "",
       diretor: "",
       gerente: "",
+      vendedor: "",
       motivo: "",
       observacoes: "",
     },
@@ -367,6 +369,19 @@ export default function CobrancaPage() {
                                 )}
                             />
                         </div>
+                        <FormField
+                            control={form.control}
+                            name="vendedor"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Nome do Vendedor</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Nome do vendedor" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                     </div>
                      <div className="space-y-4 p-4 border rounded-md">
                         <h3 className="font-semibold text-lg text-primary">Detalhes da Solicitação</h3>
@@ -475,3 +490,5 @@ export default function CobrancaPage() {
     </div>
   );
 }
+
+    

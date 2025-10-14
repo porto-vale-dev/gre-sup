@@ -59,6 +59,7 @@ export interface CobrancaTicket {
   // Responsáveis
   diretor: string;
   gerente: string;
+  vendedor: string;
   email_gerente?: string | null;
   email_diretor?: string | null;
   data_atend: string; // ISO String
@@ -117,5 +118,7 @@ export interface PosContemplacaoTicket {
 }
 
 export type CreatePosContemplacaoTicket = Omit<PosContemplacaoTicket, 'id' | 'created_at' | 'protocolo' | 'status'> & { files?: FileList };
+
+    
 
     

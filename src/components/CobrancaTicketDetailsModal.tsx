@@ -148,6 +148,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
 
   const [diretor, setDiretor] = useState(ticket?.diretor || '');
   const [gerente, setGerente] = useState(ticket?.gerente || '');
+  const [vendedor, setVendedor] = useState(ticket?.vendedor || '');
   const [observacoes, setObservacoes] = useState(ticket?.observacoes || '');
   const [availableGerentes, setAvailableGerentes] = useState<Gerente[]>([]);
 
@@ -181,6 +182,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
 
       setDiretor(ticket.diretor);
       setGerente(ticket.gerente);
+      setVendedor(ticket.vendedor || '');
       setObservacoes(ticket.observacoes || '');
       setRetornoStatus(ticket.status_retorno || undefined);
       
@@ -212,7 +214,8 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
         ticket.id, 
         { 
           diretor, 
-          gerente, 
+          gerente,
+          vendedor,
           observacoes,
           nome_cliente: nomeCliente,
           cpf,
@@ -260,6 +263,7 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
     const success = await updateAndResolveTicket(ticket.id, {
         diretor,
         gerente,
+        vendedor,
         observacoes,
         nome_cliente: nomeCliente,
         cpf,
@@ -464,6 +468,10 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-1">
+                  <Label htmlFor="vendedor" className="font-medium text-muted-foreground flex items-center gap-1.5"><UserSquare className="h-4 w-4" />Vendedor:</Label>
+                  <Input id="vendedor" value={vendedor} onChange={(e) => setVendedor(e.target.value)} disabled={isDetailsDisabled} />
+                </div>
                 <div>
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />Data de Abertura:</strong>
                   <p>{formattedDate}</p>
@@ -657,3 +665,5 @@ export function CobrancaTicketDetailsModal({ ticket: initialTicket, isOpen, onCl
     </Dialog>
   );
 }
+
+    
