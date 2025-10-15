@@ -23,6 +23,12 @@ import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 
+const nameMappings: { [key: string]: string } = {
+  atendente1: 'bruna.santos',
+  atendente2: 'eduarda.goncalves',
+  atendente3: 'stephane.soares',
+};
+
 export function DashboardClient() {
   const { tickets, isLoadingTickets, error, fetchTickets } = useTickets();
   const { cargo, username } = useAuth();
@@ -78,10 +84,14 @@ export function DashboardClient() {
     return activeTickets
       .filter(ticket => {
         const cleanedSearchTerm = searchTerm.toLowerCase().replace(/^#/, '');
+        const responsibleName = ticket.responsible || "";
+        const mappedResponsibleName = nameMappings[responsibleName.toLowerCase()] || responsibleName;
+        
         const searchMatch = ticket.name.toLowerCase().includes(cleanedSearchTerm) ||
                             String(ticket.protocol).padStart(4, '0').includes(cleanedSearchTerm) ||
                             ticket.reason.toLowerCase().includes(cleanedSearchTerm) ||
-                            (ticket.responsible && ticket.responsible.toLowerCase().includes(cleanedSearchTerm));
+                            (responsibleName && responsibleName.toLowerCase().includes(cleanedSearchTerm)) ||
+                            (mappedResponsibleName && mappedResponsibleName.toLowerCase().includes(cleanedSearchTerm));
 
         const statusMatch = statusFilter === "Todos" || ticket.status === statusFilter;
         
@@ -127,8 +137,20 @@ export function DashboardClient() {
   }, [activeTickets]);
 
   const responsibleNamesForFilter = useMemo(() => {
-    const allResponsibles = new Set(activeTickets.map(t => t.responsible).filter(Boolean) as string[]);
-    return ["Todos", ...Array.from(allResponsibles), "não atribuído"];
+    const responsibleSet = new Set<string>();
+    activeTickets.forEach(t => {
+      if (t.responsible) {
+        responsibleSet.add(t.responsible);
+      } else {
+        responsibleSet.add("não atribuído");
+      }
+    });
+    
+    return ["Todos", ...Array.from(responsibleSet).sort((a, b) => {
+      const nameA = nameMappings[a.toLowerCase()] || a;
+      const nameB = nameMappings[b.toLowerCase()] || b;
+      return nameA.localeCompare(nameB);
+    })];
   }, [activeTickets]);
 
 
@@ -251,7 +273,9 @@ export function DashboardClient() {
                       </SelectTrigger>
                       <SelectContent>
                           {responsibleNamesForFilter.map(name => (
-                              <SelectItem key={name} value={name} className="capitalize">{name}</SelectItem>
+                              <SelectItem key={name} value={name} className="capitalize">
+                                {nameMappings[name.toLowerCase()] || name}
+                              </SelectItem>
                           ))}
                       </SelectContent>
                   </Select>

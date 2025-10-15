@@ -27,8 +27,15 @@ interface Profile {
   is_active_in_queue: boolean;
 }
 
+const nameMappings: { [key: string]: string } = {
+  atendente1: 'bruna.santos',
+  atendente2: 'eduarda.goncalves',
+  atendente3: 'stephane.soares',
+};
+
 const AttendantRow = ({ profile, onStatusChange }: { profile: Profile; onStatusChange: (id: string, newStatus: boolean) => Promise<void> }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const displayName = nameMappings[profile.username.toLowerCase()] || profile.username;
 
   const handleToggle = async (checked: boolean) => {
     setIsUpdating(true);
@@ -39,7 +46,7 @@ const AttendantRow = ({ profile, onStatusChange }: { profile: Profile; onStatusC
   return (
     <div className="flex items-center justify-between p-4 border-b last:border-b-0">
       <div className="flex flex-col">
-        <span className="font-medium">{profile.username}</span>
+        <span className="font-medium">{displayName}</span>
         <Badge variant={profile.is_active_in_queue ? "default" : "secondary"} className="w-fit mt-1">
           {profile.is_active_in_queue ? "Ativo na fila" : "Inativo na fila"}
         </Badge>
@@ -48,7 +55,7 @@ const AttendantRow = ({ profile, onStatusChange }: { profile: Profile; onStatusC
         checked={profile.is_active_in_queue}
         onCheckedChange={handleToggle}
         disabled={isUpdating}
-        aria-label={`Ativar ou desativar ${profile.username} na fila`}
+        aria-label={`Ativar ou desativar ${displayName} na fila`}
       />
     </div>
   );
@@ -92,7 +99,7 @@ const AssignmentRow = ({
   const attendantOptions: OptionType[] = useMemo(() => 
     attendants.map(attendant => ({
         value: attendant.username,
-        label: attendant.username,
+        label: nameMappings[attendant.username.toLowerCase()] || attendant.username,
     })), [attendants]);
 
   const selectedUsernames = useMemo(() => 

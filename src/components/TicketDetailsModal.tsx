@@ -62,6 +62,12 @@ interface TicketDetailsModalProps {
   isReadOnlyView?: boolean;
 }
 
+const nameMappings: { [key: string]: string } = {
+  atendente1: 'bruna.santos',
+  atendente2: 'eduarda.goncalves',
+  atendente3: 'stephane.soares',
+};
+
 const FilePreviewItem: React.FC<{
   file: { file_path: string; file_name: string; };
   onDownload: (filePath: string, fileName: string) => void;
@@ -271,6 +277,10 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
     window.open(whatsappWebUrl, '_blank', 'noopener,noreferrer');
   };
 
+  const responsibleName = ticket.responsible || "";
+  const mappedResponsibleName = nameMappings[responsibleName.toLowerCase()] || responsibleName;
+  const displayResponsible = mappedResponsibleName || "Não atribuído";
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -325,7 +335,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
                 </div>
                 <div>
                   <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Tag className="h-4 w-4" />Responsável:</strong>
-                  <p>{ticket.responsible || "Não atribuído"}</p>
+                  <p>{displayResponsible}</p>
                 </div>
                 <div>
                   <strong className="font-medium text-muted-foreground">Status:</strong>

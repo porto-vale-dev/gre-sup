@@ -25,6 +25,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from './ui/scroll-area';
 
+const nameMappings: { [key: string]: string } = {
+  atendente1: 'bruna.santos',
+  atendente2: 'eduarda.goncalves',
+  atendente3: 'stephane.soares',
+};
 
 interface StatCardProps {
   title: string;
@@ -104,7 +109,11 @@ export function GestaoClient() {
 
   const responsibleList = useMemo(() => {
     const allResponsibles = new Set(dateFilteredTickets.map(t => t.responsible).filter(Boolean) as string[]);
-    return ["Todos", ...Array.from(allResponsibles).sort()];
+    return ["Todos", ...Array.from(allResponsibles).sort((a, b) => {
+      const nameA = nameMappings[a.toLowerCase()] || a;
+      const nameB = nameMappings[b.toLowerCase()] || b;
+      return nameA.localeCompare(nameB);
+    })];
   }, [dateFilteredTickets]);
 
   useEffect(() => {
@@ -146,7 +155,7 @@ export function GestaoClient() {
             "Motivo": ticket.reason,
             "Observações": ticket.observations,
             "Status": ticket.status,
-            "Responsável": ticket.responsible,
+            "Responsável": nameMappings[ticket.responsible?.toLowerCase() || ''] || ticket.responsible,
             "Previsão de Resposta": ticket.estimated_response_time,
         }));
 
@@ -251,7 +260,7 @@ export function GestaoClient() {
     }, {} as Record<TicketStatus, number>);
 
     const responsibleCounts = filteredTickets.reduce((acc, ticket) => {
-        const responsible = ticket.responsible || 'Não atribuído';
+        const responsible = nameMappings[ticket.responsible?.toLowerCase() || ''] || ticket.responsible || 'Não atribuído';
         acc[responsible] = (acc[responsible] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
@@ -392,7 +401,9 @@ export function GestaoClient() {
                 </SelectTrigger>
                 <SelectContent>
                   {responsibleList.map(name => (
-                    <SelectItem key={name} value={name} className="capitalize">{name}</SelectItem>
+                    <SelectItem key={name} value={name} className="capitalize">
+                      {nameMappings[name.toLowerCase()] || name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

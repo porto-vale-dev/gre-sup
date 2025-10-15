@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -39,6 +40,12 @@ const statusIcons: Record<TicketStatus, React.ElementType> = {
   "Concluído": CheckCircle2,
 };
 
+const nameMappings: { [key: string]: string } = {
+  atendente1: 'bruna.santos',
+  atendente2: 'eduarda.goncalves',
+  atendente3: 'stephane.soares',
+};
+
 export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
   const { updateTicketStatus, updateTicketResponsible } = useTickets();
   const [responsible, setResponsible] = useState(ticket.responsible || "");
@@ -61,6 +68,10 @@ export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
   };
 
   const StatusIcon = statusIcons[ticket.status];
+  const responsibleName = ticket.responsible || "";
+  const mappedResponsibleName = nameMappings[responsibleName.toLowerCase()] || responsibleName;
+  const displayResponsible = mappedResponsibleName || "Não atribuído";
+
 
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
@@ -113,7 +124,7 @@ export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
           ) : (
             <div className="flex items-center gap-1 w-full justify-between">
               <span className={ticket.responsible ? "" : "italic text-muted-foreground"}>
-                {ticket.responsible || "Não atribuído"}
+                {displayResponsible}
               </span>
               <Button size="icon" variant="ghost" onClick={() => setIsEditingResponsible(true)} className="h-7 w-7" aria-label="Editar responsável">
                 <Edit3 className="h-3.5 w-3.5" />
