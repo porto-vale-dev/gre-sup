@@ -155,6 +155,12 @@ const UserTicketCard = ({ ticket, onOpenDetails }: { ticket: Ticket | CobrancaTi
                             : 'Data de envio indisponível'
                         }
                     </span>
+                    {isCobrança && ticket.nome_cliente && (
+                        <span className="flex items-center gap-1.5"><User className="h-4 w-4"/> Cliente: {ticket.nome_cliente}</span>
+                    )}
+                    {isCobrança && ticket.vendedor && (
+                        <span className="flex items-center gap-1.5"><User className="h-4 w-4"/> Vendedor: {ticket.vendedor}</span>
+                    )}
                     {responsible && (
                         <span className="flex items-center gap-1.5"><User className="h-4 w-4"/> Responsável: {responsible}</span>
                     )}
@@ -431,3 +437,6 @@ export function MyTicketsClient() {
     </div>
   );
 }
+
+    
+
