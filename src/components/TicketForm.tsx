@@ -205,7 +205,9 @@ export function TicketForm() {
     reason.is_active || isCreditReason(reason.value)
   );
 
-  const isSubmitDisabled = form.formState.isSubmitting || (selectedReasonInfo && !selectedReasonInfo.is_active && isCreditReason(selectedReasonInfo.value));
+  const isSubmitDisabled = 
+    form.formState.isSubmitting ||
+    (!!selectedReasonInfo && !selectedReasonInfo.is_active && isCreditReason(selectedReasonInfo.value));
   
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
