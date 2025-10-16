@@ -1,9 +1,21 @@
 
 import type {NextConfig} from 'next';
+import fs from 'fs';
+import path from 'path';
+
+// Read the build ID from the .version file
+const buildId = fs.readFileSync(path.join(process.cwd(), '.version'), 'utf8').trim();
+
 
 const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone', // Essencial para deploy com Docker/Cloud Run
+  
+  // Make the build ID available to the client
+  env: {
+    NEXT_PUBLIC_BUILD_ID: buildId,
+  },
+
   async rewrites() {
     return [
       {
@@ -15,21 +27,9 @@ const nextConfig: NextConfig = {
         destination: '/dashboard/archived',
       },
       {
-        source: '/suporte-gre/cobranca/dashboard',
-        destination: '/suporte-gre/cobranca/dashboard',
-      },
-      {
-        source: '/suporte-gre/cobranca/archived',
-        destination: '/suporte-gre/cobranca/archived',
-      },
-      {
-        source: '/pos-contemplacao/dashboard',
-        destination: '/pos-contemplacao/dashboard',
-      },
-      {
         source: '/pos-contemplacao/archived',
         destination: '/pos-contemplacao/archived',
-      },
+      }
     ];
   },
   typescript: {

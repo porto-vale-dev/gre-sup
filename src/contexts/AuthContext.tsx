@@ -2,7 +2,7 @@
 "use client";
 
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session, User } from '@supabase/supabase-js';
@@ -25,6 +25,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const BUILD_ID_STORAGE_KEY = 'app-build-id';
 
 async function fetchUserProfile(user: User | null): Promise<UserProfile | null> {
   if (!user) return null;
@@ -53,6 +55,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [username, setUsername] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem(BUILD_ID_STORAGE_KEY);
+    router.push('/');
+  }, [router]);
+  
+  // 🔹 Verificação de versão do build
+  useEffect(() => {
+    const currentBuildId = process.env.NEXT_PUBLIC_BUILD_ID;
+    const storedBuildId = localStorage.getItem(BUILD_ID_STORAGE_KEY);
+
+    if (storedBuildId && storedBuildId !== currentBuildId) {
+      console.log('New version detected. Forcing logout and refresh.');
+      // Se estiver autenticado, desloga, senão apenas recarrega a página
+      const { data: { session } } = supabase.auth.getSession().then(({data: {session}}) => {
+          if (session) {
+            logout();
+          } else {
+            localStorage.setItem(BUILD_ID_STORAGE_KEY, currentBuildId || '');
+            window.location.reload();
+          }
+      });
+    } else if (!storedBuildId) {
+      localStorage.setItem(BUILD_ID_STORAGE_KEY, currentBuildId || '');
+    }
+  }, [logout]);
+
 
   // 🔹 Verificação imediata da sessão ao carregar
   useEffect(() => {
@@ -112,12 +142,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: "Usuário ou senha inválidos." };
     }
 
-    return { success: true };
-  };
+    // After a successful login, also update the build ID
+    localStorage.setItem(BUILD_ID_STORAGE_KEY, process.env.NEXT_PUBLIC_BUILD_ID || '');
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
+    return { success: true };
   };
 
   const value = {
