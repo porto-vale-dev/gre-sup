@@ -32,6 +32,7 @@ export const gerentesPorDiretor: Record<string, Gerente[]> = {
     { name: 'CLAYTON CARVALHO', email: 'clayton.carvalho@portovaleconsorcios.com.br', celular: '+55 12 98806-8834' },
     { name: 'ANA PAULA SILVA', email: 'ana.silva@portovaleconsorcios.com.br', celular: '+55 11 99628-9396' },
     { name: 'RAFAELA GALDINO', email: 'rafaela.galdino@portovaleconsorcios.com.br', celular: '+55 12 99666-2441' },
+    { name: 'PRISCILA APARECIDA', email: 'priscila.aparecida@portovaleconsorcios.com.br', celular: '+55 12 98830-0920' },
   ],
   'FÊNIX - ERICA MACEDO': [
     { name: 'TAINÁ LOPES', email: 'taina@portovaleconsorcios.com.br', celular: '+55 12 99633-5737' },

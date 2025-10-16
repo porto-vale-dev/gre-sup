@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, type ChangeEvent } from 'react';
@@ -77,8 +78,17 @@ export default function CobrancaPage() {
   });
 
   const handleDiretorChange = (diretorName: string) => {
-    setAvailableGerentes(gerentesPorDiretor[diretorName] || []);
-    form.setValue('gerente', ''); 
+    const director = diretores.find(d => d.name === diretorName);
+    const gerentes = gerentesPorDiretor[diretorName] || [];
+    
+    let combinedList: Gerente[] = [];
+    if (director) {
+        combinedList.push({ name: director.name, email: director.email, celular: director.celular });
+    }
+    combinedList = [...combinedList, ...gerentes];
+    
+    setAvailableGerentes(combinedList);
+    form.setValue('gerente', '');
     form.setValue("diretor", diretorName, { shouldValidate: true });
   };
 
@@ -491,4 +501,5 @@ export default function CobrancaPage() {
   );
 }
 
+    
     
