@@ -81,7 +81,7 @@ export function SiteHeader() {
     const isPosContemplacaoNovo = pathname === '/pos-contemplacao/novo';
     const isPosContemplacaoArchived = pathname === '/pos-contemplacao/archived';
     
-    const allowedManagementRoles = ['adm', 'greadmin', 'greadminsa', 'gre', 'grea'];
+    const allowedManagementRoles = ['adm', 'greadmin', 'greadminsa', 'gre', 'grea', 'gre_apoio_admin'];
     const canViewManagement = cargo && allowedManagementRoles.includes(cargo);
 
     const allowedSettingsRoles = ['adm', 'greadmin', 'greadminsa', 'gre', 'grea'];

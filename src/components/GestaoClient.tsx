@@ -89,7 +89,7 @@ export function GestaoClient() {
         baseTickets = tickets.filter(ticket => 
             ticket.responsible && allowedResponsibles.includes(ticket.responsible.toLowerCase())
         );
-    } else if (cargo === 'gre' && username) {
+    } else if ((cargo === 'gre' || cargo === 'gre_apoio_admin') && username) {
         baseTickets = tickets.filter(ticket => ticket.responsible === username);
     }
     
@@ -462,7 +462,7 @@ export function GestaoClient() {
       )}
 
       {/* Show full dashboard for adm, greadmin, greadminsa, or if the user is gre/grea and has tickets */}
-      {(canViewDashboards || ((cargo === 'gre' || cargo === 'grea') && filteredTickets.length > 0)) && (
+      {(canViewDashboards || ((cargo === 'gre' || cargo === 'grea' || cargo === 'gre_apoio_admin') && filteredTickets.length > 0)) && (
         <>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard title="Tickets no Período" value={stats.total} Icon={FileText} description="Total de tickets no período." />
