@@ -198,8 +198,15 @@ export function TicketForm() {
     });
   }
 
-  const isSubmitDisabled = form.formState.isSubmitting || (selectedReasonInfo?.is_active === false);
+  const isCreditReason = (value: string) => 
+    value === "Simulação de redução de crédito" || value === "Simulação de aumento de crédito";
 
+  const availableReasons = allReasons.filter(reason => 
+    reason.is_active || isCreditReason(reason.value)
+  );
+
+  const isSubmitDisabled = form.formState.isSubmitting || (selectedReasonInfo && !selectedReasonInfo.is_active && isCreditReason(selectedReasonInfo.value));
+  
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
@@ -354,7 +361,7 @@ export function TicketForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {allReasons.map(reason => (
+                      {availableReasons.map(reason => (
                         <SelectItem key={reason.value} value={reason.value}>
                           {reason.label}
                         </SelectItem>
@@ -367,7 +374,7 @@ export function TicketForm() {
                       Previsão de resposta: {selectedReasonInfo.responseTime}
                     </FormDescription>
                   )}
-                  {selectedReasonInfo && !selectedReasonInfo.is_active && (
+                  {selectedReasonInfo && !selectedReasonInfo.is_active && isCreditReason(selectedReasonInfo.value) && (
                     <Alert variant="destructive" className="mt-2">
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle>Serviço Indisponível</AlertTitle>
