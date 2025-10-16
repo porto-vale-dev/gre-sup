@@ -67,17 +67,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentBuildId = process.env.NEXT_PUBLIC_BUILD_ID;
     const storedBuildId = localStorage.getItem(BUILD_ID_STORAGE_KEY);
 
-    if (storedBuildId && storedBuildId !== currentBuildId) {
+    const handleVersionMismatch = async () => {
       console.log('New version detected. Forcing logout and refresh.');
-      // Se estiver autenticado, desloga, senão apenas recarrega a página
-      const { data: { session } } = supabase.auth.getSession().then(({data: {session}}) => {
-          if (session) {
-            logout();
-          } else {
-            localStorage.setItem(BUILD_ID_STORAGE_KEY, currentBuildId || '');
-            window.location.reload();
-          }
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // If authenticated, log out
+        await logout();
+      } else {
+        // If not authenticated, just update the build ID and reload
+        localStorage.setItem(BUILD_ID_STORAGE_KEY, currentBuildId || '');
+        window.location.reload();
+      }
+    };
+
+    if (storedBuildId && storedBuildId !== currentBuildId) {
+      handleVersionMismatch();
     } else if (!storedBuildId) {
       localStorage.setItem(BUILD_ID_STORAGE_KEY, currentBuildId || '');
     }
