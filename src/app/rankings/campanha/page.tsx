@@ -65,38 +65,6 @@ export default function CampanhaPage() {
                 ></iframe>
             </div>
         </div>
-
-        {/* Second Report */}
-        <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-semibold flex items-center gap-2 text-primary">
-                <Trophy className="h-6 w-6"/>
-                Ranking Campanha - Hotel Fazenda Vale do Sol
-            </h2>
-            <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden h-[calc(100vh-18rem)] min-h-[600px]">
-                <iframe
-                title="Ranking Hotel Fazenda Vale do Sol"
-                src="https://app.powerbi.com/view?r=eyJrIjoiMDk5YWVjYzQtM2YxMi00OTQ4LTg0NmEtOTk4ZDY1YjhmY2QzIiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
-                allowFullScreen
-                className="absolute top-0 left-0 w-full h-full border-0"
-                ></iframe>
-            </div>
-        </div>
-
-        {/* Third Report */}
-         <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-semibold flex items-center gap-2 text-primary">
-                <Trophy className="h-6 w-6"/>
-                Ranking Campanha - Zeca Pagodinho
-            </h2>
-            <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden h-[calc(100vh-18rem)] min-h-[600px]">
-                <iframe
-                title="Ranking Campanha Zeca Pagodinho"
-                src="https://app.powerbi.com/view?r=eyJrIjoiNTAwMTM0MmEtZjllYy00NWVkLWIxODQtNmQwNWE3YjhmNjJjIiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
-                allowFullScreen
-                className="absolute top-0 left-0 w-full h-full border-0"
-                ></iframe>
-            </div>
-        </div>
       </div>
     </div>
   );
