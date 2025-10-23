@@ -209,6 +209,17 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   };
 
   const updateTicketStatus = async (ticketId: string, status: TicketStatus) => {
+    const { data: currentTicket, error: fetchError } = await supabase
+      .from('tickets')
+      .select('*')
+      .eq('id', ticketId)
+      .single();
+
+    if (fetchError || !currentTicket) {
+      toast({ title: "Erro", description: "Ticket não encontrado para atualização.", variant: "destructive" });
+      return;
+    }
+
     const { error } = await supabase
       .from('tickets')
       .update({ status })
@@ -218,8 +229,29 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       toast({ title: "Erro ao Atualizar", description: error.message, variant: "destructive" });
       return;
     }
-
+    
     toast({ title: "Status Atualizado", description: `Status do ticket alterado para ${status}.` });
+
+    if (status === 'Concluído') {
+      const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/confirmacaotetyettette";
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            tipo_evento: 'concluido',
+            protocolo: String(currentTicket.protocol).padStart(4, '0'),
+            solicitante: currentTicket.name,
+            cliente: currentTicket.client_name,
+            motivo: currentTicket.reason,
+            responsavel: currentTicket.responsible || 'Não atribuído',
+            telefone: currentTicket.phone,
+            previsao_resposta: currentTicket.estimated_response_time
+        }),
+      }).catch(webhookError => {
+        console.error("Webhook de conclusão falhou:", webhookError);
+        toast({ title: "Aviso de Webhook", description: "O ticket foi concluído, mas a notificação pode não ter sido enviada.", variant: "default" });
+      });
+    }
     
     await fetchTickets();
   };
@@ -300,6 +332,17 @@ export function TicketProvider({ children }: { children: ReactNode }) {
             return false;
         }
 
+        // Fetch the updated ticket to send correct data to webhook
+        const { data: updatedTicket, error: fetchError } = await supabase
+          .from('tickets')
+          .select('*')
+          .eq('id', ticketId)
+          .single();
+        
+        if (fetchError || !updatedTicket) {
+           throw new Error(`Erro ao buscar ticket para conclusão: ${fetchError?.message || 'Ticket não encontrado'}`);
+        }
+
         const { error: statusError } = await supabase
             .from('tickets')
             .update({ status: 'Concluído' })
@@ -308,8 +351,29 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         if (statusError) {
             throw new Error(`Erro ao atualizar o status: ${statusError.message}`);
         }
-
+        
         toast({ title: "Ticket Concluído", description: "O ticket foi salvo e marcado como concluído." });
+        
+        // Send webhook for completion
+        const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/confirmacaotetyettette";
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              tipo_evento: 'concluido',
+              protocolo: String(updatedTicket.protocol).padStart(4, '0'),
+              solicitante: updatedTicket.name,
+              cliente: updatedTicket.client_name,
+              motivo: updatedTicket.reason,
+              responsavel: updatedTicket.responsible || 'Não atribuído',
+              telefone: updatedTicket.phone,
+              previsao_resposta: updatedTicket.estimated_response_time
+          }),
+        }).catch(webhookError => {
+          console.error("Webhook de conclusão falhou:", webhookError);
+          toast({ title: "Aviso de Webhook", description: "O ticket foi concluído, mas a notificação pode não ter sido enviada.", variant: "default" });
+        });
+
         await fetchTickets();
         return true;
     } catch (error: any) {
