@@ -76,12 +76,20 @@ const RankingCard = ({ ranking }: { ranking: Ranking }) => (
 
 
 export default function RankingsPage() {
-  const { cargo } = useAuth();
+  const { cargo, email } = useAuth();
   
   const accessibleRankings = useMemo(() => {
+    // Regra específica para o usuário 'naira.nunes@portovaleconsorcios.com.br'
+    if (email === 'naira.nunes@portovaleconsorcios.com.br') {
+        return allRankings.filter(ranking => 
+            ranking.title === "Ranking Gerente" || ranking.title === "Ranking Campanha"
+        );
+    }
+    
+    // Regra geral para os outros usuários
     const userRole = cargo || 'colaborador';
     return allRankings.filter(ranking => ranking.allowedRoles.includes(userRole));
-  }, [cargo]);
+  }, [cargo, email]);
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -196,20 +195,26 @@ export function MyTicketsClient() {
 
   const myTickets = useMemo(() => {
     if (!user || !email) return [];
-    
+  
+    // Tickets de Suporte onde o usuário logado é o criador
     const mySupportTickets = supportTickets.filter(t => t.user_id === user.id);
-
-    // Apenas gerentes e diretores podem ver os tickets de cobrança aqui
-    const myCobrancaTickets = cobrancaTickets.filter(t => 
-      t.email_gerente === email || 
-      t.email_diretor === email
-    );
-    
+  
+    let myCobrancaTickets: CobrancaTicket[] = [];
+  
+    // Regra especial para Naira
+    if (email === 'naira.nunes@portovaleconsorcios.com.br') {
+      myCobrancaTickets = cobrancaTickets.filter(t => t.email_diretor === 'simone@portovaleconsorcios.com.br');
+    } else {
+      // Regra geral para outros usuários (gerentes e diretores)
+      myCobrancaTickets = cobrancaTickets.filter(t => t.email_gerente === email || t.email_diretor === email);
+    }
+  
     const allTickets: (Ticket | CobrancaTicket)[] = [
       ...mySupportTickets,
       ...myCobrancaTickets
     ];
-    
+  
+    // Remove duplicatas caso um ticket apareça em mais de uma lista (pouco provável, mas seguro)
     return Array.from(new Map(allTickets.map(item => [item.id, item])).values());
   }, [supportTickets, cobrancaTickets, user, email]);
 
@@ -439,4 +444,3 @@ export function MyTicketsClient() {
 }
 
     
-

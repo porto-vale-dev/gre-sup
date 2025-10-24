@@ -27,7 +27,7 @@ import logoPortal from './logo_portal_pv.webp';
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const { isAuthenticated, logout, isLoading, user, username, cargo } = useAuth();
+  const { isAuthenticated, logout, isLoading, user, username, cargo, email } = useAuth();
   
   const handleLogout = () => {
     logout();
@@ -40,6 +40,9 @@ export function SiteHeader() {
 
   const displayName = capitalizeFirstLetter(username || user?.email?.split('@')[0] || '');
   const avatarFallback = displayName ? displayName.charAt(0) : <UserCircle className="h-6 w-6" />;
+  
+  // Custom display cargo for specific user
+  const displayCargo = email === 'naira.nunes@portovaleconsorcios.com.br' ? 'Eagles' : cargo;
 
 
   // Minimal header for the main login page
@@ -216,7 +219,7 @@ export function SiteHeader() {
                 <Button variant="ghost" className="flex items-center gap-2">
                   <div className="text-right hidden sm:block">
                     <p className="text-sm font-medium text-foreground -mb-1">{displayName}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{cargo}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{displayCargo}</p>
                   </div>
                   <Avatar className="h-9 w-9">
                     <AvatarFallback>{avatarFallback}</AvatarFallback>
