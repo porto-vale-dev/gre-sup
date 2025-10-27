@@ -42,8 +42,12 @@ export function SiteHeader() {
   const avatarFallback = displayName ? displayName.charAt(0) : <UserCircle className="h-6 w-6" />;
   
   // Custom display cargo for specific user
-  const displayCargo = email === 'naira.nunes@portovaleconsorcios.com.br' ? 'Eagles' : cargo;
-
+  let displayCargo = cargo;
+  if (email === 'naira.nunes@portovaleconsorcios.com.br') {
+      displayCargo = 'Eagles';
+  } else if (email === 'aprendiz.gre@portovaleconsorcios.com.br') {
+      displayCargo = null; // Oculta o cargo
+  }
 
   // Minimal header for the main login page
   if (pathname === '/') {
@@ -160,7 +164,7 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               )}
-              {isTicketDashboardArea && canViewManagement && !isArchivedPage && !isGestaoPage && !isConfiguracoesPage && (
+              {isTicketDashboardArea && canViewManagement && !isArchivedPage && !isGestaoPage && !isConfiguracoesPage && email !== 'aprendiz.gre@portovaleconsorcios.com.br' && (
                 <Link href="/suporte-gre/gestao" passHref>
                   <Button variant="ghost" size="sm" aria-label="Gestão de Suporte">
                     <LayoutDashboard className="h-4 w-4 sm:mr-2" />
@@ -176,7 +180,7 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               )}
-              {isTicketDashboardArea && canViewSettings && !isArchivedPage && !isGestaoPage && !isConfiguracoesPage && (
+              {isTicketDashboardArea && canViewSettings && !isArchivedPage && !isGestaoPage && !isConfiguracoesPage && email !== 'aprendiz.gre@portovaleconsorcios.com.br' && (
                 <Link href="/suporte-gre/configuracoes" passHref>
                   <Button variant="ghost" size="sm" aria-label="Configurações">
                     <Settings className="h-4 w-4 sm:mr-2" />
@@ -219,7 +223,7 @@ export function SiteHeader() {
                 <Button variant="ghost" className="flex items-center gap-2">
                   <div className="text-right hidden sm:block">
                     <p className="text-sm font-medium text-foreground -mb-1">{displayName}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{displayCargo}</p>
+                    {displayCargo && <p className="text-xs text-muted-foreground capitalize">{displayCargo}</p>}
                   </div>
                   <Avatar className="h-9 w-9">
                     <AvatarFallback>{avatarFallback}</AvatarFallback>

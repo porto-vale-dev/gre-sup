@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { supabaseAnon } from '@/lib/supabaseAnonClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
-import { MAX_SOLUTION_FILE_SIZE, TICKET_REASONS } from '@/lib/constants';
+import { MAX_SOLUTION_FILE_SIZE, TICKET_STATUSES } from '@/lib/constants';
 
 const TICKET_FILES_BUCKET = 'ticket-files';
 const PAGE_SIZE = 1000;
@@ -33,7 +33,7 @@ interface TicketContextType {
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
   updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
   updateTicketSolution: (ticketId: string, solution: string, newFiles: File[], comentarios?: string) => Promise<boolean>;
-  updateAndCompleteTicket: (ticketId: string, solution: string, newFiles: File[], comentarios?: string) => Promise<boolean>;
+  updateAndCompleteTicket: (ticketId: string, solution: string, newFiles: File[], comentarios?: string, status?: TicketStatus) => Promise<boolean>;
   deleteTicket: (ticketId: string, filePaths?: { solution_files?: SolutionFile[] | null, file_path?: string | null, file_name?: string | null }) => Promise<void>;
   getTicketById: (ticketId: string) => Ticket | undefined;
   fetchTickets: () => void;
@@ -324,7 +324,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateAndCompleteTicket = async (ticketId: string, solution: string, newFiles: File[], comentarios?: string): Promise<boolean> => {
+  const updateAndCompleteTicket = async (ticketId: string, solution: string, newFiles: File[], comentarios?: string, status: TicketStatus = 'Concluído'): Promise<boolean> => {
     try {
         const solutionSaved = await updateTicketSolution(ticketId, solution, newFiles, comentarios);
         if (!solutionSaved) {
@@ -345,34 +345,35 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
         const { error: statusError } = await supabase
             .from('tickets')
-            .update({ status: 'Concluído' })
+            .update({ status: status })
             .eq('id', ticketId);
 
         if (statusError) {
             throw new Error(`Erro ao atualizar o status: ${statusError.message}`);
         }
         
-        toast({ title: "Ticket Concluído", description: "O ticket foi salvo e marcado como concluído." });
+        toast({ title: `Ticket ${status}!`, description: `O ticket foi salvo e marcado como ${status.toLowerCase()}.` });
         
-        // Send webhook for completion
-        const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/confirmacaotetyettette";
-        fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              tipo_evento: 'concluido',
-              protocolo: String(updatedTicket.protocol).padStart(4, '0'),
-              solicitante: updatedTicket.name,
-              cliente: updatedTicket.client_name,
-              motivo: updatedTicket.reason,
-              responsavel: updatedTicket.responsible || 'Não atribuído',
-              telefone: updatedTicket.phone,
-              previsao_resposta: updatedTicket.estimated_response_time
-          }),
-        }).catch(webhookError => {
-          console.error("Webhook de conclusão falhou:", webhookError);
-          toast({ title: "Aviso de Webhook", description: "O ticket foi concluído, mas a notificação pode não ter sido enviada.", variant: "default" });
-        });
+                if (status === 'Concluído') {
+            const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/confirmacaotetyettette";
+            fetch(webhookUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  tipo_evento: 'concluido',
+                  protocolo: String(updatedTicket.protocol).padStart(4, '0'),
+                  solicitante: updatedTicket.name,
+                  cliente: updatedTicket.client_name,
+                  motivo: updatedTicket.reason,
+                  responsavel: updatedTicket.responsible || 'Não atribuído',
+                  telefone: updatedTicket.phone,
+                  previsao_resposta: updatedTicket.estimated_response_time
+              }),
+            }).catch(webhookError => {
+              console.error("Webhook de conclusão falhou:", webhookError);
+              toast({ title: "Aviso de Webhook", description: "O ticket foi concluído, mas a notificação pode não ter sido enviada.", variant: "default" });
+            });
+        }
 
         await fetchTickets();
         return true;
@@ -552,10 +553,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error('Error fetching reason configs:', error);
       // Fallback to local constants if there's an error
-      return TICKET_REASONS;
+      return TICKET_STATUSES.map(r => ({ value: r, label: r, is_active: true, responseTime: 'N/A' })); // This is not ideal
     }
     
     // Combine DB results with local constants to ensure all reasons are present
+    const { TICKET_REASONS } = await import('@/lib/constants'); // Dynamic import
     const combinedReasons = TICKET_REASONS.map(localReason => {
         const dbReason = data.find(d => d.value === localReason.value);
         return {

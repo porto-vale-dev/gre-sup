@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TICKET_STATUSES } from '@/lib/constants';
 import { useTickets } from '@/contexts/TicketContext';
 import { CalendarDays, Clock, FileText, User, Tag, Edit3, Check, AlertTriangle, Hourglass, CheckCircle2, ExternalLink, X, Ticket as TicketIcon, Activity, ShieldCheck, Headset } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -28,6 +29,7 @@ const statusColors: Record<TicketStatus, string> = {
   "Porto Resolve": "bg-purple-600",
   "Suporte": "bg-gray-500",
   "Concluído": "bg-green-500",
+  "Tratado": "bg-cyan-500",
 };
 
 const statusIcons: Record<TicketStatus, React.ElementType> = {
@@ -38,6 +40,7 @@ const statusIcons: Record<TicketStatus, React.ElementType> = {
   "Porto Resolve": ShieldCheck,
   "Suporte": Headset,
   "Concluído": CheckCircle2,
+  "Tratado": CheckCircle2,
 };
 
 const nameMappings: { [key: string]: string } = {
@@ -48,8 +51,20 @@ const nameMappings: { [key: string]: string } = {
 
 export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
   const { updateTicketStatus, updateTicketResponsible } = useTickets();
+  const { email } = useAuth();
   const [responsible, setResponsible] = useState(ticket.responsible || "");
   const [isEditingResponsible, setIsEditingResponsible] = useState(false);
+
+  const isAprendiz = email === 'aprendiz.gre@portovaleconsorcios.com.br';
+  
+  let availableStatuses = TICKET_STATUSES;
+  if (isAprendiz) {
+    availableStatuses = TICKET_STATUSES.filter(s => s !== 'Concluído');
+    if (!availableStatuses.includes('Tratado')) {
+      availableStatuses.push('Tratado');
+    }
+  }
+
 
   const handleStatusChange = async (status: string) => {
     await updateTicketStatus(ticket.id, status as TicketStatus);
@@ -123,7 +138,7 @@ export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
             </div>
           ) : (
             <div className="flex items-center gap-1 w-full justify-between">
-              <span className={ticket.responsible ? "" : "italic text-muted-foreground"}>
+              <span className={ticket.responsible ? "" : "italic text-muted-foreground font-bold text-destructive animate-pulse"}>
                 {displayResponsible}
               </span>
               <Button size="icon" variant="ghost" onClick={() => setIsEditingResponsible(true)} className="h-7 w-7" aria-label="Editar responsável">
@@ -139,7 +154,7 @@ export function TicketCard({ ticket, onOpenDetails }: TicketCardProps) {
               <SelectValue placeholder="Mudar status" />
             </SelectTrigger>
             <SelectContent>
-              {TICKET_STATUSES.map(s => (
+              {availableStatuses.map(s => (
                 <SelectItem key={s} value={s} className="text-xs">
                   {s}
                 </SelectItem>

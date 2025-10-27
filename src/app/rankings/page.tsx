@@ -85,6 +85,11 @@ export default function RankingsPage() {
             ranking.title === "Ranking Gerente" || ranking.title === "Ranking Campanha"
         );
     }
+
+        // Regra específica para o usuário 'aprendiz.gre@portovaleconsorcios.com.br'
+    if (email === 'aprendiz.gre@portovaleconsorcios.com.br') {
+        return allRankings.filter(ranking => ranking.title === "Ranking Campanha");
+    }
     
     // Regra geral para os outros usuários
     const userRole = cargo || 'colaborador';

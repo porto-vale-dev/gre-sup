@@ -31,7 +31,7 @@ const nameMappings: { [key: string]: string } = {
 
 export function DashboardClient() {
   const { tickets, isLoadingTickets, error, fetchTickets } = useTickets();
-  const { cargo, username } = useAuth();
+  const { cargo, username, email } = useAuth();
   
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,7 +55,16 @@ export function DashboardClient() {
 
 
   const activeTickets = useMemo(() => {
-    const baseTickets = tickets.filter(ticket => ticket.status !== "Concluído");
+    let baseTickets = tickets.filter(ticket => ticket.status !== "Concluído");
+
+    if (email === 'aprendiz.gre@portovaleconsorcios.com.br') {
+        const allowedResponsibles = ['mayara', 'luana'];
+        const allowedReasons = ['Boleto do mês', 'Link de cartão'];
+        return baseTickets.filter(ticket => 
+            ticket.responsible && allowedResponsibles.includes(ticket.responsible.toLowerCase()) &&
+            allowedReasons.includes(ticket.reason)
+        );
+    }
 
     if (cargo === 'greadminsa') {
       const excludedResponsibles = ['marcelo', 'abraao / marcelo', 'luana', 'mayara'];
@@ -78,10 +87,10 @@ export function DashboardClient() {
     
     // Admins and greadmins see all active tickets
     return baseTickets;
-  }, [tickets, cargo, username]);
+  }, [tickets, cargo, username, email]);
 
   const filteredAndSortedTickets = useMemo(() => {
-    return activeTickets
+    const sorted = activeTickets
       .filter(ticket => {
         const cleanedSearchTerm = searchTerm.toLowerCase().replace(/^#/, '');
         const responsibleName = ticket.responsible || "";
@@ -120,7 +129,16 @@ export function DashboardClient() {
         const dateB = new Date(b.submission_date).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
-  }, [activeTickets, searchTerm, statusFilter, responsibleFilter, sortOrder, date]);
+      
+    // For greadmin and greadminsa, bring unassigned tickets to the top
+    if (cargo === 'greadmin' || cargo === 'greadminsa') {
+      const unassigned = sorted.filter(t => !t.responsible);
+      const assigned = sorted.filter(t => t.responsible);
+      return [...unassigned, ...assigned];
+    }
+
+    return sorted;
+  }, [activeTickets, searchTerm, statusFilter, responsibleFilter, sortOrder, date, cargo]);
 
   const handleOpenDetails = (ticket: Ticket) => {
     setSelectedTicket(ticket);

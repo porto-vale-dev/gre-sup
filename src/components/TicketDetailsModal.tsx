@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Ticket, SolutionFile } from '@/types';
+import type { Ticket, SolutionFile, TicketStatus } from '@/types';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import React, { useState, useEffect, type ChangeEvent } from 'react';
@@ -115,7 +115,7 @@ const FilePreviewItem: React.FC<{
 export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isReadOnlyView = false }: TicketDetailsModalProps) {
   const { downloadFile, createPreviewUrl, updateTicketSolution, getTicketById, updateAndCompleteTicket, deleteTicket } = useTickets();
   const { toast } = useToast();
-  const { cargo } = useAuth();
+  const { cargo, email } = useAuth();
   
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
 
@@ -126,11 +126,12 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
   const [isDeleting, setIsDeleting] = useState(false);
 
   const allowedRoles = ['adm', 'greadmin', 'greadminsa', 'gre', 'grea', 'gre_apoio_admin'];
-  const canViewInternalComments = !isReadOnlyView && cargo && allowedRoles.includes(cargo);
+  const canViewInternalComments = !isReadOnlyView && cargo && (allowedRoles.includes(cargo) || email === 'aprendiz.gre@portovaleconsorcios.com.br');
   
   const allowedDeleteRoles = ['adm', 'greadmin', 'greadminsa'];
   const canDelete = cargo && allowedDeleteRoles.includes(cargo);
 
+  const isAprendiz = email === 'aprendiz.gre@portovaleconsorcios.com.br';
 
   useEffect(() => {
     if (ticket) {
@@ -219,10 +220,10 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
     }
   };
 
-  const handleSaveAndComplete = async () => {
+   const handleSaveAndComplete = async (status: TicketStatus = 'Concluído') => {
     setIsSaving(true);
     try {
-        const success = await updateAndCompleteTicket(ticket.id, solutionText, stagedFiles, comentarios);
+        const success = await updateAndCompleteTicket(ticket.id, solutionText, stagedFiles, comentarios, status);
         if (success) {
             setStagedFiles([]);
             onClose();
@@ -493,10 +494,17 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
                     <Save className="mr-2 h-4 w-4" />
                     {isSaving ? 'Salvando...' : 'Salvar'}
                   </Button>
-                  <Button onClick={handleSaveAndComplete} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700">
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    {isSaving ? 'Concluindo...' : 'Salvar e Concluir'}
-                  </Button>
+                   {isAprendiz ? (
+                    <Button onClick={() => handleSaveAndComplete('Tratado')} disabled={isSaving} className="w-full bg-cyan-600 hover:bg-cyan-700">
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        {isSaving ? 'Salvando...' : 'Marcar como Tratado'}
+                    </Button>
+                  ) : (
+                    <Button onClick={() => handleSaveAndComplete('Concluído')} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700">
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        {isSaving ? 'Concluindo...' : 'Salvar e Concluir'}
+                    </Button>
+                  )}
                 </>
               )}
             </div>

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -9,10 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfiguracoesClient } from '@/components/ConfiguracoesClient';
 
 export default function ConfiguracoesPage() {
-  const { cargo } = useAuth();
+  const { cargo, email } = useAuth();
   const allowedRoles = ['adm', 'greadmin', 'greadminsa', 'gre', 'grea'];
 
-  if (!cargo || !allowedRoles.includes(cargo)) {
+  if (email === 'aprendiz.gre@portovaleconsorcios.com.br' || !cargo || !allowedRoles.includes(cargo)) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
         <Card className="w-full max-w-md text-center shadow-xl">

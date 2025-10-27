@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useMemo } from 'react';
@@ -47,13 +48,20 @@ const ServiceCard = ({ service }: { service: Service }) => (
 );
 
 export default function HubPage() {
-    const { cargo } = useAuth();
+    const { cargo, email } = useAuth();
     
     const accessibleServices = useMemo(() => {
       // Trata usuários com cargo nulo, vazio ou indefinido como "colaborador"
       const userRole = cargo || 'colaborador';
-      return allServices.filter(service => service.allowedRoles.includes(userRole));
-    }, [cargo]);
+      
+      let filtered = allServices.filter(service => service.allowedRoles.includes(userRole));
+      
+      if (email === 'aprendiz.gre@portovaleconsorcios.com.br') {
+        filtered = filtered.filter(service => service.title !== 'Painel de Apoio Jacareí');
+      }
+
+      return filtered;
+    }, [cargo, email]);
 
     const generalTools = useMemo(() => {
       return accessibleServices.filter(s => s.title === "Rankings" || s.title === "Mural de Avisos - GRE" || s.title === "Novo ticket - GRE" || s.title === "Acompanhar Solicitação");
