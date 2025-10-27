@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useContext } from 'react';
@@ -38,6 +37,7 @@ const statusColors: Record<TicketStatus | CobrancaTicketStatus | PosContemplacao
   "Porto Resolve": "bg-purple-600",
   "Suporte": "bg-gray-500",
   "Concluído": "bg-green-500",
+  "Tratado": "bg-cyan-500",
   // Cobrança
   "Aberta": "bg-blue-500",
   "Em análise": "bg-yellow-500",

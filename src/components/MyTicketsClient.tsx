@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -29,6 +28,7 @@ const statusColors: Record<TicketStatus | CobrancaTicketStatus, string> = {
   "Porto Resolve": "bg-purple-600 hover:bg-purple-600",
   "Suporte": "bg-gray-500 hover:bg-gray-500",
   "Concluído": "bg-green-500 hover:bg-green-500",
+  "Tratado": "bg-cyan-500 hover:bg-cyan-500",
   // Cobrança
   "Aberta": "bg-blue-500 hover:bg-blue-500",
   "Em análise": "bg-yellow-500 hover:bg-yellow-500",
@@ -49,6 +49,7 @@ const statusIcons: Record<TicketStatus | CobrancaTicketStatus, React.ElementType
   "Porto Resolve": ShieldCheck,
   "Suporte": Headset,
   "Concluído": CheckCircle2,
+  "Tratado": CheckCircle2,
   // Cobrança
   "Aberta": FileText,
   "Em análise": Hourglass,
@@ -195,26 +196,29 @@ export function MyTicketsClient() {
 
   const myTickets = useMemo(() => {
     if (!user || !email) return [];
-  
+    
     // Tickets de Suporte onde o usuário logado é o criador
     const mySupportTickets = supportTickets.filter(t => t.user_id === user.id);
-  
+
     let myCobrancaTickets: CobrancaTicket[] = [];
-  
-    // Regra especial para Naira
+
+    // Regra especial para Naira: vê todos os tickets da diretora Simone
     if (email === 'naira.nunes@portovaleconsorcios.com.br') {
-      myCobrancaTickets = cobrancaTickets.filter(t => t.email_diretor === 'simone@portovaleconsorcios.com.br');
+        myCobrancaTickets = cobrancaTickets.filter(t => t.email_diretor === 'simone@portovaleconsorcios.com.br');
     } else {
-      // Regra geral para outros usuários (gerentes e diretores)
-      myCobrancaTickets = cobrancaTickets.filter(t => t.email_gerente === email || t.email_diretor === email);
+        // Regra geral para outros gerentes e diretores
+        myCobrancaTickets = cobrancaTickets.filter(t => 
+            t.email_gerente === email || 
+            t.email_diretor === email
+        );
     }
-  
+    
     const allTickets: (Ticket | CobrancaTicket)[] = [
       ...mySupportTickets,
       ...myCobrancaTickets
     ];
-  
-    // Remove duplicatas caso um ticket apareça em mais de uma lista (pouco provável, mas seguro)
+    
+    // Remove duplicatas caso um ticket apareça em mais de uma lista
     return Array.from(new Map(allTickets.map(item => [item.id, item])).values());
   }, [supportTickets, cobrancaTickets, user, email]);
 
@@ -442,5 +446,3 @@ export function MyTicketsClient() {
     </div>
   );
 }
-
-    
