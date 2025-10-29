@@ -93,6 +93,11 @@ export interface TicketReasonConfig {
   responseTime: string;
 }
 
+export interface PosContemplacaoComment {
+  text: string;
+  author: string;
+  timestamp: string; // ISO string
+}
 
 // Type for the new "Pós Contemplação" tickets
 export interface PosContemplacaoTicket {
@@ -110,7 +115,7 @@ export interface PosContemplacaoTicket {
   motivo: string;
   susep?: string;
   status: PosContemplacaoTicketStatus;
-  observacoes?: string | null;
+  observacoes?: PosContemplacaoComment[] | string | null;
   file_path?: string | null;
   file_name?: string | null;
   data_limite?: string | null;

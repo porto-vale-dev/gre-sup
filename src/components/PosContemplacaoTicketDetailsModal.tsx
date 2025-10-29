@@ -2,10 +2,10 @@
 
 "use client";
 
-import type { PosContemplacaoTicket, PosContemplacaoTicketStatus } from '@/types';
+import type { PosContemplacaoTicket, PosContemplacaoTicketStatus, PosContemplacaoComment } from '@/types';
 import { format, parseISO, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, Paperclip, Eye, Download, File, CalendarIcon as CalendarIconLucide, Trash2 } from 'lucide-react';
+import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, Paperclip, Eye, Download, File, CalendarIcon as CalendarIconLucide, Trash2, MessageCircle as MessageCircleIcon } from 'lucide-react';
 import { usePosContemplacaoTickets } from '@/contexts/PosContemplacaoTicketContext';
 import { MOTIVOS_POS_CONTEMPLACAO, RESPONSAVEIS } from '@/lib/posContemplacaoData';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -85,6 +85,21 @@ const FilePreviewItem: React.FC<{
   );
 };
 
+const parseObs = (obs: PosContemplacaoTicket['observacoes']): PosContemplacaoComment[] => {
+    if (!obs) return [];
+    if (Array.isArray(obs)) return obs;
+    if (typeof obs === 'string') {
+        try {
+            const parsed = JSON.parse(obs);
+            if (Array.isArray(parsed)) return parsed;
+        } catch (e) {
+            // It's a plain string, wrap it.
+            return [{ text: obs, author: 'Sistema', timestamp: new Date().toISOString() }];
+        }
+    }
+    return [];
+};
+
 interface PosContemplacaoTicketDetailsModalProps {
   ticket: PosContemplacaoTicket | null;
   isOpen: boolean;
@@ -100,7 +115,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   // State for editable fields
   const [responsavel, setResponsavel] = useState(ticket?.responsavel || '');
   const [motivo, setMotivo] = useState(ticket?.motivo || '');
-  const [observacoes, setObservacoes] = useState(ticket?.observacoes || '');
+  const [newObservacao, setNewObservacao] = useState('');
   const [dataLimite, setDataLimite] = useState<Date | undefined>(undefined);
   
   const [isSaving, setIsSaving] = useState(false);
@@ -110,12 +125,14 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   const allowedDeleteRoles = ['adm', 'greadmin', 'gre_con_admin', 'greadminsa'];
   const canDelete = cargo && allowedDeleteRoles.includes(cargo);
 
+  const comments = useMemo(() => ticket ? parseObs(ticket.observacoes) : [], [ticket]);
+
   useEffect(() => {
     if (ticket) {
       setResponsavel(ticket.responsavel);
       setMotivo(ticket.motivo);
-      setObservacoes(ticket.observacoes || '');
       setDataLimite(ticket.data_limite ? parseISO(ticket.data_limite) : undefined);
+      setNewObservacao(''); // Clear new observation on modal open
     }
   }, [ticket, isOpen]);
   
@@ -126,7 +143,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
     await updateTicket(ticket.id, { 
       responsavel, 
       motivo, 
-      observacoes,
+      new_observacao: newObservacao,
       data_limite: dataLimite ? dataLimite.toISOString() : null,
     });
     setIsSaving(false);
@@ -139,7 +156,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
     await updateTicket(ticket.id, { 
         responsavel, 
         motivo, 
-        observacoes,
+        new_observacao: newObservacao,
         data_limite: dataLimite ? dataLimite.toISOString() : null,
         status: 'Concluído' 
     });
@@ -194,6 +211,11 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
         );
     }
     return null;
+  };
+  
+  const findNameByEmail = (email: string) => {
+    const user = RESPONSAVEIS.find(r => r.email.toLowerCase() === email.toLowerCase());
+    return user ? user.name : email.split('@')[0];
   };
 
   return (
@@ -280,12 +302,10 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                       <Label htmlFor="relator-select" className="font-medium text-muted-foreground flex items-center gap-1.5"><User className="h-4 w-4" />Relator:</Label>
                       <Select value={ticket.relator} disabled>
                         <SelectTrigger id="relator-select">
-                          <SelectValue />
+                          <SelectValue placeholder={findNameByEmail(ticket.relator)} />
                         </SelectTrigger>
                         <SelectContent>
-                          {RESPONSAVEIS.map(r => (
-                            <SelectItem key={r.email} value={r.email}>{r.name}</SelectItem>
-                          ))}
+                          <SelectItem value={ticket.relator}>{findNameByEmail(ticket.relator)}</SelectItem>
                         </SelectContent>
                       </Select>
                   </div>
@@ -320,13 +340,34 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
               </div>
               
               <Separator />
+
+              <div className="space-y-4">
+                  <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><MessageCircleIcon className="h-4 w-4" />Histórico de Observações:</strong>
+                  {comments.length > 0 ? (
+                    <div className="space-y-3 max-h-48 overflow-y-auto pr-2 border rounded-md p-3">
+                        {comments.map((comment, index) => (
+                           <div key={index} className="text-sm bg-muted/50 p-3 rounded-md">
+                              <div className="flex justify-between items-baseline mb-1">
+                                <span className="font-semibold text-primary">{comment.author}</span>
+                                <span className="text-xs text-muted-foreground">{format(parseISO(comment.timestamp), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</span>
+                              </div>
+                             <p className="whitespace-pre-wrap break-words">{comment.text}</p>
+                           </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic p-4 border-dashed border rounded-md text-center">Nenhuma observação registrada.</p>
+                  )}
+              </div>
+
               <div className="space-y-1">
-                <Label htmlFor="observacoes-solicitacao">Observações:</Label>
+                <Label htmlFor="observacoes-solicitacao">Nova Observação:</Label>
                 <Textarea
                   id="observacoes-solicitacao"
+                  placeholder="Adicione uma nova observação ao histórico..."
                   className="whitespace-pre-wrap break-words bg-background p-3 rounded-md min-h-[100px] resize-y"
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
+                  value={newObservacao}
+                  onChange={(e) => setNewObservacao(e.target.value)}
                 />
               </div>
 

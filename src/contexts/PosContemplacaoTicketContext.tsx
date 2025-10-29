@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -6,7 +7,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
-import type { PosContemplacaoTicket, CreatePosContemplacaoTicket, PosContemplacaoTicketStatus } from '@/types';
+import type { PosContemplacaoTicket, CreatePosContemplacaoTicket, PosContemplacaoTicketStatus, PosContemplacaoComment } from '@/types';
 import { RESPONSAVEIS } from '@/lib/posContemplacaoData';
 
 const POS_CONTEMPLACAO_FILES_BUCKET = 'pos-contemplacao-files';
@@ -17,7 +18,7 @@ interface PosContemplacaoTicketContextType {
   isLoading: boolean;
   error: string | null;
   addTicket: (ticketData: CreatePosContemplacaoTicket, files?: File[]) => Promise<boolean>;
-  updateTicket: (ticketId: string, updates: Partial<PosContemplacaoTicket>) => Promise<void>;
+  updateTicket: (ticketId: string, updates: Partial<Omit<PosContemplacaoTicket, 'observacoes'>> & { new_observacao?: string }) => Promise<void>;
   deleteTicket: (ticketId: string, filePath?: string | null) => Promise<void>;
   getTicketById: (ticketId: string) => PosContemplacaoTicket | undefined;
   fetchTickets: () => void;
@@ -27,6 +28,22 @@ interface PosContemplacaoTicketContextType {
 }
 
 const PosContemplacaoTicketContext = createContext<PosContemplacaoTicketContextType | undefined>(undefined);
+
+const parseObs = (obs: PosContemplacaoTicket['observacoes']): PosContemplacaoComment[] => {
+    if (!obs) return [];
+    if (Array.isArray(obs)) return obs;
+    if (typeof obs === 'string') {
+        try {
+            const parsed = JSON.parse(obs);
+            if (Array.isArray(parsed)) return parsed;
+        } catch (e) {
+            // It's a plain string, wrap it.
+            return [{ text: obs, author: 'Sistema', timestamp: new Date().toISOString() }];
+        }
+    }
+    return [];
+};
+
 
 export function PosContemplacaoTicketProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<PosContemplacaoTicket[]>([]);
@@ -118,9 +135,19 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
         }
 
         const { files: _, ...restOfTicketData } = ticketData;
+        
+        let initialObservacoes: PosContemplacaoComment[] = [];
+        if(restOfTicketData.observacoes && typeof restOfTicketData.observacoes === 'string' && restOfTicketData.observacoes.trim() !== '') {
+            initialObservacoes.push({
+                text: restOfTicketData.observacoes,
+                author: username || user.email.split('@')[0],
+                timestamp: new Date().toISOString()
+            });
+        }
 
         const payload = {
             ...restOfTicketData,
+            observacoes: initialObservacoes,
             relator: user.email, // Save user's email as the relator
             status: 'Aberto' as PosContemplacaoTicketStatus,
             file_path: filePath,
@@ -185,12 +212,8 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
     }
   };
 
-  const updateTicket = async (ticketId: string, updates: Partial<PosContemplacaoTicket>) => {
-    if (Object.keys(updates).length === 0) {
-        toast({ title: "Nenhuma Alteração", description: "Nenhuma informação foi alterada.", variant: "default" });
-        return;
-    }
-
+  const updateTicket = async (ticketId: string, updates: Partial<Omit<PosContemplacaoTicket, 'observacoes'>> & { new_observacao?: string }) => {
+    
     const { data: currentTicket, error: fetchError } = await supabase
       .from('tickets_poscontemplacao')
       .select('*')
@@ -201,10 +224,30 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
       toast({ title: "Erro", description: "Não foi possível encontrar o ticket para atualizar.", variant: "destructive" });
       return;
     }
+    
+    const { new_observacao, ...otherUpdates } = updates;
+    
+    let finalUpdates: Partial<PosContemplacaoTicket> = { ...otherUpdates };
+
+    // Handle observations
+    if (new_observacao && new_observacao.trim() !== '') {
+        const existingObs = parseObs(currentTicket.observacoes);
+        const newComment: PosContemplacaoComment = {
+            text: new_observacao,
+            author: username || user?.email?.split('@')[0] || 'Sistema',
+            timestamp: new Date().toISOString()
+        };
+        finalUpdates.observacoes = [...existingObs, newComment];
+    }
+
+    if (Object.keys(finalUpdates).length === 0) {
+        toast({ title: "Nenhuma Alteração", description: "Nenhuma informação foi alterada.", variant: "default" });
+        return;
+    }
 
     const { error: updateError } = await supabase
       .from('tickets_poscontemplacao')
-      .update(updates)
+      .update(finalUpdates)
       .eq('id', ticketId);
 
     if (updateError) {
@@ -247,6 +290,10 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
   };
 
   const deleteTicket = async (ticketId: string, filePath?: string | null) => {
+    const originalTickets = tickets;
+    // Optimistic update
+    setTickets(prevTickets => prevTickets.filter(t => t.id !== ticketId));
+
     try {
       // 1. Delete associated files from storage, if they exist
       if (filePath) {
@@ -282,9 +329,9 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
       }
       
       toast({ title: "Ticket Excluído", description: "O ticket foi removido com sucesso." });
-      await fetchTickets(); // Refresh the list
 
     } catch (error: any) {
+        setTickets(originalTickets);
         toast({ title: "Erro ao Excluir", description: `Não foi possível excluir o ticket: ${error.message}`, variant: "destructive" });
         console.error("Error deleting ticket:", error);
     }
