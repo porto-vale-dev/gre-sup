@@ -59,7 +59,15 @@ export function DashboardClient() {
 
     if (email === 'aprendiz.gre@portovaleconsorcios.com.br') {
         const allowedResponsibles = ['mayara', 'luana'];
-        const allowedReasons = ['Boleto do mês', 'Link de cartão'];
+        const allowedReasons = [
+          'Boleto do mês', 
+          'Link de cartão',
+          'Cadastro COL',
+          'Boleto de quitação',
+          'Extrato financeiro',
+          'Simulação de redução de crédito',
+          'Simulação de aumento de crédito'
+        ];
         return baseTickets.filter(ticket => 
             ticket.responsible && allowedResponsibles.includes(ticket.responsible.toLowerCase()) &&
             allowedReasons.includes(ticket.reason)
