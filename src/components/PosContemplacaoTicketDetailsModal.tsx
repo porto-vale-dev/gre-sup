@@ -108,7 +108,7 @@ interface PosContemplacaoTicketDetailsModalProps {
 
 export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: PosContemplacaoTicketDetailsModalProps) {
   const { getTicketById, updateTicket, downloadFile, createPreviewUrl, deleteTicket } = usePosContemplacaoTickets();
-  const { cargo } = useAuth();
+  const { cargo, username, user } = useAuth();
   
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
 
@@ -369,7 +369,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                   )}
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Label htmlFor="observacoes-solicitacao">Nova Observação:</Label>
                 <Textarea
                   id="observacoes-solicitacao"
@@ -378,6 +378,10 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                   value={newObservacao}
                   onChange={(e) => setNewObservacao(e.target.value)}
                 />
+                 <Button variant="secondary" size="sm" onClick={handleSaveComment} disabled={isSaving || isCompleting || !newObservacao.trim()} className="mt-2">
+                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Salvar Comentário
+                </Button>
               </div>
 
                {ticket.file_path && ticket.file_name && (
@@ -423,10 +427,6 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
               <Button variant="outline" onClick={onClose} className="w-full">Fechar</Button>
-              <Button variant="secondary" onClick={handleSaveComment} disabled={isSaving || isCompleting || !newObservacao.trim()}>
-                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  Salvar Comentário
-              </Button>
               <Button onClick={handleSave} disabled={isSaving || isCompleting} className="w-full">
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {isSaving ? 'Salvando...' : 'Salvar'}
