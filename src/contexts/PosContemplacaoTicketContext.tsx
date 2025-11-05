@@ -18,7 +18,7 @@ interface PosContemplacaoTicketContextType {
   isLoading: boolean;
   error: string | null;
   addTicket: (ticketData: CreatePosContemplacaoTicket, files?: File[]) => Promise<boolean>;
-  updateTicket: (ticketId: string, updates: Partial<Omit<PosContemplacaoTicket, 'observacoes'>> & { new_observacao?: string }) => Promise<void>;
+  updateTicket: (ticketId: string, updates: Partial<Omit<PosContemplacaoTicket, 'observacoes'>> & { new_observacao?: string }, shouldClose?: boolean) => Promise<void>;
   deleteTicket: (ticketId: string, filePath?: string | null) => Promise<void>;
   getTicketById: (ticketId: string) => PosContemplacaoTicket | undefined;
   fetchTickets: () => void;
@@ -212,15 +212,11 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
     }
   };
 
-  const updateTicket = async (ticketId: string, updates: Partial<Omit<PosContemplacaoTicket, 'observacoes'>> & { new_observacao?: string }) => {
+  const updateTicket = async (ticketId: string, updates: Partial<Omit<PosContemplacaoTicket, 'observacoes'>> & { new_observacao?: string }, shouldClose?: boolean) => {
     
-    const { data: currentTicket, error: fetchError } = await supabase
-      .from('tickets_poscontemplacao')
-      .select('*')
-      .eq('id', ticketId)
-      .single();
+    const currentTicket = tickets.find(t => t.id === ticketId);
 
-    if(fetchError){
+    if(!currentTicket){
       toast({ title: "Erro", description: "Não foi possível encontrar o ticket para atualizar.", variant: "destructive" });
       return;
     }
@@ -238,12 +234,18 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
             timestamp: new Date().toISOString()
         };
         finalUpdates.observacoes = [...existingObs, newComment];
-    }
-
-    if (Object.keys(finalUpdates).length === 0) {
+    } else if (Object.keys(otherUpdates).length === 0) {
+        // If there is no new comment and no other updates, do nothing.
         toast({ title: "Nenhuma Alteração", description: "Nenhuma informação foi alterada.", variant: "default" });
         return;
     }
+
+    // Optimistic update
+    const originalTickets = tickets;
+    const updatedTickets = tickets.map(t => 
+      t.id === ticketId ? { ...t, ...finalUpdates } : t
+    );
+    setTickets(updatedTickets);
 
     const { error: updateError } = await supabase
       .from('tickets_poscontemplacao')
@@ -251,6 +253,8 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
       .eq('id', ticketId);
 
     if (updateError) {
+      // Rollback on error
+      setTickets(originalTickets);
       toast({ title: "Erro ao Atualizar", description: `Não foi possível atualizar o ticket. Detalhes: ${updateError.message}`, variant: "destructive" });
       return;
     }
@@ -286,7 +290,10 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
         }
     }
     
-    await fetchTickets();
+    // Only refetch if it wasn't just a comment save
+    if(shouldClose) {
+      await fetchTickets();
+    }
   };
 
   const deleteTicket = async (ticketId: string, filePath?: string | null) => {

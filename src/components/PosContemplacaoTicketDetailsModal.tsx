@@ -145,10 +145,19 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
       motivo, 
       new_observacao: newObservacao,
       data_limite: dataLimite ? dataLimite.toISOString() : null,
-    });
+    }, true);
     setIsSaving(false);
     onClose();
   };
+
+  const handleSaveComment = async () => {
+    if (!ticket || !newObservacao.trim()) return;
+    setIsSaving(true);
+    await updateTicket(ticket.id, { new_observacao: newObservacao }, false);
+    setNewObservacao(''); // Clear textarea after saving
+    setIsSaving(false);
+  };
+
 
   const handleComplete = async () => {
     if (!ticket) return;
@@ -159,7 +168,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
         new_observacao: newObservacao,
         data_limite: dataLimite ? dataLimite.toISOString() : null,
         status: 'Concluído' 
-    });
+    }, true);
     setIsCompleting(false);
     onClose();
   };
@@ -414,6 +423,10 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
               <Button variant="outline" onClick={onClose} className="w-full">Fechar</Button>
+              <Button variant="secondary" onClick={handleSaveComment} disabled={isSaving || isCompleting || !newObservacao.trim()}>
+                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Salvar Comentário
+              </Button>
               <Button onClick={handleSave} disabled={isSaving || isCompleting} className="w-full">
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {isSaving ? 'Salvando...' : 'Salvar'}
