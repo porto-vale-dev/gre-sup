@@ -54,12 +54,12 @@ export default function CampanhaPage() {
         <div className="flex flex-col gap-4">
             <h2 className="text-2xl font-semibold flex items-center gap-2 text-primary">
                 <Trophy className="h-6 w-6"/>
-                Ranking Campanha
+                Ranking Campanha - Cash Black
             </h2>
             <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden h-[calc(100vh-18rem)] min-h-[600px]">
                 <iframe
-                title="Ranking Campanha"
-                src=""
+                title="Ranking Campanha - Cash Black"
+                src="https://app.powerbi.com/view?r=eyJrIjoiYjdlMGE1YTAtNmRmMC00ZTRmLThkYWYtMTA3MmY3MjExODU2IiwidCI6IjUzNDU4MDVjLTNiZjQtNDgzNS05YTc5LWQxNzVkOTEyZjljYyJ9"
                 allowFullScreen
                 className="absolute top-0 left-0 w-full h-full border-0"
                 ></iframe>
