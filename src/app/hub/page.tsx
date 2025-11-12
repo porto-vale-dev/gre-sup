@@ -24,7 +24,7 @@ const allServices: Service[] = [
     { title: "Painel de Suporte - GRE", href: "/suporte-gre/painel", Icon: FolderKanban, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm", "greadmin", "greadminsa", "gre", "grea", "gre_apoio_admin"] },
     { title: "Painel de Apoio Jacareí", href: "/suporte-gre/cobranca/dashboard", Icon: Handshake, description: "Gerencie os tickets de apoio.", allowedRoles: ['adm', 'greadmin', 'greadminsa', 'gre_apoio', 'gre_apoio_admin'] },
     { title: "Painel de Pós-Contemplação", href: "/pos-contemplacao/dashboard", Icon: FileCheck, description: "Gerencie os tickets de pós-contemplação.", allowedRoles: ['adm', 'greadmin', 'gre_con', 'gre_con_admin'] },
-    { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo chamado para o suporte.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
+     { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo chamado para o suporte.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin", "colaborador"] },
     { title: "Acompanhar Solicitação", href: "/suporte-gre/minhas-solicitacoes", Icon: FileSearch, description: "Acompanhe o andamento dos seus tickets.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
 ];
 
