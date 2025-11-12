@@ -9,11 +9,12 @@ import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function MinhasSolicitacoesPage() {
-  const { cargo } = useAuth();
+  const { cargo, username } = useAuth();
   
   const deniedRoles = ['colaborador', 'gerente1'];
-
-  if (cargo && deniedRoles.includes(cargo)) {
+  
+  // Se o usuário for 'diretor01' OU tiver um dos cargos negados, bloqueie o acesso.
+  if ((username === 'diretor01') || (cargo && deniedRoles.includes(cargo))) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
         <Card className="w-full max-w-md text-center shadow-xl">

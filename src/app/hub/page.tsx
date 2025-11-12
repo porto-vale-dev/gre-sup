@@ -24,7 +24,7 @@ const allServices: Service[] = [
     { title: "Painel de Suporte - GRE", href: "/suporte-gre/painel", Icon: FolderKanban, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm", "greadmin", "greadminsa", "gre", "grea", "gre_apoio_admin"] },
     { title: "Painel de Apoio Jacareí", href: "/suporte-gre/cobranca/dashboard", Icon: Handshake, description: "Gerencie os tickets de apoio.", allowedRoles: ['adm', 'greadmin', 'greadminsa', 'gre_apoio', 'gre_apoio_admin'] },
     { title: "Painel de Pós-Contemplação", href: "/pos-contemplacao/dashboard", Icon: FileCheck, description: "Gerencie os tickets de pós-contemplação.", allowedRoles: ['adm', 'greadmin', 'gre_con', 'gre_con_admin'] },
-    { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo chamado para o suporte.", allowedRoles: ["adm", "diretor", "gerente", "gerente1", "colaborador", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
+    { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo chamado para o suporte.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
     { title: "Acompanhar Solicitação", href: "/suporte-gre/minhas-solicitacoes", Icon: FileSearch, description: "Acompanhe o andamento dos seus tickets.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
 ];
 
@@ -48,7 +48,7 @@ const ServiceCard = ({ service }: { service: Service }) => (
 );
 
 export default function HubPage() {
-    const { cargo, email } = useAuth();
+    const { cargo, email, username } = useAuth();
     
     const accessibleServices = useMemo(() => {
       // Trata usuários com cargo nulo, vazio ou indefinido como "colaborador"
@@ -56,12 +56,21 @@ export default function HubPage() {
       
       let filtered = allServices.filter(service => service.allowedRoles.includes(userRole));
       
+      // Regra específica para o usuário 'aprendiz.gre@portovaleconsorcios.com.br'
       if (email === 'aprendiz.gre@portovaleconsorcios.com.br') {
         filtered = filtered.filter(service => service.title !== 'Painel de Apoio Jacareí');
       }
 
+      // Regra específica para o usuário 'diretor01'
+      if (username === 'diretor01') {
+        filtered = filtered.filter(service => 
+            service.title !== 'Acompanhar Solicitação' && 
+            service.title !== 'Novo ticket - GRE'
+        );
+      }
+
       return filtered;
-    }, [cargo, email]);
+    }, [cargo, email, username]);
 
     const generalTools = useMemo(() => {
       return accessibleServices.filter(s => s.title === "Rankings" || s.title === "Mural de Avisos - GRE" || s.title === "Novo ticket - GRE" || s.title === "Acompanhar Solicitação");
