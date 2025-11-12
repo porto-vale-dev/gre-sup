@@ -65,7 +65,8 @@ export default function HubPage() {
       if (username === 'diretor01') {
         filtered = filtered.filter(service => 
             service.title !== 'Acompanhar Solicitação' && 
-            service.title !== 'Novo ticket - GRE'
+            service.title !== 'Novo ticket - GRE' &&
+            service.title !== 'Mural de Avisos - GRE'
         );
       }
 
