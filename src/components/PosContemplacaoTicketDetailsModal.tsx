@@ -30,14 +30,17 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, Paperclip, Eye, Download, File, CalendarIcon as CalendarIconLucide, Trash2, MessageCircle as MessageCircleIcon } from 'lucide-react';
+import { CalendarDays, User, Phone, MessageSquare, Tag, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, Save, BarChartHorizontal, CheckCircle, Loader2, Paperclip, Eye, Download, File, CalendarIcon as CalendarIconLucide, Trash2, MessageCircle as MessageCircleIcon, UploadCloud, X } from 'lucide-react';
 import { usePosContemplacaoTickets } from '@/contexts/PosContemplacaoTicketContext';
 import { MOTIVOS_POS_CONTEMPLACAO, RESPONSAVEIS } from '@/lib/posContemplacaoData';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
 
 
 const FilePreviewItem: React.FC<{
@@ -108,6 +111,7 @@ interface PosContemplacaoTicketDetailsModalProps {
 
 export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpen, onClose }: PosContemplacaoTicketDetailsModalProps) {
   const { getTicketById, updateTicket, downloadFile, createPreviewUrl, deleteTicket } = usePosContemplacaoTickets();
+  const { toast } = useToast();
   const { cargo, username, user } = useAuth();
   
   const ticket = initialTicket ? getTicketById(initialTicket.id) || initialTicket : null;
@@ -117,6 +121,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   const [motivo, setMotivo] = useState(ticket?.motivo || '');
   const [newObservacao, setNewObservacao] = useState('');
   const [dataLimite, setDataLimite] = useState<Date | undefined>(undefined);
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   
   const [isSaving, setIsSaving] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -133,6 +138,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
       setMotivo(ticket.motivo);
       setDataLimite(ticket.data_limite ? parseISO(ticket.data_limite) : undefined);
       setNewObservacao(''); // Clear new observation on modal open
+      setStagedFiles([]); // Clear staged files
     }
   }, [ticket, isOpen]);
   
@@ -145,7 +151,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
       motivo, 
       new_observacao: newObservacao,
       data_limite: dataLimite ? dataLimite.toISOString() : null,
-    }, true);
+    }, stagedFiles, true);
     setIsSaving(false);
     onClose();
   };
@@ -153,7 +159,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
   const handleSaveComment = async () => {
     if (!ticket || !newObservacao.trim()) return;
     setIsSaving(true);
-    await updateTicket(ticket.id, { new_observacao: newObservacao }, false);
+    await updateTicket(ticket.id, { new_observacao: newObservacao }, [], false);
     setNewObservacao(''); // Clear textarea after saving
     setIsSaving(false);
   };
@@ -168,7 +174,7 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
         new_observacao: newObservacao,
         data_limite: dataLimite ? dataLimite.toISOString() : null,
         status: 'Concluído' 
-    }, true);
+    }, stagedFiles, true);
     setIsCompleting(false);
     onClose();
   };
@@ -179,6 +185,31 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
     await deleteTicket(ticket.id, ticket.file_path);
     setIsDeleting(false);
     onClose();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      let validFiles = [...stagedFiles];
+      let error = false;
+      for (const file of newFiles) {
+        if (file.size > MAX_SOLUTION_FILE_SIZE) {
+          toast({ variant: 'destructive', title: 'Arquivo muito grande', description: `O arquivo ${file.name} excede o limite de 100MB.` });
+          error = true;
+          continue;
+        }
+        validFiles.push(file);
+      }
+      setStagedFiles(validFiles);
+      if(error) {
+        event.target.value = "";
+      }
+    }
+  };
+
+  const removeStagedFile = (index: number) => {
+    setStagedFiles(stagedFiles.filter((_, i) => i !== index));
   };
 
   if (!ticket) return null;
@@ -384,15 +415,53 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
                 </Button>
               </div>
 
-               {ticket.file_path && ticket.file_name && (
-                <>
-                  <Separator />
-                  <div>
-                    <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Paperclip className="h-4 w-4" />Arquivos Anexados:</strong>
-                    {renderAttachments()}
+              <Separator />
+               <div className="space-y-2">
+                <Label htmlFor="solution-files-upload">Anexar Novos Arquivos</Label>
+                <div className="relative">
+                  <Input
+                    id="solution-files-upload"
+                    type="file"
+                    multiple
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={handleFileChange}
+                    accept={ALLOWED_FILE_TYPES.join(',')}
+                    disabled={isSaving}
+                  />
+                  <Label
+                    htmlFor="solution-files-upload"
+                    className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-muted rounded-md cursor-pointer hover:border-primary transition-colors"
+                  >
+                    <UploadCloud className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-muted-foreground">Clique para adicionar arquivos</span>
+                  </Label>
+                </div>
+                 <p className="text-xs text-muted-foreground">Tamanho máximo por arquivo: 100MB.</p>
+                
+                {stagedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Novos arquivos para upload:</p>
+                    {stagedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 border rounded-md">
+                        <span className="text-sm truncate">{file.name}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeStagedFile(index)} disabled={isSaving}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                </>
-              )}
+                )}
+
+                {(ticket.file_path && ticket.file_name) && (
+                  <>
+                    <Separator className="my-4" />
+                    <div>
+                      <strong className="font-medium text-muted-foreground flex items-center gap-1.5"><Paperclip className="h-4 w-4" />Arquivos Já Anexados:</strong>
+                      {renderAttachments()}
+                    </div>
+                  </>
+                )}
+               </div>
 
             </div>
           </div>
@@ -428,8 +497,8 @@ export function PosContemplacaoTicketDetailsModal({ ticket: initialTicket, isOpe
             <div className="flex gap-2 w-full sm:w-auto">
               <Button variant="outline" onClick={onClose} className="w-full">Fechar</Button>
               <Button onClick={handleSave} disabled={isSaving || isCompleting} className="w-full">
-                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                {isSaving ? 'Salvando...' : 'Salvar'}
+                {isSaving && !isCompleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                {isSaving && !isCompleting ? 'Salvando...' : 'Salvar'}
               </Button>
                <Button onClick={handleComplete} disabled={isCompleting || isSaving} className="w-full bg-green-600 hover:bg-green-700">
                 {isCompleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}

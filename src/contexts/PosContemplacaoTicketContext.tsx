@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
 import type { PosContemplacaoTicket, CreatePosContemplacaoTicket, PosContemplacaoTicketStatus, PosContemplacaoComment } from '@/types';
 import { RESPONSAVEIS } from '@/lib/posContemplacaoData';
+import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
 
 const POS_CONTEMPLACAO_FILES_BUCKET = 'pos-contemplacao-files';
 const PAGE_SIZE = 1000;
@@ -18,7 +19,7 @@ interface PosContemplacaoTicketContextType {
   isLoading: boolean;
   error: string | null;
   addTicket: (ticketData: CreatePosContemplacaoTicket, files?: File[]) => Promise<boolean>;
-  updateTicket: (ticketId: string, updates: Partial<Omit<PosContemplacaoTicket, 'observacoes'>> & { new_observacao?: string }, shouldClose?: boolean) => Promise<void>;
+  updateTicket: (ticketId: string, updates: Partial<Omit<PosContemplacaoTicket, 'observacoes'>> & { new_observacao?: string }, newFiles?: File[], shouldClose?: boolean) => Promise<void>;
   deleteTicket: (ticketId: string, filePath?: string | null) => Promise<void>;
   getTicketById: (ticketId: string) => PosContemplacaoTicket | undefined;
   fetchTickets: () => void;
@@ -212,7 +213,7 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
     }
   };
 
-  const updateTicket = async (ticketId: string, updates: Partial<Omit<PosContemplacaoTicket, 'observacoes'>> & { new_observacao?: string }, shouldClose?: boolean) => {
+  const updateTicket = async (ticketId: string, updates: Partial<Omit<PosContemplacaoTicket, 'observacoes'>> & { new_observacao?: string }, newFiles: File[] = [], shouldClose?: boolean) => {
     
     const currentTicket = tickets.find(t => t.id === ticketId);
 
@@ -234,10 +235,35 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
             timestamp: new Date().toISOString()
         };
         finalUpdates.observacoes = [...existingObs, newComment];
-    } else if (Object.keys(otherUpdates).length === 0) {
+    } else if (Object.keys(otherUpdates).length === 0 && newFiles.length === 0) {
         // If there is no new comment and no other updates, do nothing.
         toast({ title: "Nenhuma Alteração", description: "Nenhuma informação foi alterada.", variant: "default" });
         return;
+    }
+
+    // Handle file uploads
+    if (newFiles.length > 0) {
+      const folderPath = currentTicket.file_path || `public/${crypto.randomUUID()}`;
+      if (!currentTicket.file_path) {
+        finalUpdates.file_path = folderPath;
+      }
+      
+      const existingFileNames = currentTicket.file_name ? JSON.parse(currentTicket.file_name) : [];
+      const newUploadedFileNames: string[] = [];
+      
+      for(const file of newFiles) {
+        const pathInBucket = `${folderPath}/${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from(POS_CONTEMPLACAO_FILES_BUCKET)
+          .upload(pathInBucket, file);
+        if (uploadError) {
+          toast({ title: "Erro no Upload", description: `Falha ao enviar o arquivo ${file.name}.`, variant: "destructive" });
+          continue; // Skip this file and try others
+        }
+        newUploadedFileNames.push(file.name);
+      }
+      
+      finalUpdates.file_name = JSON.stringify([...existingFileNames, ...newUploadedFileNames]);
     }
 
     // Optimistic update
@@ -290,9 +316,20 @@ export function PosContemplacaoTicketProvider({ children }: { children: ReactNod
         }
     }
     
-    // Only refetch if it wasn't just a comment save
     if(shouldClose) {
       await fetchTickets();
+    } else {
+        // Just re-fetch the single ticket to update the modal view without closing
+        const { data: updatedTicket, error: refetchError } = await supabase
+            .from('tickets_poscontemplacao')
+            .select('*')
+            .eq('id', ticketId)
+            .single();
+        if (refetchError || !updatedTicket) {
+             await fetchTickets(); // fallback to full refresh on error
+        } else {
+            setTickets(prev => prev.map(t => t.id === ticketId ? updatedTicket : t));
+        }
     }
   };
 
