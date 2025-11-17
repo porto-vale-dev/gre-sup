@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useMemo } from 'react';
@@ -8,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trophy, ArrowRight, Ticket, Megaphone, FolderKanban, LayoutDashboard, FileSearch, Handshake, FileCheck } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Service {
   title: string;
@@ -15,37 +15,56 @@ interface Service {
   Icon: LucideIcon;
   description: string;
   allowedRoles: string[];
+  color: string;
 }
 
 const allServices: Service[] = [
-    { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "gerente1", "greadmin", "greadminsa", "gre", "grea", "colaborador", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
-    { title: "Mural de Avisos - GRE", href: "/mural-de-aviso", Icon: Megaphone, description: "Veja os últimos avisos e comunicados.", allowedRoles: ["adm", "diretor", "gerente", "gerente1", "colaborador", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
-    { title: "Documentos", href: "/documentos", Icon: FolderKanban, description: "Acesse os documentos da empresa.", allowedRoles: ["adm"] },
-    { title: "Painel de Suporte - GRE", href: "/suporte-gre/painel", Icon: FolderKanban, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm", "greadmin", "greadminsa", "gre", "grea", "gre_apoio_admin"] },
-    { title: "Painel de Apoio Jacareí", href: "/suporte-gre/cobranca/dashboard", Icon: Handshake, description: "Gerencie os tickets de apoio.", allowedRoles: ['adm', 'greadmin', 'greadminsa', 'gre_apoio', 'gre_apoio_admin'] },
-    { title: "Painel de Pós-Contemplação", href: "/pos-contemplacao/dashboard", Icon: FileCheck, description: "Gerencie os tickets de pós-contemplação.", allowedRoles: ['adm', 'greadmin', 'gre_con', 'gre_con_admin'] },
-     { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo chamado para o suporte.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin", "colaborador"] },
-    { title: "Acompanhar Solicitação", href: "/suporte-gre/minhas-solicitacoes", Icon: FileSearch, description: "Acompanhe o andamento dos seus tickets.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"] },
+    { title: "Rankings", href: "/rankings", Icon: Trophy, description: "Acesse os rankings de desempenho.", allowedRoles: ["adm", "diretor", "gerente", "gerente1", "greadmin", "greadminsa", "gre", "grea", "colaborador", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"], color: 'purple' },
+    { title: "Mural de Avisos - GRE", href: "/mural-de-aviso", Icon: Megaphone, description: "Veja os últimos avisos e comunicados.", allowedRoles: ["adm", "diretor", "gerente", "gerente1", "colaborador", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"], color: 'amber' },
+    { title: "Documentos", href: "/documentos", Icon: FolderKanban, description: "Acesse os documentos da empresa.", allowedRoles: ["adm"], color: 'orange' },
+    { title: "Painel de Suporte - GRE", href: "/suporte-gre/painel", Icon: FolderKanban, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm", "greadmin", "greadminsa", "gre", "grea", "gre_apoio_admin"], color: 'blue-dark' },
+    { title: "Painel de Apoio Jacareí", href: "/suporte-gre/cobranca/dashboard", Icon: Handshake, description: "Gerencie os tickets de apoio.", allowedRoles: ['adm', 'greadmin', 'greadminsa', 'gre_apoio', 'gre_apoio_admin'], color: 'red' },
+    { title: "Painel de Pós-Contemplação", href: "/pos-contemplacao/dashboard", Icon: FileCheck, description: "Gerencie os tickets de pós-contemplação.", allowedRoles: ['adm', 'greadmin', 'gre_con', 'gre_con_admin'], color: 'teal-dark' },
+    { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo chamado para o suporte.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin", "colaborador"], color: 'blue' },
+    { title: "Acompanhar Solicitação", href: "/suporte-gre/minhas-solicitacoes", Icon: FileSearch, description: "Acompanhe o andamento dos seus tickets.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"], color: 'green' },
 ];
 
-const ServiceCard = ({ service }: { service: Service }) => (
-  <Link href={service.href} className="group block">
-    <Card className="h-full hover:border-primary hover:shadow-lg transition-all duration-300 flex flex-col">
-      <CardContent className="p-6 flex flex-col items-start gap-4 flex-grow">
-        <div className="flex justify-between items-center w-full">
-            <div className="bg-primary/10 text-primary p-3 rounded-lg">
-                <service.Icon className="h-6 w-6" />
-            </div>
-            <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-transform" />
-        </div>
-        <div className="flex-grow">
-          <h3 className="text-lg font-semibold text-card-foreground">{service.title}</h3>
-          <p className="text-sm text-muted-foreground mt-1">{service.description}</p>
-        </div>
-      </CardContent>
-    </Card>
-  </Link>
-);
+const colorVariants = {
+  purple: 'border-[#8b5cf6] bg-[#8b5cf6] text-white',
+  amber: 'border-[#eab308] bg-[#eab308] text-white',
+  blue: 'border-[#3b82f6] bg-[#3b82f6] text-white',
+  green: 'border-[#22c55e] bg-[#22c55e] text-white',
+  'blue-dark': 'border-[#3e5a88] bg-[#3e5a88] text-white',
+  red: 'border-[#ef4444] bg-[#ef4444] text-white',
+  'teal-dark': 'border-[#0f766e] bg-[#0f766e] text-white',
+  orange: 'border-[#ea580c] bg-[#ea580c] text-white',
+};
+
+
+const ServiceCard = ({ service }: { service: Service }) => {
+  const colorClass = colorVariants[service.color as keyof typeof colorVariants] || 'border-gray-500 bg-gray-500 text-white';
+
+  return (
+    <Link href={service.href} className="group block h-full">
+       <Card className={cn(
+        "relative h-full overflow-hidden transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1 flex flex-col",
+        "border-0 border-l-4",
+        colorClass.split(' ')[0] // Usa a classe da borda para a esquerda
+      )}>
+        <CardContent className="p-6 flex items-center gap-6 flex-grow">
+           <div className={cn("p-3 rounded-lg", colorClass.split(' ')[1])}>
+             <service.Icon className={cn("h-8 w-8", colorClass.split(' ')[2])} />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-card-foreground">{service.title}</h3>
+            <p className="text-sm text-muted-foreground mt-1">{service.description}</p>
+          </div>
+          <ArrowRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+        </CardContent>
+      </Card>
+    </Link>
+  );
+};
 
 export default function HubPage() {
     const { cargo, email, username } = useAuth();
@@ -84,7 +103,7 @@ export default function HubPage() {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-3xl font-bold font-headline text-primary">Ferramentas</h1>
+                <h1 className="text-3xl font-bold font-headline text-[#334155]">Ferramentas</h1>
                 <p className="text-muted-foreground mt-1">Selecione uma ferramenta para continuar.</p>
             </div>
             
@@ -93,7 +112,7 @@ export default function HubPage() {
                     {generalTools.length > 0 && (
                         <section>
                             <h2 className="text-2xl font-semibold tracking-tight border-b pb-2 mb-6">Geral</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
                                 {generalTools.map(service => (
                                     <ServiceCard key={service.href} service={service} />
                                 ))}
@@ -104,7 +123,7 @@ export default function HubPage() {
                     {adminTools.length > 0 && (
                         <section>
                             <h2 className="text-2xl font-semibold tracking-tight border-b pb-2 mb-6">Administrativo</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
                                 {adminTools.map(service => (
                                     <ServiceCard key={service.href} service={service} />
                                 ))}

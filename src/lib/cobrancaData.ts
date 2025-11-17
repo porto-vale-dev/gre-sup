@@ -34,6 +34,7 @@ export const gerentesPorDiretor: Record<string, Gerente[]> = {
     { name: 'ANA PAULA SILVA', email: 'ana.silva@portovaleconsorcios.com.br', celular: '+55 11 99628-9396' },
     { name: 'RAFAELA GALDINO', email: 'rafaela.galdino@portovaleconsorcios.com.br', celular: '+55 12 99666-2441' },
     { name: 'PRISCILA APARECIDA', email: 'priscila.aparecida@portovaleconsorcios.com.br', celular: '+55 12 98830-0920' },
+    { name: 'CAROLINA HORIE', email: 'carolina.castro@portovaleconsorcios.com.br', celular: '+55 12 99726-6484' },
   ],
   'FÊNIX - ERICA MACEDO': [
     { name: 'ERICA MACEDO', email: 'erica@portovaleconsorcios.com.br', celular:'+5519991116713'},
@@ -52,8 +53,8 @@ export const gerentesPorDiretor: Record<string, Gerente[]> = {
     { name: 'MICHELE FRANÇA', email: 'michelle.franca@portovaleconsorcios.com.br', celular: '+55 12 98815-2071' },
     { name: 'CAROL FRANÇA', email: 'carolina.franca@portovaleconsorcios.com.br', celular: '+55 12 99241-6767' },
     { name: 'DANIELLE SILVA', email: 'danielle.silva@portovaleconsorcios.com.br', celular: '+55 11 91536-8239' },
-    { name: 'CAROLINA HORIE', email: 'carolina.castro@portovaleconsorcios.com.br', celular: '+55 12 99726-6484' },
     { name: 'ERICK MARTINS', email: 'erick.martins@portovaleconsorcios.com.br', celular: '+55 11 99831-1811' },
+    { name: 'SUELLEN VILELA', email: 'suellen.vilela@portovaleconsorcios.com.br', celular: '+5512997328911' },
   ],
   'DIAMANTES - VÂNIA MONTEIRO': [
     { name: 'VÂNIA MONTEIRO', email: 'vania@portovaleconsorcios.com.br', celular: '+5512982315868' },
