@@ -60,7 +60,7 @@ const allRankings: Ranking[] = [
     allowedRoles: ['adm', 'greadmin', 'greadminsa', 'diretor'],
     color: 'green'
   },
-],  {
+  {
     title: "Ranking Administrativo",
     href: "/rankings/administrativo",
     Icon: Trophy,
@@ -78,6 +78,7 @@ const colorVariants = {
   amber: 'border-[#eab308] bg-[#eab308] text-white',
   red: 'border-[#ef4444] bg-[#ef4444] text-white',
 };
+
 
 const RankingCard = ({ ranking }: { ranking: Ranking }) => {
   const colorClass = colorVariants[ranking.color as keyof typeof colorVariants] || colorVariants.blue;
