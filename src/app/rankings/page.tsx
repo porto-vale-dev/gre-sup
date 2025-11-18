@@ -61,10 +61,10 @@ const allRankings: Ranking[] = [
     color: 'green'
   },
   {
-    title: "Ranking Administrativo",
+    title: "Ranking Indicação de Seguros",
     href: "/rankings/administrativo",
     Icon: Trophy,
-    description: "Visualize o ranking administrativo.",
+    description: "Visualize o ranking de indicação de seguros.",
     allowedRoles: ['adm', 'greadmin'],
     color: 'red'
   },

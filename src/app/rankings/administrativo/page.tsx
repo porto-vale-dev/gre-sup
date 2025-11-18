@@ -49,7 +49,7 @@ export default function AdministrativoPage() {
       </div>
       <div className="relative flex-grow rounded-lg shadow-lg border overflow-hidden">
         <iframe
-          title="Ranking Administrativo"
+          title="Ranking Indicação de Seguros"
           src="https://lookerstudio.google.com/embed/reporting/95f7709e-16ab-4d91-82b4-815ccd691511/page/p_8agz1955td"
           allowFullScreen
           className="absolute top-0 left-0 w-full h-full border-0"
