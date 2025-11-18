@@ -52,7 +52,7 @@ export default function CampanhaPage() {
       <div className="space-y-12">
         {/* First Report */}
         <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-semibold flex items-center gap-2 text-primary">
+            <h2 className="text-2xl font-semibold flex items-center gap-2 text-[#334155]">
                 <Trophy className="h-6 w-6"/>
                 Ranking Campanha - Cash Black
             </h2>
