@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function AdministrativoPage() {
   const { cargo } = useAuth();
-  const allowedRoles = ['adm', 'greadmin'];
+  const allowedRoles = ['adm', 'greadmin', 'diretorseg'];
 
   if (!cargo || !allowedRoles.includes(cargo)) {
     return (

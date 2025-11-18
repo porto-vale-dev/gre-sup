@@ -65,7 +65,7 @@ const allRankings: Ranking[] = [
     href: "/rankings/administrativo",
     Icon: Trophy,
     description: "Visualize o ranking de indicação de seguros.",
-    allowedRoles: ['adm', 'greadmin'],
+    allowedRoles: ['adm', 'greadmin', 'diretorseg'],
     color: 'red'
   },
 ];
