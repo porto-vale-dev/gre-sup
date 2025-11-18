@@ -43,7 +43,7 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold font-headline text-primary">Painel de Tickets</h1>
+        <h1 className="text-3xl font-bold font-headline text-[#334155]">Painel de Tickets</h1>
       </div>
       <DashboardClient />
     </div>

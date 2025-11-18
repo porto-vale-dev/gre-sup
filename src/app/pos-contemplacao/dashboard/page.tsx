@@ -45,7 +45,7 @@ export default function PosContemplacaoDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold font-headline text-primary">Painel Pós-Contemplação</h1>
+        <h1 className="text-3xl font-bold font-headline text-[#334155]">Painel Pós-Contemplação</h1>
          <div className="flex gap-2">
             <Button asChild>
                 <Link href="/pos-contemplacao/novo">

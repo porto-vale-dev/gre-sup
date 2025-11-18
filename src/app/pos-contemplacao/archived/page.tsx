@@ -44,7 +44,7 @@ export default function ArchivedPosContemplacaoTicketsPage() {
     return (
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold font-headline text-primary">Pós-Contemplação - Arquivados</h1>
+            <h1 className="text-3xl font-bold font-headline text-[#334155]">Pós-Contemplação - Arquivados</h1>
           </div>
           <ArchivedPosContemplacaoTicketsClient />
         </div>

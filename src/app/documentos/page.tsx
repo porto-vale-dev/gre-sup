@@ -463,7 +463,7 @@ export default function DocumentosPage() {
       {/* Main */}
       <main className="flex-1">
         <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold font-headline text-primary">
+            <h1 className="text-3xl font-bold font-headline text-[#334155]">
               {getTitle(selectedSubCategory)}
             </h1>
             {(selectedSubCategory === 'Comex Geral' || selectedSubCategory === 'Comex Board') && (

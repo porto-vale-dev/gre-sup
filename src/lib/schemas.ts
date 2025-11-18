@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_COUNT } from './constants';
+import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES, MAX_OBSERVATIONS_LENGTH, MAX_FILES_COUNT, TICKET_REASONS } from './constants';
 
 const fileSchema = z
   .custom<FileList>()
@@ -54,7 +54,9 @@ export const ticketSchema = z.object({
   cpf: z.string().min(14, { message: "CPF/CNPJ inválido." }),
   grupo: z.string().min(1, { message: "Grupo é obrigatório." }),
   cota: z.string().min(1, { message: "Cota é obrigatória." }),
-  reason: z.string().min(1, { message: "Motivo do ticket é obrigatório." }),
+  reason: z.enum(TICKET_REASONS.map(r => r.value) as [string, ...string[]], {
+    errorMap: () => ({ message: "Por favor, selecione um motivo válido." }),
+  }),
   observations: z.string().min(1, { message: "Observações são obrigatórias." }).max(MAX_OBSERVATIONS_LENGTH, { message: `Observações não podem exceder ${MAX_OBSERVATIONS_LENGTH} caracteres.` }),
   file: fileSchema,
 }).superRefine((data, ctx) => {

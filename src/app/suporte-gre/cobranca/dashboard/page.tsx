@@ -43,7 +43,7 @@ export default function CobrancaDashboardPage() {
   return (
     <div>
       <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold font-headline text-primary">Painel Apoio Jacareí</h1>
+        <h1 className="text-3xl font-bold font-headline text-[#334155]">Painel Apoio Jacareí</h1>
         <div className="flex gap-2">
           <Button asChild>
             <Link href="/suporte-gre/cobranca/novo">

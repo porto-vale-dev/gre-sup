@@ -43,7 +43,7 @@ export default function ArchivedTicketsPage() {
     return (
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold font-headline text-primary">Tickets Arquivados</h1>
+            <h1 className="text-3xl font-bold font-headline text-[#334155]">Tickets Arquivados</h1>
           </div>
           <ArchivedTicketsClient />
         </div>
