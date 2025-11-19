@@ -231,9 +231,14 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
   const handleSaveAndComplete = async (status: TicketStatus = 'Concluído') => {
     setIsSaving(true);
     try {
-        if (isAprendizChecked !== ticket.aprendiz) {
-            await updateTicketAprendizStatus(ticket.id, isAprendizChecked);
+        const isMarkingAsTratado = status === 'Tratado';
+        // If an admin is marking as "Aprendiz" OR the user is an apprentice marking as "Tratado"
+        const finalAprendizStatus = isAprendizChecked || isMarkingAsTratado;
+
+        if (finalAprendizStatus !== ticket.aprendiz) {
+            await updateTicketAprendizStatus(ticket.id, finalAprendizStatus);
         }
+
         const success = await updateAndCompleteTicket(ticket.id, solutionText, stagedFiles, comentarios, status);
         if (success) {
             setStagedFiles([]);
