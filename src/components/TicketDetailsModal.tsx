@@ -129,7 +129,7 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
   const canViewInternalComments = !isReadOnlyView && cargo && (allowedRoles.includes(cargo) || email === 'aprendiz.gre@portovaleconsorcios.com.br');
   
   const allowedDeleteRoles = ['adm', 'greadmin', 'greadminsa'];
-  const canDelete = cargo && allowedDeleteRoles.includes(cargo);
+  const canDelete = cargo && allowedDeleteRoles.includes(cargo) && email !== 'aprendiz.gre@portovaleconsorcios.com.br';
 
   const isAprendiz = email === 'aprendiz.gre@portovaleconsorcios.com.br';
 
