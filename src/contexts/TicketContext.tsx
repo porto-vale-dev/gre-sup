@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -32,6 +33,7 @@ interface TicketContextType {
   }) => Promise<boolean>;
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
   updateTicketResponsible: (ticketId: string, responsible: string) => Promise<void>;
+  updateTicketAprendizStatus: (ticketId: string, isAprendiz: boolean) => Promise<void>;
   updateTicketSolution: (ticketId: string, solution: string, newFiles: File[], comentarios?: string) => Promise<boolean>;
   updateAndCompleteTicket: (ticketId: string, solution: string, newFiles: File[], comentarios?: string, status?: TicketStatus) => Promise<boolean>;
   deleteTicket: (ticketId: string, filePaths?: { solution_files?: SolutionFile[] | null, file_path?: string | null, file_name?: string | null }) => Promise<void>;
@@ -209,30 +211,25 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   };
 
   const updateTicketStatus = async (ticketId: string, status: TicketStatus) => {
-    const { data: currentTicket, error: fetchError } = await supabase
-      .from('tickets')
-      .select('*')
-      .eq('id', ticketId)
-      .single();
+    const originalTickets = [...tickets];
+    setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status } : t));
 
-    if (fetchError || !currentTicket) {
-      toast({ title: "Erro", description: "Ticket não encontrado para atualização.", variant: "destructive" });
-      return;
-    }
-
-    const { error } = await supabase
+    const { data: currentTicket, error: updateError } = await supabase
       .from('tickets')
       .update({ status })
-      .eq('id', ticketId);
+      .eq('id', ticketId)
+      .select()
+      .single();
 
-    if (error) {
-      toast({ title: "Erro ao Atualizar", description: error.message, variant: "destructive" });
+    if (updateError) {
+      setTickets(originalTickets);
+      toast({ title: "Erro ao Atualizar", description: updateError.message, variant: "destructive" });
       return;
     }
     
     toast({ title: "Status Atualizado", description: `Status do ticket alterado para ${status}.` });
 
-    if (status === 'Concluído') {
+    if (status === 'Concluído' && currentTicket) {
       const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/confirmacaotetyettette";
       fetch(webhookUrl, {
         method: 'POST',
@@ -252,24 +249,42 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         toast({ title: "Aviso de Webhook", description: "O ticket foi concluído, mas a notificação pode não ter sido enviada.", variant: "default" });
       });
     }
-    
-    await fetchTickets();
   };
 
   const updateTicketResponsible = async (ticketId: string, responsible: string) => {
+    const originalTickets = [...tickets];
+    setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, responsible } : t));
+    
     const { error } = await supabase
       .from('tickets')
       .update({ responsible })
       .eq('id', ticketId);
 
     if (error) {
+      setTickets(originalTickets);
       toast({ title: "Erro ao Atualizar", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Responsável Atualizado", description: `Responsável pelo ticket alterado para ${responsible}.` });
-      await fetchTickets();
     }
   };
   
+  const updateTicketAprendizStatus = async (ticketId: string, isAprendiz: boolean) => {
+    const originalTickets = [...tickets];
+    setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, aprendiz: isAprendiz } : t));
+
+    const { error } = await supabase
+        .from('tickets')
+        .update({ aprendiz: isAprendiz })
+        .eq('id', ticketId);
+
+    if (error) {
+        setTickets(originalTickets);
+        toast({ title: "Erro ao Atualizar", description: `Não foi possível marcar como aprendiz. ${error.message}`, variant: "destructive" });
+    } else {
+        toast({ title: "Status de Aprendiz Atualizado" });
+    }
+  };
+
   const updateTicketSolution = async (ticketId: string, solution: string, newFiles: File[], comentarios?: string): Promise<boolean> => {
     try {
       const currentTicket = getTicketById(ticketId);
@@ -299,22 +314,28 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
       const existingFiles = currentTicket.solution_files || [];
       const updatedSolutionFiles = [...existingFiles, ...uploadedFiles];
+      
+      const updates = { 
+        solution: solution, 
+        solution_files: updatedSolutionFiles,
+        comentarios: comentarios,
+      };
+
+      // Optimistic update
+      setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, ...updates } : t));
 
       const { error: updateError } = await supabase
         .from('tickets')
-        .update({ 
-          solution: solution, 
-          solution_files: updatedSolutionFiles,
-          comentarios: comentarios,
-        })
+        .update(updates)
         .eq('id', ticketId);
 
       if (updateError) {
+        // Rollback on error
+        setTickets(prev => prev.map(t => t.id === ticketId ? { ...currentTicket } : t));
         throw new Error(`Erro ao salvar a solução: ${updateError.message}`);
       }
 
       toast({ title: "Solução Salva", description: "As informações da solução foram salvas com sucesso." });
-      await fetchTickets();
       return true;
 
     } catch (error: any) {
@@ -328,33 +349,31 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     try {
         const solutionSaved = await updateTicketSolution(ticketId, solution, newFiles, comentarios);
         if (!solutionSaved) {
-            // Error toast is already shown by updateTicketSolution
             return false;
         }
-
-        // Fetch the updated ticket to send correct data to webhook
-        const { data: updatedTicket, error: fetchError } = await supabase
-          .from('tickets')
-          .select('*')
-          .eq('id', ticketId)
-          .single();
         
-        if (fetchError || !updatedTicket) {
-           throw new Error(`Erro ao buscar ticket para conclusão: ${fetchError?.message || 'Ticket não encontrado'}`);
-        }
+        // Optimistic update for status
+        const currentTicket = tickets.find(t => t.id === ticketId);
+        if(!currentTicket) return false;
 
-        const { error: statusError } = await supabase
+        const originalTickets = [...tickets];
+        setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: status } : t));
+
+        const { data: updatedTicket, error: statusError } = await supabase
             .from('tickets')
             .update({ status: status })
-            .eq('id', ticketId);
+            .eq('id', ticketId)
+            .select()
+            .single();
 
         if (statusError) {
+            setTickets(originalTickets);
             throw new Error(`Erro ao atualizar o status: ${statusError.message}`);
         }
         
         toast({ title: `Ticket ${status}!`, description: `O ticket foi salvo e marcado como ${status.toLowerCase()}.` });
         
-                if (status === 'Concluído') {
+        if (status === 'Concluído' && updatedTicket) {
             const webhookUrl = "https://n8n.portovaleconsorcio.com.br/webhook/confirmacaotetyettette";
             fetch(webhookUrl, {
               method: 'POST',
@@ -374,8 +393,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
               toast({ title: "Aviso de Webhook", description: "O ticket foi concluído, mas a notificação pode não ter sido enviada.", variant: "default" });
             });
         }
-
-        await fetchTickets();
         return true;
     } catch (error: any) {
         toast({ title: "Erro ao Concluir Ticket", description: error.message, variant: "destructive" });
@@ -593,6 +610,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         addTicket, 
         updateTicketStatus, 
         updateTicketResponsible,
+        updateTicketAprendizStatus,
         updateTicketSolution,
         updateAndCompleteTicket,
         deleteTicket,

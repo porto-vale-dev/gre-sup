@@ -28,6 +28,7 @@ export interface Ticket {
   status: TicketStatus;
   responsible?: string | null;
   user_id?: string | null; 
+  aprendiz?: boolean | null;
   
   file_path?: string | null;
   file_name?: string | null;

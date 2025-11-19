@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Ticket, SolutionFile, TicketStatus } from '@/types';
@@ -30,11 +31,12 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, CheckCircle, MessageCircle, Trash2, Loader2 } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, MessageSquare, Paperclip, Tag, Info, Download, Eye, UploadCloud, File, X, Save, Edit, Ticket as TicketIcon, Users, Fingerprint, UserSquare, Mail, CheckCircle, MessageCircle, Trash2, Loader2, GraduationCap } from 'lucide-react';
 import { useTickets } from '@/contexts/TicketContext';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_FILE_TYPES, MAX_SOLUTION_FILE_SIZE } from '@/lib/constants';
 import { useAuth } from '@/contexts/AuthContext';
+import { Checkbox } from './ui/checkbox';
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -113,7 +115,7 @@ const FilePreviewItem: React.FC<{
 };
 
 export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isReadOnlyView = false }: TicketDetailsModalProps) {
-  const { downloadFile, createPreviewUrl, updateTicketSolution, getTicketById, updateAndCompleteTicket, deleteTicket } = useTickets();
+  const { downloadFile, createPreviewUrl, updateTicketSolution, getTicketById, updateAndCompleteTicket, deleteTicket, updateTicketAprendizStatus } = useTickets();
   const { toast } = useToast();
   const { cargo, email } = useAuth();
   
@@ -124,22 +126,25 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAprendizChecked, setIsAprendizChecked] = useState(false);
 
   const allowedRoles = ['adm', 'greadmin', 'greadminsa', 'gre', 'grea', 'gre_apoio_admin'];
   const canViewInternalComments = !isReadOnlyView && cargo && (allowedRoles.includes(cargo) || email === 'aprendiz.gre@portovaleconsorcios.com.br');
   
   const allowedDeleteRoles = ['adm', 'greadmin', 'greadminsa'];
   const canDelete = cargo && allowedDeleteRoles.includes(cargo) && email !== 'aprendiz.gre@portovaleconsorcios.com.br';
-
+  
+  const canMarkAsAprendiz = cargo && ['adm', 'greadmin', 'greadminsa'].includes(cargo);
   const isAprendiz = email === 'aprendiz.gre@portovaleconsorcios.com.br';
 
   useEffect(() => {
     if (ticket) {
       setSolutionText(ticket.solution || '');
       setComentarios(ticket.comentarios || '');
+      setIsAprendizChecked(ticket.aprendiz || false);
       setStagedFiles([]);
     }
-  }, [ticket?.id, isOpen]); 
+  }, [ticket?.id, isOpen, ticket]); 
 
   if (!ticket) return null;
 
@@ -208,6 +213,9 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
   const handleSaveSolution = async () => {
     setIsSaving(true);
     try {
+      if (isAprendizChecked !== ticket.aprendiz) {
+        await updateTicketAprendizStatus(ticket.id, isAprendizChecked);
+      }
       const success = await updateTicketSolution(ticket.id, solutionText, stagedFiles, comentarios);
       if (success) {
         setStagedFiles([]);
@@ -220,9 +228,12 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
     }
   };
 
-   const handleSaveAndComplete = async (status: TicketStatus = 'Concluído') => {
+  const handleSaveAndComplete = async (status: TicketStatus = 'Concluído') => {
     setIsSaving(true);
     try {
+        if (isAprendizChecked !== ticket.aprendiz) {
+            await updateTicketAprendizStatus(ticket.id, isAprendizChecked);
+        }
         const success = await updateAndCompleteTicket(ticket.id, solutionText, stagedFiles, comentarios, status);
         if (success) {
             setStagedFiles([]);
@@ -341,6 +352,22 @@ export function TicketDetailsModal({ ticket: initialTicket, isOpen, onClose, isR
                   <strong className="font-medium text-muted-foreground">Status:</strong>
                   <Badge variant={ticket.status === 'Concluído' ? 'default' : ticket.status === 'Atrasado' ? 'destructive' : 'secondary'}>{ticket.status}</Badge>
                 </div>
+                 {canMarkAsAprendiz && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="aprendiz-checkbox"
+                      checked={isAprendizChecked}
+                      onCheckedChange={(checked) => setIsAprendizChecked(Boolean(checked))}
+                      disabled={isSaving}
+                    />
+                    <label
+                      htmlFor="aprendiz-checkbox"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5"
+                    >
+                      <GraduationCap className="h-4 w-4" /> É aprendiz?
+                    </label>
+                  </div>
+                )}
               </div>
               <Separator />
               <div>
