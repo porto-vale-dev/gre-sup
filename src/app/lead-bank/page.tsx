@@ -106,7 +106,7 @@ export default function LeadBankPage() {
             <div className="flex items-center gap-3">
                 <Wallet className="h-8 w-8 text-primary" />
                 <div>
-                    <p className="text-sm text-muted-foreground">Olá {cargo === 'adm' ? 'Admin' : (username || 'Usuário')}, seu Saldo Lead Bank:</p>
+                    <p className="text-sm text-muted-foreground">Olá {username || 'Usuário'}, seu Saldo Lead Bank:</p>
                     <p className="text-xl font-bold">{saldoDisponivelEmLeads} {saldoDisponivelEmLeads === 1 ? 'Lead' : 'Leads'}</p>
                 </div>
             </div>
