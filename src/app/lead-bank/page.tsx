@@ -216,7 +216,7 @@ export default function LeadBankPage() {
                           <div className="bg-card flex items-center justify-center cursor-pointer rounded-t-lg overflow-hidden">
                               <div className="relative w-full h-[250px]">
                                   <Image
-                                    src={product.image}
+                                    src={product.image.trim()}
                                     alt={product.name}
                                     fill
                                     className="p-4 object-contain"

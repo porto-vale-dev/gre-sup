@@ -197,7 +197,7 @@ export default function AdminProductsPage() {
                         <div className="flex items-center gap-4">
                           <div className="relative h-12 w-12 rounded-md overflow-hidden bg-muted">
                             <Image
-                                src={product.image}
+                                src={product.image.trim()}
                                 alt={product.name}
                                 fill
                                 className="object-cover"
