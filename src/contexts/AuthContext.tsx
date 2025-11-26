@@ -2,7 +2,7 @@
 "use client";
 
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session, User } from '@supabase/supabase-js';
@@ -18,10 +18,12 @@ interface AuthContextType {
   user: User | null;
   cargo: string | null;
   username: string | null;
+  leadBalance: number;
   isLoading: boolean;
   login: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   email: string | null;
+  refreshLeadBalance: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,12 +49,44 @@ async function fetchUserProfile(user: User | null): Promise<UserProfile | null> 
   }
 }
 
+async function fetchLeadBalance(user: User | null): Promise<number> {
+    if (!user || !user.email) return 0;
+    try {
+        const { data, error } = await supabase.rpc('get_user_lead_balance', {
+            p_user_email: user.email,
+        });
+
+        if (error) {
+            console.error('Error fetching lead balance:', error.message);
+            return 0;
+        }
+        return data || 0;
+    } catch (err) {
+        console.error('Unexpected error fetching lead balance:', err);
+        return 0;
+    }
+}
+
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [cargo, setCargo] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [leadBalance, setLeadBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+  }, [router]);
+  
+  const refreshLeadBalance = useCallback(async () => {
+    if (user) {
+      const newBalance = await fetchLeadBalance(user);
+      setLeadBalance(newBalance);
+    }
+  }, [user]);
 
   // 🔹 Verificação imediata da sessão ao carregar
   useEffect(() => {
@@ -77,16 +111,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // 🔹 Quando o user muda, busca o perfil
+  // 🔹 Quando o user muda, busca o perfil e o saldo
   useEffect(() => {
     if (user) {
       fetchUserProfile(user).then((profile) => {
         setCargo(profile?.cargo || null);
         setUsername(profile?.username || null);
       });
+      fetchLeadBalance(user).then(setLeadBalance);
     } else {
       setCargo(null);
       setUsername(null);
+      setLeadBalance(0);
     }
   }, [user]);
 
@@ -115,20 +151,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: true };
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
-  };
-
   const value = {
     isAuthenticated: !!user,
     user,
     cargo,
     username,
+    leadBalance,
     isLoading,
     login,
     logout,
     email: user?.email ?? null,
+    refreshLeadBalance,
   };
 
   return (
