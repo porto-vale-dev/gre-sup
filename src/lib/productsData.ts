@@ -1,5 +1,6 @@
 
-interface Product {
+
+export interface Product {
   id?: string; // Adicionado para compatibilidade com produtos dinâmicos
   name: string;
   slug: string;
