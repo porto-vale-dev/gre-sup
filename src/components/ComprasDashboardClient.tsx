@@ -189,35 +189,29 @@ export function ComprasDashboardClient() {
   const { tickets, isLoading, error } = useComprasTickets();
   const { username } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedTicket, setSelectedTicket] = useState<ComprasTicket | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<ComprasOrder | null>(null);
 
   const filteredTickets = useMemo(() => {
     return tickets.filter(ticket => {
+      // Dashboard principal só mostra PENDENTES (aprovado === null)
+      if (ticket.aprovado !== null) return false;
+
       const matchesSearch = 
         ticket.produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ticket.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ticket.id.toString().includes(searchTerm);
 
-      const matchesStatus = 
-        statusFilter === 'all' ||
-        (statusFilter === 'pending' && ticket.aprovado === null) ||
-        (statusFilter === 'approved' && ticket.aprovado === true) ||
-        (statusFilter === 'rejected' && ticket.aprovado === false);
-
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
-  }, [tickets, searchTerm, statusFilter]);
+  }, [tickets, searchTerm]);
 
   // Agrupa os tickets filtrados em pedidos
   const groupedOrders = useMemo(() => groupTicketsToOrders(filteredTickets), [filteredTickets]);
 
   const stats = useMemo(() => {
-    const pending = groupedOrders.filter(o => o.aprovado === null).length;
-    const approved = groupedOrders.filter(o => o.aprovado === true).length;
-    const rejected = groupedOrders.filter(o => o.aprovado === false).length;
-    return { pending, approved, rejected, total: groupedOrders.length };
+    // Todos os pedidos visíveis são pendentes, pois já filtrados
+    return { pending: groupedOrders.length, total: groupedOrders.length };
   }, [groupedOrders]);
 
   if (error) {
@@ -234,73 +228,32 @@ export function ComprasDashboardClient() {
       <div className="space-y-6">
         {/* Header link moved to page header */}
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Pedidos</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-              <Package className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pending}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Aprovados</CardTitle>
-              <Package className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.approved}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Reprovados</CardTitle>
-              <Package className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.rejected}</div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Stats Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pedidos Pendentes</CardTitle>
+            <Package className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pending}</div>
+            <p className="text-xs text-muted-foreground mt-1">Aguardando aprovação</p>
+          </CardContent>
+        </Card>
 
-        {/* Filters */}
+        {/* Filtro de Busca */}
         <Card>
           <CardHeader>
-            <CardTitle>Filtros</CardTitle>
+            <CardTitle>Buscar Pedidos Pendentes</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por produto, email ou ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pending">Pendentes</SelectItem>
-                  <SelectItem value="approved">Aprovados</SelectItem>
-                  <SelectItem value="rejected">Reprovados</SelectItem>
-                </SelectContent>
-              </Select>
+          <CardContent>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por produto, email ou ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
           </CardContent>
         </Card>
