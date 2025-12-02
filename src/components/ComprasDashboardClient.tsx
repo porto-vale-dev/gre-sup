@@ -348,10 +348,12 @@ export function ComprasDashboardClient() {
       </div>
 
       {/* Details Modal */}
-      {selectedTicket && (
+      {(selectedTicket || selectedGroup) && (
         <ComprasTicketDetailsModal
-          ticket={selectedTicket}
-          onClose={() => setSelectedTicket(null)}
+          ticket={selectedTicket || (tickets.find(t => t.id === (selectedGroup?.items[0]?.id ?? -1)) as ComprasTicket)}
+          groupItems={selectedGroup?.items}
+          groupMeta={selectedGroup ? { createdAtDisplay: selectedGroup.createdAtDisplay, email: selectedGroup.email, retirada: selectedGroup.retirada, folha: selectedGroup.folha, aprovado: selectedGroup.aprovado, usuario_compras: selectedGroup.usuario_compras ?? null } : undefined}
+          onClose={() => { setSelectedTicket(null); setSelectedGroup(null); }}
           currentUser={username || 'Usuário'}
         />
       )}
