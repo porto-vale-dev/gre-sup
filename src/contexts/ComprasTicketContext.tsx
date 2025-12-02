@@ -34,7 +34,7 @@ export function ComprasTicketProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
         const { data, error: fetchError } = await supabase
-            .from('pedidos')
+            .from('compras')
             .select('*')
             .order('created_at', { ascending: false });
         
@@ -65,7 +65,7 @@ export function ComprasTicketProvider({ children }: { children: ReactNode }) {
   const updateTicketStatus = async (ticketId: number, aprovado: boolean, usuarioCompras: string): Promise<boolean> => {
     try {
       const { error: updateError } = await supabase
-        .from('pedidos')
+        .from('compras')
         .update({ 
           aprovado,
           usuario_compras: usuarioCompras

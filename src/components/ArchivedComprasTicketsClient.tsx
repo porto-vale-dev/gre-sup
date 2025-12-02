@@ -10,33 +10,20 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, ShoppingCart, Package, Eye, Archive } from 'lucide-react';
+import { Search, Package, Eye, CheckCircle, XCircle } from 'lucide-react';
 import { format, parseISO } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
 import { ComprasTicketDetailsModal } from './ComprasTicketDetailsModal';
-import Link from 'next/link';
 
-const statusColors = {
-  pending: "bg-yellow-500",
-  approved: "bg-green-500",
-  rejected: "bg-red-500",
-};
-
-const getStatusDisplay = (aprovado: boolean | null) => {
-  if (aprovado === null) return { label: "Pendente", color: statusColors.pending };
-  if (aprovado === true) return { label: "Aprovado", color: statusColors.approved };
-  return { label: "Reprovado", color: statusColors.rejected };
-};
-
-const ComprasTicketCard = ({ 
+const ArchivedComprasTicketCard = ({ 
   ticket, 
   onOpenDetails 
 }: { 
   ticket: ComprasTicket; 
   onOpenDetails: (ticket: ComprasTicket) => void;
 }) => {
-  const statusInfo = getStatusDisplay(ticket.aprovado ?? null);
+  const isApproved = ticket.aprovado === true;
   const displayDate = ticket.created_at ? format(parseISO(ticket.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'N/A';
 
   return (
@@ -47,8 +34,18 @@ const ComprasTicketCard = ({
             <Package className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">Pedido #{ticket.id}</CardTitle>
           </div>
-          <Badge className={`${statusInfo.color} text-white`}>
-            {statusInfo.label}
+          <Badge className={`${isApproved ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+            {isApproved ? (
+              <>
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Aprovado
+              </>
+            ) : (
+              <>
+                <XCircle className="h-3 w-3 mr-1" />
+                Reprovado
+              </>
+            )}
           </Badge>
         </div>
         <CardDescription className="text-xs mt-1">
@@ -72,9 +69,6 @@ const ComprasTicketCard = ({
           <p className="text-xs text-muted-foreground">
             <span className="font-medium">Retirada:</span> {ticket.retirada.toUpperCase()}
           </p>
-          <p className="text-xs text-muted-foreground">
-            <span className="font-medium">Folha ABAC:</span> {ticket.folha ? 'Sim' : 'Não'}
-          </p>
         </div>
         {ticket.usuario_compras && (
           <div className="border-t pt-2">
@@ -97,15 +91,19 @@ const ComprasTicketCard = ({
   );
 };
 
-export function ComprasDashboardClient() {
+export function ArchivedComprasTicketsClient() {
   const { tickets, isLoading, error } = useComprasTickets();
   const { username } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedTicket, setSelectedTicket] = useState<ComprasTicket | null>(null);
 
+  const archivedTickets = useMemo(() => {
+    return tickets.filter(ticket => ticket.aprovado !== null);
+  }, [tickets]);
+
   const filteredTickets = useMemo(() => {
-    return tickets.filter(ticket => {
+    return archivedTickets.filter(ticket => {
       const matchesSearch = 
         ticket.produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ticket.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -113,20 +111,18 @@ export function ComprasDashboardClient() {
 
       const matchesStatus = 
         statusFilter === 'all' ||
-        (statusFilter === 'pending' && ticket.aprovado === null) ||
         (statusFilter === 'approved' && ticket.aprovado === true) ||
         (statusFilter === 'rejected' && ticket.aprovado === false);
 
       return matchesSearch && matchesStatus;
     });
-  }, [tickets, searchTerm, statusFilter]);
+  }, [archivedTickets, searchTerm, statusFilter]);
 
   const stats = useMemo(() => {
-    const pending = tickets.filter(t => t.aprovado === null).length;
-    const approved = tickets.filter(t => t.aprovado === true).length;
-    const rejected = tickets.filter(t => t.aprovado === false).length;
-    return { pending, approved, rejected, total: tickets.length };
-  }, [tickets]);
+    const approved = archivedTickets.filter(t => t.aprovado === true).length;
+    const rejected = archivedTickets.filter(t => t.aprovado === false).length;
+    return { approved, rejected, total: archivedTickets.length };
+  }, [archivedTickets]);
 
   if (error) {
     return (
@@ -140,22 +136,12 @@ export function ComprasDashboardClient() {
   return (
     <>
       <div className="space-y-6">
-        {/* Header with Archive Link */}
-        <div className="flex justify-end">
-          <Button asChild variant="outline">
-            <Link href="/compras/archived">
-              <Archive className="mr-2 h-4 w-4" />
-              Ver Arquivados
-            </Link>
-          </Button>
-        </div>
-
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Pedidos</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Processados</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.total}</div>
@@ -163,29 +149,20 @@ export function ComprasDashboardClient() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-              <Package className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pending}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Aprovados</CardTitle>
-              <Package className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.approved}</div>
+              <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Reprovados</CardTitle>
-              <Package className="h-4 w-4 text-red-500" />
+              <XCircle className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.rejected}</div>
+              <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
             </CardContent>
           </Card>
         </div>
@@ -212,7 +189,6 @@ export function ComprasDashboardClient() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pending">Pendentes</SelectItem>
                   <SelectItem value="approved">Aprovados</SelectItem>
                   <SelectItem value="rejected">Reprovados</SelectItem>
                 </SelectContent>
@@ -241,14 +217,16 @@ export function ComprasDashboardClient() {
             <CardContent className="py-12 text-center">
               <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">
-                Nenhum pedido encontrado com os filtros aplicados.
+                {archivedTickets.length === 0 
+                  ? 'Nenhum pedido processado ainda.'
+                  : 'Nenhum pedido encontrado com os filtros aplicados.'}
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredTickets.map(ticket => (
-              <ComprasTicketCard
+              <ArchivedComprasTicketCard
                 key={ticket.id}
                 ticket={ticket}
                 onOpenDetails={setSelectedTicket}
