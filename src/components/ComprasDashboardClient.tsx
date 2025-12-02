@@ -35,7 +35,7 @@ const ComprasTicketCard = ({
   ticket: ComprasTicket; 
   onOpenDetails: (ticket: ComprasTicket) => void;
 }) => {
-  const statusInfo = getStatusDisplay(ticket.aprovado);
+  const statusInfo = getStatusDisplay(ticket.aprovado ?? null);
   const displayDate = ticket.created_at ? format(parseISO(ticket.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'N/A';
 
   return (

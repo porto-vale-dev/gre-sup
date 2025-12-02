@@ -46,7 +46,7 @@ export function ComprasTicketDetailsModal({ ticket, onClose, currentUser }: Comp
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const statusInfo = getStatusDisplay(ticket.aprovado);
+  const statusInfo = getStatusDisplay(ticket.aprovado ?? null);
   const displayDate = ticket.created_at 
     ? format(parseISO(ticket.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) 
     : 'N/A';
