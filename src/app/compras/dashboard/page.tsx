@@ -4,7 +4,7 @@ import { ComprasDashboardClient } from "@/components/ComprasDashboardClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, ArrowLeft, ShoppingCart } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, ShoppingCart, Archive } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function ComprasDashboardPage() {
@@ -46,6 +46,12 @@ export default function ComprasDashboardPage() {
           <ShoppingCart className="h-8 w-8" />
           Painel de Compras
         </h1>
+        <Button asChild variant="outline">
+          <Link href="/compras/archived">
+            <Archive className="mr-2 h-4 w-4" />
+            Ver Arquivados
+          </Link>
+        </Button>
       </div>
       <ComprasDashboardClient />
     </div>

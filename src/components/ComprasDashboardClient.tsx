@@ -80,7 +80,7 @@ const ComprasOrderCard = ({ order, onOpenDetails }: { order: ComprasOrder; onOpe
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Pedido</CardTitle>
+            <CardTitle className="text-lg">Pedido #{order.items[0]?.id}</CardTitle>
           </div>
           <Badge className={`${statusInfo.color} text-white`}>{statusInfo.label}</Badge>
         </div>
@@ -231,15 +231,7 @@ export function ComprasDashboardClient() {
   return (
     <>
       <div className="space-y-6">
-        {/* Header with Archive Link */}
-        <div className="flex justify-end">
-          <Button asChild variant="outline">
-            <Link href="/compras/archived">
-              <Archive className="mr-2 h-4 w-4" />
-              Ver Arquivados
-            </Link>
-          </Button>
-        </div>
+        {/* Header link moved to page header */}
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-4">
