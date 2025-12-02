@@ -72,7 +72,7 @@ function groupTicketsToOrders(tickets: ComprasTicket[]): ComprasOrder[] {
   return Array.from(map.values());
 }
 
-const ComprasOrderCard = ({ order, onOpenDetails }: { order: ComprasOrder; onOpenDetails: (firstTicketId: number) => void }) => {
+const ComprasOrderCard = ({ order, onOpenDetails }: { order: ComprasOrder; onOpenDetails: (order: ComprasOrder) => void }) => {
   const statusInfo = getStatusDisplay(order.aprovado ?? null);
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -108,7 +108,7 @@ const ComprasOrderCard = ({ order, onOpenDetails }: { order: ComprasOrder; onOpe
             <p className="text-xs text-muted-foreground"><span className="font-medium">Processado por:</span> {order.usuario_compras}</p>
           </div>
         )}
-        <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => onOpenDetails(order.items[0].id)}>
+        <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => onOpenDetails(order)}>
           <Eye className="h-4 w-4 mr-2" />
           Ver Detalhes
         </Button>
@@ -191,6 +191,7 @@ export function ComprasDashboardClient() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedTicket, setSelectedTicket] = useState<ComprasTicket | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<ComprasOrder | null>(null);
 
   const filteredTickets = useMemo(() => {
     return tickets.filter(ticket => {
@@ -334,7 +335,9 @@ export function ComprasDashboardClient() {
               <ComprasOrderCard
                 key={order.groupId}
                 order={order}
-                onOpenDetails={(firstId) => {
+                onOpenDetails={(ord) => {
+                  setSelectedGroup(ord);
+                  const firstId = ord.items[0]?.id;
                   const first = tickets.find(t => t.id === firstId) || filteredTickets.find(t => t.id === firstId);
                   if (first) setSelectedTicket(first);
                 }}
