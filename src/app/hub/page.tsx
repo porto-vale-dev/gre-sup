@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trophy, ArrowRight, Ticket, Megaphone, FolderKanban, LayoutDashboard, FileSearch, Handshake, FileCheck, ShoppingBasket, BadgeDollarSign } from 'lucide-react';
+import { Trophy, ArrowRight, Ticket, Megaphone, FolderKanban, LayoutDashboard, FileSearch, Handshake, FileCheck, ShoppingBasket, BadgeDollarSign, ShoppingCart } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +25,7 @@ const allServices: Service[] = [
     { title: "Painel de Suporte - GRE", href: "/suporte-gre/painel", Icon: FolderKanban, description: "Gerencie os tickets de suporte.", allowedRoles: ["adm", "greadmin", "greadminsa", "gre", "grea", "gre_apoio_admin"], color: 'blue-dark' },
     { title: "Painel de Apoio Jacareí", href: "/suporte-gre/cobranca/dashboard", Icon: Handshake, description: "Gerencie os tickets de apoio.", allowedRoles: ['adm', 'greadmin', 'greadminsa', 'gre_apoio', 'gre_apoio_admin'], color: 'red' },
     { title: "Painel de Pós-Contemplação", href: "/pos-contemplacao/dashboard", Icon: FileCheck, description: "Gerencie os tickets de pós-contemplação.", allowedRoles: ['adm', 'greadmin', 'gre_con', 'gre_con_admin'], color: 'teal-dark' },
+    { title: "Painel de Compras", href: "/compras/dashboard", Icon: ShoppingCart, description: "Gerencie os pedidos de compras.", allowedRoles: ['adm', 'compras'], color: 'indigo' },
     { title: "Novo ticket - GRE", href: "/suporte-gre", Icon: Ticket, description: "Abra um novo chamado para o suporte.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin", "colaborador"], color: 'blue' },
     { title: "Acompanhar Solicitação", href: "/suporte-gre/minhas-solicitacoes", Icon: FileSearch, description: "Acompanhe o andamento dos seus tickets.", allowedRoles: ["adm", "diretor", "gerente", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"], color: 'green' },
     { title: "Lead Bank", href: "/lead-bank", Icon: ShoppingBasket, description: "Compre produtos institucionais.", allowedRoles: ["adm", "diretor", "gerente", "gerente1", "colaborador", "greadmin", "greadminsa", "gre", "grea", "diretorseg", "gre_apoio", "gre_apoio_admin", "gre_con", "gre_con_admin"], color: 'pink' },
@@ -40,6 +41,7 @@ const colorVariants = {
   'teal-dark': 'border-[#0f766e] bg-[#0f766e] text-white',
   orange: 'border-[#ea580c] bg-[#ea580c] text-white',
   pink: 'border-[#ec4899] bg-[#ec4899] text-white',
+  indigo: 'border-[#6366f1] bg-[#6366f1] text-white',
 };
 
 
@@ -99,7 +101,7 @@ export default function HubPage() {
     }, [accessibleServices]);
 
     const adminTools = useMemo(() => {
-      return accessibleServices.filter(s => s.title === "Painel de Suporte - GRE" || s.title === "Documentos" || s.title === "Painel de Apoio Jacareí" || s.title === "Painel de Pós-Contemplação");
+      return accessibleServices.filter(s => s.title === "Painel de Suporte - GRE" || s.title === "Documentos" || s.title === "Painel de Apoio Jacareí" || s.title === "Painel de Pós-Contemplação" || s.title === "Painel de Compras");
     }, [accessibleServices]);
     
     return (

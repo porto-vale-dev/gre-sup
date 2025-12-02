@@ -7,6 +7,7 @@ export type TicketStatus = "Novo" | "Em Andamento" | "Ativo" | "Atrasado" | "Con
 export type CobrancaTicketStatus = "Aberta" | "Em análise" | "Encaminhada" | "Respondida" | "Resolvida" | "Dentro do prazo" | "Fora do prazo" | "Reabertura";
 export type RetornoComercialStatus = 'Tirou dúvidas' | 'Tentando contato' | 'Em andamento' | 'Revertido' | 'Não Revertido' | 'Sem retorno';
 export type PosContemplacaoTicketStatus = "Aberto" | "Em Análise" | "Concluído";
+export type ComprasTicketStatus = "Pendente" | "Aprovado" | "Reprovado";
 
 
 export interface SolutionFile {
@@ -107,3 +108,20 @@ export interface PosContemplacaoTicket {
 }
 
 export type CreatePosContemplacaoTicket = Omit<PosContemplacaoTicket, 'id' | 'created_at' | 'protocolo' | 'status'> & { files?: FileList };
+
+// Type for "Compras" (purchases from Lead Bank)
+export interface ComprasTicket {
+  id: number;
+  created_at: string;
+  produto: string;
+  quantidade: number;
+  total: string;
+  tamanho?: string | null;
+  retirada: string;
+  folha: boolean;
+  user_id: string;
+  email: string;
+  telefone?: string | null;
+  aprovado?: boolean | null;
+  usuario_compras?: string | null;
+}

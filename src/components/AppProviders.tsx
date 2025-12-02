@@ -6,6 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { TicketProvider } from '@/contexts/TicketContext';
 import { CobrancaTicketProvider } from '@/contexts/CobrancaTicketContext';
 import { PosContemplacaoTicketProvider } from '@/contexts/PosContemplacaoTicketContext';
+import { ComprasTicketProvider } from '@/contexts/ComprasTicketContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -86,12 +87,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <TicketProvider>
           <CobrancaTicketProvider>
             <PosContemplacaoTicketProvider>
-              <CartProvider>
-                <GlobalModalManager>
-                  {children}
-                  <Toaster />
-                </GlobalModalManager>
-              </CartProvider>
+              <ComprasTicketProvider>
+                <CartProvider>
+                  <GlobalModalManager>
+                    {children}
+                    <Toaster />
+                  </GlobalModalManager>
+                </CartProvider>
+              </ComprasTicketProvider>
             </PosContemplacaoTicketProvider>
           </CobrancaTicketProvider>
         </TicketProvider>
