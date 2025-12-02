@@ -29,6 +29,94 @@ const getStatusDisplay = (aprovado: boolean | null) => {
   return { label: "Reprovado", color: statusColors.rejected };
 };
 
+// ===== Agrupamento por pedido (mesmo dia + horário/minuto, mesmo solicitante e mesma retirada) =====
+type ComprasOrder = {
+  groupId: string;
+  createdAtDisplay: string;
+  email: string;
+  retirada: string;
+  folha: boolean;
+  aprovado: boolean | null;
+  usuario_compras?: string | null;
+  items: Array<Pick<ComprasTicket, 'id' | 'produto' | 'quantidade' | 'tamanho' | 'total'>>;
+  totalValue: number;
+  totalQty: number;
+};
+
+function groupTicketsToOrders(tickets: ComprasTicket[]): ComprasOrder[] {
+  const map = new Map<string, ComprasOrder>();
+  for (const t of tickets) {
+    const minuteKey = t.created_at ? format(parseISO(t.created_at), 'yyyy-MM-dd HH:mm') : 'N/A';
+    const key = `${minuteKey}|${t.email}|${t.retirada}`;
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, {
+        groupId: key,
+        createdAtDisplay: t.created_at ? format(parseISO(t.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'N/A',
+        email: t.email,
+        retirada: t.retirada,
+        folha: !!t.folha,
+        aprovado: t.aprovado ?? null,
+        usuario_compras: t.usuario_compras ?? null,
+        items: [{ id: t.id, produto: t.produto, quantidade: t.quantidade, tamanho: t.tamanho ?? null, total: t.total }],
+        totalValue: parseFloat(t.total || '0'),
+        totalQty: t.quantidade,
+      });
+    } else {
+      existing.items.push({ id: t.id, produto: t.produto, quantidade: t.quantidade, tamanho: t.tamanho ?? null, total: t.total });
+      existing.totalValue += parseFloat(t.total || '0');
+      existing.totalQty += t.quantidade;
+      existing.folha = existing.folha || !!t.folha;
+    }
+  }
+  return Array.from(map.values());
+}
+
+const ComprasOrderCard = ({ order, onOpenDetails }: { order: ComprasOrder; onOpenDetails: (firstTicketId: number) => void }) => {
+  const statusInfo = getStatusDisplay(order.aprovado ?? null);
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Pedido</CardTitle>
+          </div>
+          <Badge className={`${statusInfo.color} text-white`}>{statusInfo.label}</Badge>
+        </div>
+        <CardDescription className="text-xs mt-1">{order.createdAtDisplay}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div>
+          <p className="text-sm font-semibold">Itens ({order.items.length})</p>
+          <div className="text-xs text-muted-foreground space-y-1">
+            {order.items.map((it) => (
+              <p key={it.id}>
+                {it.produto} — Qty: {it.quantidade}{it.tamanho ? ` — ${it.tamanho}` : ''} — R$ {parseFloat(it.total).toFixed(2)}
+              </p>
+            ))}
+          </div>
+          <p className="text-xs font-medium pt-2">Total do Pedido: R$ {order.totalValue.toFixed(2)}</p>
+        </div>
+        <div className="border-t pt-3">
+          <p className="text-xs text-muted-foreground"><span className="font-medium">Solicitante:</span> {order.email}</p>
+          <p className="text-xs text-muted-foreground"><span className="font-medium">Retirada:</span> {order.retirada.toUpperCase()}</p>
+          <p className="text-xs text-muted-foreground"><span className="font-medium">Folha de Pagamento:</span> {order.folha ? 'Sim' : 'Não'}</p>
+        </div>
+        {order.usuario_compras && (
+          <div className="border-t pt-2">
+            <p className="text-xs text-muted-foreground"><span className="font-medium">Processado por:</span> {order.usuario_compras}</p>
+          </div>
+        )}
+        <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => onOpenDetails(order.items[0].id)}>
+          <Eye className="h-4 w-4 mr-2" />
+          Ver Detalhes
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
 const ComprasTicketCard = ({ 
   ticket, 
   onOpenDetails 
@@ -73,7 +161,7 @@ const ComprasTicketCard = ({
             <span className="font-medium">Retirada:</span> {ticket.retirada.toUpperCase()}
           </p>
           <p className="text-xs text-muted-foreground">
-            <span className="font-medium">Folha ABAC:</span> {ticket.folha ? 'Sim' : 'Não'}
+            <span className="font-medium">Folha de Pagamento:</span> {ticket.folha ? 'Sim' : 'Não'}
           </p>
         </div>
         {ticket.usuario_compras && (
@@ -121,12 +209,15 @@ export function ComprasDashboardClient() {
     });
   }, [tickets, searchTerm, statusFilter]);
 
+  // Agrupa os tickets filtrados em pedidos
+  const groupedOrders = useMemo(() => groupTicketsToOrders(filteredTickets), [filteredTickets]);
+
   const stats = useMemo(() => {
-    const pending = tickets.filter(t => t.aprovado === null).length;
-    const approved = tickets.filter(t => t.aprovado === true).length;
-    const rejected = tickets.filter(t => t.aprovado === false).length;
-    return { pending, approved, rejected, total: tickets.length };
-  }, [tickets]);
+    const pending = groupedOrders.filter(o => o.aprovado === null).length;
+    const approved = groupedOrders.filter(o => o.aprovado === true).length;
+    const rejected = groupedOrders.filter(o => o.aprovado === false).length;
+    return { pending, approved, rejected, total: groupedOrders.length };
+  }, [groupedOrders]);
 
   if (error) {
     return (
@@ -221,7 +312,7 @@ export function ComprasDashboardClient() {
           </CardContent>
         </Card>
 
-        {/* Tickets Grid */}
+        {/* Pedidos (agrupados) */}
         {isLoading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
@@ -236,7 +327,7 @@ export function ComprasDashboardClient() {
               </Card>
             ))}
           </div>
-        ) : filteredTickets.length === 0 ? (
+        ) : groupedOrders.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -247,11 +338,14 @@ export function ComprasDashboardClient() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredTickets.map(ticket => (
-              <ComprasTicketCard
-                key={ticket.id}
-                ticket={ticket}
-                onOpenDetails={setSelectedTicket}
+            {groupedOrders.map(order => (
+              <ComprasOrderCard
+                key={order.groupId}
+                order={order}
+                onOpenDetails={(firstId) => {
+                  const first = tickets.find(t => t.id === firstId) || filteredTickets.find(t => t.id === firstId);
+                  if (first) setSelectedTicket(first);
+                }}
               />
             ))}
           </div>

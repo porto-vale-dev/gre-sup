@@ -175,9 +175,9 @@ export function ComprasTicketDetailsModal({ ticket, onClose, currentUser }: Comp
                 <p className="text-sm text-muted-foreground uppercase">{ticket.retirada}</p>
               </div>
               <div>
-                <p className="text-sm font-medium">Folha ABAC</p>
+                <p className="text-sm font-medium">Folha de Pagamento</p>
                 <p className="text-sm text-muted-foreground">
-                  {ticket.folha ? 'Sim - Incluir folha ABAC' : 'Não - Sem folha ABAC'}
+                  {ticket.folha ? 'Sim - Incluir folha de pagamento' : 'Não - Sem folha de pagamento'}
                 </p>
               </div>
             </div>
