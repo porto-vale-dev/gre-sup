@@ -209,10 +209,14 @@ export function ComprasDashboardClient() {
   // Agrupa os tickets filtrados em pedidos
   const groupedOrders = useMemo(() => groupTicketsToOrders(filteredTickets), [filteredTickets]);
 
+  // Stats contam de TODOS os tickets (não só os filtrados)
   const stats = useMemo(() => {
-    // Todos os pedidos visíveis são pendentes, pois já filtrados
-    return { pending: groupedOrders.length, total: groupedOrders.length };
-  }, [groupedOrders]);
+    const allOrders = groupTicketsToOrders(tickets);
+    const pending = allOrders.filter(o => o.aprovado === null).length;
+    const approved = allOrders.filter(o => o.aprovado === true).length;
+    const rejected = allOrders.filter(o => o.aprovado === false).length;
+    return { pending, approved, rejected, total: allOrders.length };
+  }, [tickets]);
 
   if (error) {
     return (
@@ -228,22 +232,50 @@ export function ComprasDashboardClient() {
       <div className="space-y-6">
         {/* Header link moved to page header */}
 
-        {/* Stats Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pedidos Pendentes</CardTitle>
-            <Package className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground mt-1">Aguardando aprovação</p>
-          </CardContent>
-        </Card>
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Pedidos</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+              <Package className="h-4 w-4 text-yellow-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.pending}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Aprovados</CardTitle>
+              <Package className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.approved}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Reprovados</CardTitle>
+              <Package className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.rejected}</div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Filtro de Busca */}
         <Card>
           <CardHeader>
-            <CardTitle>Buscar Pedidos Pendentes</CardTitle>
+            <CardTitle>Buscar Pedidos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="relative">
