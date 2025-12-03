@@ -72,6 +72,10 @@ export default function HubPage() {
     const accessibleServices = useMemo(() => {
       // Trata usuários com cargo nulo, vazio ou indefinido como "colaborador"
       const userRole = cargo || 'colaborador';
+      const allowedEmailsForPos = new Set([
+        'luana.pereira@portovaleconsorcios.com.br',
+        'mayara.paulino@portovaleconsorcios.com.br',
+      ]);
       
       let filtered = allServices.filter(service => service.allowedRoles.includes(userRole));
       
@@ -87,6 +91,15 @@ export default function HubPage() {
             service.title !== 'Novo ticket - GRE' &&
             service.title !== 'Mural de Avisos - GRE'
         );
+      }
+
+      // Libera o Painel de Pós-Contemplação para e-mails específicos
+      const emailLower = email ? email.toLowerCase() : '';
+      if (emailLower && allowedEmailsForPos.has(emailLower)) {
+        const posService = allServices.find(s => s.title === 'Painel de Pós-Contemplação');
+        if (posService && !filtered.some(s => s.title === posService.title)) {
+          filtered = [...filtered, posService];
+        }
       }
 
       return filtered;

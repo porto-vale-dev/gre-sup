@@ -9,10 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PosContemplacaoGestaoClient } from '@/components/PosContemplacaoGestaoClient';
 
 export default function GestaoPosContemplacaoPage() {
-  const { cargo } = useAuth();
+  const { cargo, email } = useAuth();
   const allowedRoles = ['adm', 'greadmin', 'gre_con', 'gre_con_admin'];
+  const allowedEmails = new Set([
+    'luana.pereira@portovaleconsorcios.com.br',
+    'mayara.paulino@portovaleconsorcios.com.br',
+  ]);
+  const canView = (cargo && allowedRoles.includes(cargo)) || (email ? allowedEmails.has(email.toLowerCase()) : false);
 
-  if (!cargo || !allowedRoles.includes(cargo)) {
+  if (!canView) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
         <Card className="w-full max-w-md text-center shadow-xl">

@@ -9,9 +9,13 @@ import { ShieldAlert, ArrowLeft, BarChart2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function ArchivedPosContemplacaoTicketsPage() {
-    const { cargo } = useAuth();
+    const { cargo, email } = useAuth();
     const allowedRoles = ['adm', 'greadmin', 'gre_con', 'gre_con_admin'];
-    const canViewManagement = cargo && allowedRoles.includes(cargo);
+    const allowedEmails = new Set([
+      'luana.pereira@portovaleconsorcios.com.br',
+      'mayara.paulino@portovaleconsorcios.com.br',
+    ]);
+    const canViewManagement = (cargo && allowedRoles.includes(cargo)) || (email ? allowedEmails.has(email.toLowerCase()) : false);
 
     if (!canViewManagement) {
         return (

@@ -11,7 +11,9 @@ export const RESPONSAVEIS: Responsavel[] = [
     { name: 'Bruna', email: 'bruna@portovaleconsorcios.com.br', celular: '+5512997289218' },
     { name: 'Dominik', email: 'dominik.rocha@portovaleconsorcios.com.br', celular: '+551235122064' },
     { name: 'Sara', email: 'apoioposcontemplacao1@portovaleconsorcios.com.br', celular: '+551220181191' },
-    { name: 'Pedro', email: 'apoioposcontemplacao2@portovaleconsorcios.com.br', celular: '+551220181189' }
+    { name: 'Pedro', email: 'apoioposcontemplacao2@portovaleconsorcios.com.br', celular: '+551220181189' },
+    { name: 'Luana', email: 'luana.pereira@portovaleconsorcios.com.br', celular: '+551236003504' },
+    { name: 'Mayara', email: 'mayara.paulino@portovaleconsorcios.com.br', celular: '+551236002689' }
 ];
 
 export const POS_CONTEMPLACAO_STATUSES: PosContemplacaoTicketStatus[] = ["Aberto", "Em Análise", "Urgente", "Retorno", "Concluído"];
