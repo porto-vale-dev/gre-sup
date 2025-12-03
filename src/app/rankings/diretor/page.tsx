@@ -10,6 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 export default function DiretorPage() {
   const { cargo, email } = useAuth();
   const allowedRoles = ['adm', 'greadmin', 'greadminsa', 'diretor'];
+  const allowedEmails = new Set([
+    'leticia.sun@portovaleconsorcios.com.br',
+  ]);
 
   // Regra específica para bloquear usuários
   if (email === 'naira.nunes@portovaleconsorcios.com.br' || email === 'aprendiz.gre@portovaleconsorcios.com.br') {
@@ -40,7 +43,9 @@ export default function DiretorPage() {
     );
   }
 
-  if (!cargo || !allowedRoles.includes(cargo)) {
+  const canView = (cargo && allowedRoles.includes(cargo)) || (email ? allowedEmails.has(email.toLowerCase()) : false);
+
+  if (!canView) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
         <Card className="w-full max-w-md text-center shadow-xl">
