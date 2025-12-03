@@ -12,6 +12,7 @@ interface ComprasTicketContextType {
   isLoading: boolean;
   error: string | null;
   updateTicketStatus: (ticketId: number, aprovado: boolean, usuarioCompras: string) => Promise<boolean>;
+  markAsDelivered: (ticketId: number, entregador: string) => Promise<boolean>;
   getTicketById: (ticketId: number) => ComprasTicket | undefined;
   fetchTickets: () => void;
 }
@@ -98,11 +99,44 @@ export function ComprasTicketProvider({ children }: { children: ReactNode }) {
     return tickets.find(t => t.id === ticketId);
   };
 
+  const markAsDelivered = async (ticketId: number, entregador: string): Promise<boolean> => {
+    try {
+      const { error: updateError } = await supabase
+        .from('compras')
+        .update({ 
+          entrega: true,
+          entregador
+        })
+        .eq('id', ticketId);
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
+      toast({
+        title: 'Entrega Registrada',
+        description: 'O pedido foi marcado como entregue.',
+      });
+
+      await fetchTickets();
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao registrar entrega.';
+      toast({
+        title: 'Erro ao Registrar Entrega',
+        description: message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   const value = {
     tickets,
     isLoading,
     error,
     updateTicketStatus,
+    markAsDelivered,
     getTicketById,
     fetchTickets,
   };

@@ -1,0 +1,253 @@
+"use client";
+
+import { useState, useMemo } from 'react';
+import { useComprasTickets } from '@/contexts/ComprasTicketContext';
+import type { ComprasTicket } from '@/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Search, Package, Eye, Truck } from 'lucide-react';
+import { format, parseISO } from "date-fns";
+import { ptBR } from 'date-fns/locale';
+import { useAuth } from '@/contexts/AuthContext';
+import { EntregaComprasModal } from './EntregaComprasModal';
+
+// ===== Agrupamento por pedido (mesmo dia + horário/minuto, mesmo solicitante e mesma retirada) =====
+type ComprasOrder = {
+  groupId: string;
+  createdAtDisplay: string;
+  email: string;
+  retirada: string;
+  folha: boolean;
+  aprovado: boolean | null;
+  usuario_compras?: string | null;
+  entrega?: boolean | null;
+  entregador?: string | null;
+  items: Array<Pick<ComprasTicket, 'id' | 'produto' | 'quantidade' | 'tamanho' | 'total'>>;
+  totalValue: number;
+  totalQty: number;
+};
+
+function groupTicketsToOrders(tickets: ComprasTicket[]): ComprasOrder[] {
+  const map = new Map<string, ComprasOrder>();
+  for (const t of tickets) {
+    const minuteKey = t.created_at ? format(parseISO(t.created_at), 'yyyy-MM-dd HH:mm') : 'N/A';
+    const key = `${minuteKey}|${t.email}|${t.retirada}`;
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, {
+        groupId: key,
+        createdAtDisplay: t.created_at ? format(parseISO(t.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'N/A',
+        email: t.email,
+        retirada: t.retirada,
+        folha: !!t.folha,
+        aprovado: t.aprovado ?? null,
+        usuario_compras: t.usuario_compras ?? null,
+        entrega: t.entrega ?? null,
+        entregador: t.entregador ?? null,
+        items: [{ id: t.id, produto: t.produto, quantidade: t.quantidade, tamanho: t.tamanho ?? null, total: t.total }],
+        totalValue: parseFloat(t.total || '0'),
+        totalQty: t.quantidade,
+      });
+    } else {
+      existing.items.push({ id: t.id, produto: t.produto, quantidade: t.quantidade, tamanho: t.tamanho ?? null, total: t.total });
+      existing.totalValue += parseFloat(t.total || '0');
+      existing.totalQty += t.quantidade;
+      existing.folha = existing.folha || !!t.folha;
+      existing.entrega = existing.entrega ?? (t.entrega ?? null);
+      existing.entregador = existing.entregador ?? (t.entregador ?? null);
+    }
+  }
+  return Array.from(map.values());
+}
+
+const EntregaOrderCard = ({ order, onOpenDetails }: { order: ComprasOrder; onOpenDetails: (order: ComprasOrder) => void }) => {
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Pedido #{order.items[0]?.id}</CardTitle>
+          </div>
+          <Badge className="bg-blue-500 text-white">
+            Aguardando Entrega
+          </Badge>
+        </div>
+        <CardDescription className="text-xs mt-1">{order.createdAtDisplay}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div>
+          <p className="text-sm font-semibold">Itens ({order.items.length})</p>
+          <div className="text-xs text-muted-foreground space-y-1">
+            {order.items.map((it) => (
+              <p key={it.id}>
+                {it.produto} — Qty: {it.quantidade}{it.tamanho ? ` — ${it.tamanho}` : ''} — R$ {parseFloat(it.total).toFixed(2)}
+              </p>
+            ))}
+          </div>
+          <p className="text-xs font-medium pt-2">Total do Pedido: R$ {order.totalValue.toFixed(2)}</p>
+        </div>
+        <div className="border-t pt-3">
+          <p className="text-xs text-muted-foreground"><span className="font-medium">Solicitante:</span> {order.email}</p>
+          <p className="text-xs text-muted-foreground"><span className="font-medium">Retirada:</span> {order.retirada.toUpperCase()}</p>
+          <p className="text-xs text-muted-foreground"><span className="font-medium">Folha de Pagamento:</span> {order.folha ? 'Sim' : 'Não'}</p>
+        </div>
+        {order.usuario_compras && (
+          <div className="border-t pt-2">
+            <p className="text-xs text-muted-foreground"><span className="font-medium">Aprovado por:</span> {order.usuario_compras}</p>
+          </div>
+        )}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full mt-2"
+          onClick={() => onOpenDetails(order)}
+        >
+          <Truck className="h-4 w-4 mr-2" />
+          Registrar Entrega
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
+export function EntregasComprasClient() {
+  const { tickets, isLoading, error } = useComprasTickets();
+  const { username } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTicket, setSelectedTicket] = useState<ComprasTicket | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<ComprasOrder | null>(null);
+
+  // Filtrar apenas pedidos aprovados (aprovado === true) e não entregues (entrega !== true)
+  const pendingDeliveryTickets = useMemo(() => {
+    return tickets.filter(ticket => ticket.aprovado === true && ticket.entrega !== true);
+  }, [tickets]);
+
+  const filteredTickets = useMemo(() => {
+    return pendingDeliveryTickets.filter(ticket => {
+      const matchesSearch = 
+        ticket.produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.id.toString().includes(searchTerm);
+
+      return matchesSearch;
+    });
+  }, [pendingDeliveryTickets, searchTerm]);
+
+  // Agrupa os tickets filtrados em pedidos
+  const groupedOrders = useMemo(() => groupTicketsToOrders(filteredTickets), [filteredTickets]);
+
+  const stats = useMemo(() => {
+    // Stats contam de TODOS os tickets aprovados aguardando entrega
+    const allOrders = groupTicketsToOrders(pendingDeliveryTickets);
+    return { total: allOrders.length };
+  }, [pendingDeliveryTickets]);
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Erro ao Carregar Pedidos</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <>
+      <div className="space-y-6">
+        {/* Stats Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pedidos Aguardando Entrega</CardTitle>
+            <Truck className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">Aprovados e pendentes de entrega</p>
+          </CardContent>
+        </Card>
+
+        {/* Filtro de Busca */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Buscar Pedidos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por produto, email ou ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pedidos (agrupados) */}
+        {isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2 mt-2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : groupedOrders.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Truck className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">
+                Nenhum pedido aguardando entrega.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {groupedOrders.map(order => (
+              <EntregaOrderCard
+                key={order.groupId}
+                order={order}
+                onOpenDetails={(ord) => {
+                  setSelectedGroup(ord);
+                  const firstId = ord.items[0]?.id;
+                  const first = tickets.find(t => t.id === firstId) || filteredTickets.find(t => t.id === firstId);
+                  if (first) setSelectedTicket(first);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Entrega Modal */}
+      {(selectedTicket || selectedGroup) && (
+        <EntregaComprasModal
+          ticket={selectedTicket || (tickets.find(t => t.id === (selectedGroup?.items[0]?.id ?? -1)) as ComprasTicket)}
+          groupItems={selectedGroup?.items}
+          groupMeta={selectedGroup ? {
+            createdAtDisplay: selectedGroup.createdAtDisplay,
+            email: selectedGroup.email,
+            retirada: selectedGroup.retirada,
+            folha: selectedGroup.folha,
+            aprovado: selectedGroup.aprovado,
+            usuario_compras: selectedGroup.usuario_compras ?? null,
+          } : undefined}
+          onClose={() => { setSelectedTicket(null); setSelectedGroup(null); }}
+          currentUser={username || 'Usuário'}
+        />
+      )}
+    </>
+  );
+}

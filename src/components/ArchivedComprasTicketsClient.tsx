@@ -204,7 +204,7 @@ export function ArchivedComprasTicketsClient() {
   const [selectedTicket, setSelectedTicket] = useState<ComprasTicket | null>(null);
 
   const archivedTickets = useMemo(() => {
-    return tickets.filter(ticket => ticket.aprovado !== null);
+    return tickets.filter(ticket => ticket.entrega === true || ticket.aprovado === false);
   }, [tickets]);
 
   const archivedOrders = useMemo(() => groupTicketsToOrders(archivedTickets), [archivedTickets]);
