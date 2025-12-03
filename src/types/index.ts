@@ -124,4 +124,6 @@ export interface ComprasTicket {
   telefone?: string | null;
   aprovado?: boolean | null;
   usuario_compras?: string | null;
+  entrega?: boolean | null;
+  entregador?: string | null;
 }
