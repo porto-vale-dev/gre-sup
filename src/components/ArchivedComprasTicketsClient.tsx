@@ -107,8 +107,13 @@ const ArchivedOrderCard = ({ order, onOpenDetails }: { order: ComprasOrder; onOp
           <p className="text-xs text-muted-foreground"><span className="font-medium">Retirada:</span> {order.retirada.toUpperCase()}</p>
           <p className="text-xs text-muted-foreground"><span className="font-medium">Folha de Pagamento:</span> {order.folha ? 'Sim' : 'Não'}</p>
         </div>
-        {order.entregador && (
+        {order.usuario_compras && (
           <div className="border-t pt-2">
+            <p className="text-xs text-muted-foreground"><span className="font-medium">Processado por:</span> {order.usuario_compras}</p>
+          </div>
+        )}
+        {order.entregador && (
+          <div className="pt-2">
             <p className="text-xs text-muted-foreground"><span className="font-medium">Entregue por:</span> {order.entregador}</p>
           </div>
         )}
