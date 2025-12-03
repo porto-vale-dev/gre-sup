@@ -110,6 +110,10 @@ export default function RankingsPage() {
   const { cargo, email } = useAuth();
   
   const accessibleRankings = useMemo(() => {
+    const allowedEmailsForDiretor = new Set([
+      'leticia.sun@portovaleconsorcios.com.br',
+    ]);
+
     // Regra específica para o usuário 'naira.nunes@portovaleconsorcios.com.br'
     if (email === 'naira.nunes@portovaleconsorcios.com.br') {
         return allRankings.filter(ranking => 
@@ -120,6 +124,17 @@ export default function RankingsPage() {
     // Regra específica para o usuário 'aprendiz.gre@portovaleconsorcios.com.br'
     if (email === 'aprendiz.gre@portovaleconsorcios.com.br') {
         return allRankings.filter(ranking => ranking.title === "Ranking Campanha");
+    }
+    
+    // Allowlist: garante "Ranking Diretor" para e-mails específicos
+    if (email && allowedEmailsForDiretor.has(email.toLowerCase())) {
+      const userRole = cargo || 'colaborador';
+      let base = allRankings.filter(ranking => ranking.allowedRoles.includes(userRole));
+      const diretor = allRankings.find(r => r.title === 'Ranking Diretor');
+      if (diretor && !base.some(r => r.title === diretor.title)) {
+        base = [...base, diretor];
+      }
+      return base;
     }
     
     // Regra geral para os outros usuários
