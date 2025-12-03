@@ -25,6 +25,8 @@ type ComprasOrder = {
   folha: boolean;
   aprovado: boolean | null;
   usuario_compras?: string | null;
+  entrega?: boolean | null;
+  entregador?: string | null;
   items: Array<Pick<ComprasTicket, 'id' | 'produto' | 'quantidade' | 'tamanho' | 'total'>>;
   totalValue: number;
   totalQty: number;
@@ -45,6 +47,8 @@ function groupTicketsToOrders(tickets: ComprasTicket[]): ComprasOrder[] {
         folha: !!t.folha,
         aprovado: t.aprovado ?? null,
         usuario_compras: t.usuario_compras ?? null,
+        entrega: t.entrega ?? null,
+        entregador: t.entregador ?? null,
         items: [{ id: t.id, produto: t.produto, quantidade: t.quantidade, tamanho: t.tamanho ?? null, total: t.total }],
         totalValue: parseFloat(t.total || '0'),
         totalQty: t.quantidade,
@@ -61,7 +65,7 @@ function groupTicketsToOrders(tickets: ComprasTicket[]): ComprasOrder[] {
 }
 
 const ArchivedOrderCard = ({ order, onOpenDetails }: { order: ComprasOrder; onOpenDetails: (order: ComprasOrder) => void }) => {
-  const isApproved = order.aprovado === true;
+  const isDelivered = order.entrega === true;
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
@@ -70,11 +74,11 @@ const ArchivedOrderCard = ({ order, onOpenDetails }: { order: ComprasOrder; onOp
             <Package className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">Pedido #{order.items[0]?.id}</CardTitle>
           </div>
-          <Badge className={`${isApproved ? 'bg-green-500' : 'bg-red-500'} text-white`}>
-            {isApproved ? (
+          <Badge className={`${isDelivered ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+            {isDelivered ? (
               <>
                 <CheckCircle className="h-3 w-3 mr-1" />
-                Aprovado
+                Entregue
               </>
             ) : (
               <>
@@ -103,9 +107,9 @@ const ArchivedOrderCard = ({ order, onOpenDetails }: { order: ComprasOrder; onOp
           <p className="text-xs text-muted-foreground"><span className="font-medium">Retirada:</span> {order.retirada.toUpperCase()}</p>
           <p className="text-xs text-muted-foreground"><span className="font-medium">Folha de Pagamento:</span> {order.folha ? 'Sim' : 'Não'}</p>
         </div>
-        {order.usuario_compras && (
+        {order.entregador && (
           <div className="border-t pt-2">
-            <p className="text-xs text-muted-foreground"><span className="font-medium">Processado por:</span> {order.usuario_compras}</p>
+            <p className="text-xs text-muted-foreground"><span className="font-medium">Entregue por:</span> {order.entregador}</p>
           </div>
         )}
         <Button 
