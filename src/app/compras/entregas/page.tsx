@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 export default function EntregasPage() {
-  const { user, isLoading } = useAuth();
+  const { cargo, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -18,7 +18,7 @@ export default function EntregasPage() {
     );
   }
 
-  if (!user || (user.cargo !== 'adm' && user.cargo !== 'compras')) {
+  if (!cargo || (cargo !== 'adm' && cargo !== 'compras')) {
     return (
       <div className="container mx-auto p-6">
         <h1 className="text-2xl font-bold mb-4">Acesso Negado</h1>
