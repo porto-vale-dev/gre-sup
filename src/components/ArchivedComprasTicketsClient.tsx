@@ -109,7 +109,7 @@ const ArchivedOrderCard = ({ order, onOpenDetails }: { order: ComprasOrder; onOp
         </div>
         {order.usuario_compras && (
           <div className="border-t pt-2">
-            <p className="text-xs text-muted-foreground"><span className="font-medium">Processado por:</span> {order.usuario_compras}</p>
+            <p className="text-xs text-muted-foreground"><span className="font-medium">Aprovado por:</span> {order.usuario_compras}</p>
           </div>
         )}
         {order.entregador && (
