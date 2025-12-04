@@ -123,7 +123,13 @@ export function ArchivedPosContemplacaoTicketsClient() {
   
   const archivedTickets = useMemo(() => {
     const baseTickets = tickets.filter(ticket => ticket.status === "Concluído");
-    if (cargo === 'gre_con' && email) {
+    
+    const restrictedAccessEmails = new Set([
+      'luana.pereira@portovaleconsorcios.com.br',
+      'mayara.paulino@portovaleconsorcios.com.br',
+    ]);
+
+    if ((cargo === 'gre_con' || (email && restrictedAccessEmails.has(email.toLowerCase()))) && email) {
         return baseTickets.filter(ticket => ticket.relator === email || ticket.responsavel === email);
     }
     return baseTickets;
