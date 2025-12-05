@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { ComprasTicket } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
+import { sendComprasWebhook } from '@/lib/comprasWebhook';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
 
@@ -65,13 +66,15 @@ export function ComprasTicketProvider({ children }: { children: ReactNode }) {
 
   const updateTicketStatus = async (ticketId: number, aprovado: boolean, usuarioCompras: string): Promise<boolean> => {
     try {
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from('compras')
         .update({ 
           aprovado,
           usuario_compras: usuarioCompras
         })
-        .eq('id', ticketId);
+        .eq('id', ticketId)
+        .select()
+        .single();
 
       if (updateError) {
         throw new Error(updateError.message);
@@ -81,6 +84,10 @@ export function ComprasTicketProvider({ children }: { children: ReactNode }) {
         title: aprovado ? 'Pedido Aprovado' : 'Pedido Reprovado',
         description: `O pedido foi ${aprovado ? 'aprovado' : 'reprovado'} com sucesso.`,
       });
+
+      if (data) {
+        await sendComprasWebhook(data as ComprasTicket);
+      }
 
       await fetchTickets();
       return true;
@@ -96,18 +103,20 @@ export function ComprasTicketProvider({ children }: { children: ReactNode }) {
   };
 
   const getTicketById = (ticketId: number): ComprasTicket | undefined => {
-    return tickets.find(t => t.id === ticketId);
+    return tickets.find((t: ComprasTicket) => t.id === ticketId);
   };
 
   const markAsDelivered = async (ticketId: number, entregador: string): Promise<boolean> => {
     try {
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from('compras')
         .update({ 
           entrega: true,
           entregador
         })
-        .eq('id', ticketId);
+        .eq('id', ticketId)
+        .select()
+        .single();
 
       if (updateError) {
         throw new Error(updateError.message);
@@ -117,6 +126,10 @@ export function ComprasTicketProvider({ children }: { children: ReactNode }) {
         title: 'Entrega Registrada',
         description: 'O pedido foi marcado como entregue.',
       });
+
+      if (data) {
+        await sendComprasWebhook(data as ComprasTicket);
+      }
 
       await fetchTickets();
       return true;

@@ -14,6 +14,7 @@ import { Trash2, ArrowLeft, Minus, Plus, Loader2, AlertTriangle } from 'lucide-r
 import Image from 'next/image'
 import { Separator } from '@/components/ui/separator'
 import { supabase } from '@/lib/supabaseClient'
+import { sendComprasWebhook } from '@/lib/comprasWebhook'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import {
